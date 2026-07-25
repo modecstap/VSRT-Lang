@@ -1,0 +1,16 @@
+.button {
+  border: none;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 13px 18px;
+
+  background: var(--lonetrail-blue);
+  color: var(--lonetrail-white);
+
+  transition: background 0.2s ease;
+}
+
+.button:hover {
+  background: var(--lonetrail-light-blue);
+}

@@ -1,0 +1,43 @@
+.lonetrailWrapper {
+  position: relative;
+  width: fit-content;
+}
+
+.lonetrailCard {
+  display: flex;
+  align-items: stretch;
+  width: fit-content;
+}
+
+.lonetrailTopOberation,
+.lonetrailBottomOberation {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 25px;
+  pointer-events: none;
+}
+
+.lonetrailTopOberation {
+  top: -25px;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--lonetrail-olive) 35%, transparent) 0%,
+    transparent 100%
+  );
+}
+
+.lonetrailBottomOberation {
+  bottom: -25px;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--lonetrail-red) 35%, transparent) 0%,
+    transparent 100%
+  );
+}
+
+.lonetrailTricolor{
+  width: var(--tri-bar-width);
+  background: var(--lonetrail-tricolor-horiz);
+  flex-shrink: 0;
+}

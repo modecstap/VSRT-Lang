@@ -1,0 +1,54 @@
+@font-face {
+  font-family: "Lonetrail Bold";
+  src: url(https://cdn.eludris.com/6462265229323);
+}
+
+@font-face {
+  font-family: "Lonetrail Regular";
+  src: url(https://cdn.eludris.com/6462266277900);
+}
+
+:root {
+  --lonetrail-white: #f5eddc;
+  --lonetrail-grey: #181818;
+  --lonetrail-faded-grey: #413e3a;
+  --lonetrail-light-grey: #69645c;
+  --lonetrail-orange: #d0713c;
+  --lonetrail-orange-glow: #f5eddc;
+  --lonetrail-teal: #98bcb1;
+  --lonetrail-red: #a12525;
+  --lonetrail-yellow: #f3a730;
+  --lonetrail-olive: #618574;
+  --lonetrail-light-blue: #6e8596;
+  --lonetrail-blue: #526370;
+  --lonetrail-dark-blue: #343f47;
+
+  --header-font: "Lonetrail Bold";
+  --text-font: "Lonetrail Regular";
+
+  --accent-color: var(--lonetrail-light-blue);
+  --lonetrail-tricolor-vert: linear-gradient(
+    to left,
+    var(--lonetrail-olive) 33%,
+    var(--lonetrail-yellow) 33%,
+    var(--lonetrail-yellow) 66%,
+    var(--lonetrail-red) 66%
+  );
+  --lonetrail-tricolor-horiz: linear-gradient(
+    to bottom,
+    var(--lonetrail-olive) 33%,
+    var(--lonetrail-yellow) 33%,
+    var(--lonetrail-yellow) 66%,
+    var(--lonetrail-red) 66%
+  );
+  
+  --tri-bar-width: 15px;
+
+  --lonetrail-bg:
+    radial-gradient(circle at top, var(--lonetrail-faded-grey), transparent 42%),
+    linear-gradient(135deg, var(--lonetrail-faded-grey),  var(--lonetrail-grey));
+
+  --lonetrail-oberation:
+    drop-shadow(0 -2px 3px var(--lonetrail-olive))
+    drop-shadow(0  2px 3px var(--lonetrail-red));
+}

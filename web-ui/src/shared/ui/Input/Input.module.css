@@ -1,0 +1,29 @@
+.field {
+  display: grid;
+  gap: 8px;
+}
+
+.label {
+  font-size: 0.94rem;
+  font-weight: 600;
+  color: var(--lonetrail-white);
+  text-transform: uppercase;
+}
+
+.input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 0px solid;
+  font-size: 1rem;
+  color: var(--lonetrail-grey);
+}
+
+.input::placeholder {
+  color: var(--lonetrail-light-grey);
+}
+
+.input:focus {
+  outline: 2px solid rgba(152, 188, 177, 0.35);
+  border-color: var(--lonetrail-teal);
+}
