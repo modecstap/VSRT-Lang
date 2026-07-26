@@ -42,31 +42,35 @@ func (s *Service) Register(username, email, password string) (*User, error) {
 		return nil, err
 	}
 
-	user := &User{Username: username, Email: email, Password: hashed, CreatedAt: time.Now()}
-	if err := s.userRepo.Create(user); err != nil {
-		return nil, err
+	user := &User{
+		Username: username, 
+		Email: email, Password: 
+		hashed, CreatedAt: time.Now(),
 	}
-	return user, nil
-}
 
-func (s *Service) Login(login, password string) (*TokenPair, error) {
-	user, err := s.userRepo.FindByUsername(login)
+	err = s.userRepo.Create(user)
 	if err != nil {
 		return nil, err
 	}
 
-	if user == nil {
-		user, err = s.userRepo.FindByEmail(login)
-		if err != nil {
-			return nil, err
-		}
+	return user, nil
+}
+
+func (s *Service) Login(login, password string) (*TokenPair, error) {
+	user, err := s.findUser(login)
+	if err != nil {
+		return nil, err
 	}
 
 	if !ComparePassword(user.Password, password) {
 		return nil, fmt.Errorf("invalid password")
 	}
 
-	accessToken, err := s.jwtService.GenerateAccessToken(user.ID, user.Username, user.Email)
+	accessToken, err := s.jwtService.GenerateAccessToken(
+		user.ID, 
+		user.Username, 
+		user.Email,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -79,11 +83,26 @@ func (s *Service) Login(login, password string) (*TokenPair, error) {
 		ExpiresAt: time.Now().Add(refreshTokenTTL),
 		CreatedAt: time.Now(),
 	}
-	if err := s.refreshRepo.Save(refreshToken); err != nil {
+
+	err = s.refreshRepo.Save(refreshToken)
+	if err != nil {
 		return nil, err
 	}
 
 	return &TokenPair{AccessToken: accessToken, RefreshToken: refreshTokenValue}, nil
+}
+
+func (s *Service) findUser(login string) (*User, error) {
+	user, err := s.userRepo.FindByUsername(login)
+	if err != nil {
+		return nil, err
+	}
+
+	if user != nil{
+		return user, nil
+	}
+
+	return s.userRepo.FindByEmail(login)
 }
 
 func (s *Service) Refresh(accessToken, refreshTokenValue string) (*TokenPair, error) {
@@ -92,32 +111,62 @@ func (s *Service) Refresh(accessToken, refreshTokenValue string) (*TokenPair, er
 		return nil, err
 	}
 
-	refreshHash := hashToken(refreshTokenValue)
-	storedToken, err := s.refreshRepo.FindByHash(refreshHash)
+	newAccessToken, err := s.updateAccessToken(refreshTokenValue, claims)
 	if err != nil {
 		return nil, err
 	}
-	if storedToken.Revoked || time.Now().After(storedToken.ExpiresAt) {
-		return nil, fmt.Errorf("refresh token expired")
+
+	newRefreshTokenValue, err := s.updateRefreshToken(claims)
+	if err != nil {
+		return nil, err
 	}
 
-	if err := s.refreshRepo.RevokeByHash(refreshHash); err != nil {
-		return nil, err
+	tokenPair := &TokenPair{
+		AccessToken: newAccessToken, 
+		RefreshToken: newRefreshTokenValue,
+	}
+	return tokenPair, nil
+}
+
+func (s *Service) updateRefreshToken(claims *Claims) (string, error) {
+	newRefreshTokenValue := s.jwtService.GenerateRefreshToken()
+	newRefreshHash := hashToken(newRefreshTokenValue)
+
+	newToken := &RefreshToken{
+		UserID:    claims.Subject,
+		TokenHash: newRefreshHash,
+		ExpiresAt: time.Now().Add(refreshTokenTTL),
+		CreatedAt: time.Now(),
+	}
+
+	err := s.refreshRepo.Save(newToken)
+	if err != nil {
+		return "", err
+	}
+	return newRefreshTokenValue, nil
+}
+
+func (s *Service) updateAccessToken(refreshTokenValue string, claims *Claims) (string, error) {
+	refreshHash := hashToken(refreshTokenValue)
+	storedToken, err := s.refreshRepo.FindByHash(refreshHash)
+	if err != nil {
+		return "", err
+	}
+
+	if storedToken.Revoked || time.Now().After(storedToken.ExpiresAt) {
+		return "", fmt.Errorf("refresh token expired")
+	}
+
+	err = s.refreshRepo.RevokeByHash(refreshHash)
+	if err != nil {
+		return "", err
 	}
 
 	newAccessToken, err := s.jwtService.GenerateAccessToken(claims.Subject, claims.Username, claims.Email)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-
-	newRefreshTokenValue := s.jwtService.GenerateRefreshToken()
-	newRefreshHash := hashToken(newRefreshTokenValue)
-	newToken := &RefreshToken{UserID: claims.Subject, TokenHash: newRefreshHash, ExpiresAt: time.Now().Add(refreshTokenTTL), CreatedAt: time.Now()}
-	if err := s.refreshRepo.Save(newToken); err != nil {
-		return nil, err
-	}
-
-	return &TokenPair{AccessToken: newAccessToken, RefreshToken: newRefreshTokenValue}, nil
+	return newAccessToken, nil
 }
 
 func (s *Service) Logout(refreshTokenValue string) error {
