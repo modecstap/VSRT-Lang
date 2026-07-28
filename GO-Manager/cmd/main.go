@@ -2,6 +2,7 @@ package main
 
 import (
 	"VSRT-Lang/internal"
+	"VSRT-Lang/internal/database/postgres/migrations"
 	"VSRT-Lang/internal/database/postgres/session_repository"
 	"VSRT-Lang/internal/session"
 	"database/sql"
@@ -24,6 +25,9 @@ func main() {
 	connStr := "host=localhost port=5432 user=postgres password=postgres dbname=vsrt_lang sslmode=disable"
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
+		panic(err)
+	}
+	if err := migrations.Run(db); err != nil {
 		panic(err)
 	}
 	repository := session_repository.New(db)
