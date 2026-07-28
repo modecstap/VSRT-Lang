@@ -1,49 +1,12 @@
 import styles from '../LoginForm/LoginForm.module.css';
 import Button from '../../../../shared/ui/Button/Button';
 import FormField from '../LoginForm/FormField';
-import { useState } from 'react';
+import { useRegisterForm } from '../../hooks/useRegisterForm';
 
 function RegisterForm({ onSwitchToLogin }) {
-  const [form, setForm] = useState({
-    username: '',
-    email: '',
-    password: '',
+  const { form, message, isSubmitting, handleChange, handleSubmit } = useRegisterForm({
+    onSuccess: onSwitchToLogin,
   });
-  const [message, setMessage] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-    setForm((current) => ({
-      ...current,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setMessage('');
-    setIsSubmitting(true);
-
-    try {
-      const response = await fetch('http://localhost:8080/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-
-      if (!response.ok) {
-        throw new Error('Registration failed');
-      }
-
-      setMessage('Registration successful. You can sign in now.');
-      setForm({ username: '', email: '', password: '' });
-    } catch (error) {
-      setMessage(error.message || 'Registration failed');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   return (
     <form className={styles.form} onSubmit={handleSubmit}>

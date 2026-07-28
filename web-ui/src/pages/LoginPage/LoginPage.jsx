@@ -7,13 +7,17 @@ import LonetrailCard from '../../shared/ui/LonetrailCard/LonetrailCard';
 function LoginPage() {
   const [isRegistering, setIsRegistering] = useState(false);
 
+  const handleSwitchToLogin = () => {
+    setIsRegistering(false);
+  };
+
   return (
     <main className={styles.page}>
       <LonetrailCard>
         <section className={styles.panel}>
           <h1 className={styles.title}>{isRegistering ? 'REGISTER' : 'LOGIN'}</h1>
           {isRegistering ? (
-            <RegisterForm onSwitchToLogin={() => setIsRegistering(false)} />
+            <RegisterForm onSwitchToLogin={handleSwitchToLogin} />
           ) : (
             <LoginForm onSwitchToRegister={() => setIsRegistering(true)} />
           )}
