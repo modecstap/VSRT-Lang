@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { login } from '../api/login';
 import {
   createInitialLoginForm,
@@ -8,6 +8,18 @@ export function useLoginForm() {
   const [form, setForm] = useState(createInitialLoginForm());
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!error) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setError('');
+    }, 2500);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [error]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
