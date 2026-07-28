@@ -7,17 +7,17 @@ jest.mock('axios');
 
 test('submits login form to the backend endpoint', async () => {
   axios.post.mockResolvedValue({
-    data: { username: 'alice' },
+    data: { access_token: 'token', refresh_token: 'refresh-token' },
   });
 
   render(<App />);
 
-  await userEvent.type(screen.getByPlaceholderText(/Username/i), 'alice');
+  await userEvent.type(screen.getByPlaceholderText(/login/i), 'alice');
   await userEvent.type(screen.getByPlaceholderText(/Password/i), 'secret');
   await userEvent.click(screen.getByRole('button', { name: /sign in/i }));
 
-  expect(axios.post).toHaveBeenCalledWith('/api/login', {
-    username: 'alice',
+  expect(axios.post).toHaveBeenCalledWith('http://localhost:8080/login', {
+    login: 'alice',
     password: 'secret',
   });
 });

@@ -3,7 +3,7 @@ import Button from '../../../../shared/ui/Button/Button';
 import FormField from './FormField';
 import { useLoginForm } from '../../hooks/useLoginForm';
 
-function LoginForm() {
+function LoginForm({ onSwitchToRegister }) {
   const { form, error, isSubmitting, handleChange, handleSubmit } = useLoginForm();
 
   return (
@@ -12,10 +12,10 @@ function LoginForm() {
         <FormField
           label=" "
           id="login-username"
-          name="username"
+          name="login"
           type="text"
-          placeholder="Username"
-          value={form.username}
+          placeholder="Login"
+          value={form.login}
           onChange={handleChange}
         />
 
@@ -39,9 +39,14 @@ function LoginForm() {
           }
           
         </Button>
-        <a className={styles.link} href="/forgot-password">
-          FORGOT PASSWORD
-        </a>
+        <div className={styles.additional}>
+          <a className={styles.link} href="/forgot-password">
+            FORGOT PASSWORD
+          </a>
+          <button type="button" className={styles.link} onClick={onSwitchToRegister}>
+            CREATE ACCOUNT
+          </button>
+        </div>
       </div>
     </form>
   );

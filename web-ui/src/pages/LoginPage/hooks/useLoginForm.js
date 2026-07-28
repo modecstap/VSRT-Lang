@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { login } from '../api/login';
 import {
-  buildProfilePath,
   createInitialLoginForm,
 } from '../model/loginFormModel';
 
@@ -26,11 +25,15 @@ export function useLoginForm() {
 
     try {
       const data = await login(form);
-      const username = data?.username ?? form.username;
 
-      window.location.assign(buildProfilePath(username));
+      if (data?.access_token) {
+        localStorage.setItem('access_token', data.access_token);
+        localStorage.setItem('refresh_token', data.refresh_token || '');
+      }
+
+      window.location.assign('/');
     } catch (submitError) {
-      setError(submitError.message || 'Unable to sign in');
+      setError(submitError.response?.data?.error?.message || submitError.message || 'Unable to sign in');
     } finally {
       setIsSubmitting(false);
     }

@@ -1,6 +1,4 @@
 export const createInitialLoginForm = () => ({
-  username: '',
+  login: '',
   password: '',
 });
-
-export const buildProfilePath = (username) => `/profile/${username}`;
