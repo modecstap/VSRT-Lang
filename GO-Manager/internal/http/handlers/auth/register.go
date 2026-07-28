@@ -3,6 +3,8 @@ package auth
 import (
 	"encoding/json"
 	"net/http"
+
+	handlers "VSRT-Lang/internal/http/handlers"
 )
 
 // Register godoc
@@ -19,13 +21,13 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	var req RegisterRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		http.Error(w, "invalid request", http.StatusBadRequest)
+		handlers.WriteError(w, http.StatusBadRequest, "invalid_request", "invalid request")
 		return
 	}
 
 	user, err := h.service.Register(req.Username, req.Email, req.Password)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		handlers.WriteError(w, http.StatusBadRequest, "registration_failed", err.Error())
 		return
 	}
 

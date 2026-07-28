@@ -3,6 +3,8 @@ package auth
 import (
 	"encoding/json"
 	"net/http"
+
+	handlers "VSRT-Lang/internal/http/handlers"
 )
 
 // Login godoc
@@ -20,13 +22,13 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	var req LoginRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		http.Error(w, "invalid request", http.StatusBadRequest)
+		handlers.WriteError(w, http.StatusBadRequest, "invalid_request", "invalid request")
 		return
 	}
 
 	tokens, err := h.service.Login(req.Login, req.Password)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+		handlers.WriteError(w, http.StatusUnauthorized, "unauthorized", err.Error())
 		return
 	}
 

@@ -29,8 +29,23 @@ paths:
                     type: string
                   email:
                     type: string
+              example:
+                id: 123
+                email: user@example.com
         '400':
           description: Bad request or validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: invalid_request
+                  message: invalid request
+                  details:
+                    - field: email
+                      code: required
+                      message: email is required
   /login:
     post:
       summary: Login user
@@ -54,10 +69,33 @@ paths:
                     type: string
                   refresh_token:
                     type: string
+              example:
+                access_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
+                refresh_token: refresh-token-example
         '400':
           description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: invalid_request
+                  message: invalid request
+                  details:
+                    - field: password
+                      code: required
+                      message: password is required
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: unauthorized
+                  message: invalid credentials
 components:
   schemas:
     RegisterRequest:
@@ -83,3 +121,41 @@ components:
       required:
         - login
         - password
+    ErrorResponse:
+      type: object
+      example:
+        error:
+          code: invalid_request
+          message: invalid request
+          details:
+            - field: email
+              code: required
+              message: email is required
+      properties:
+        error:
+          $ref: '#/components/schemas/Error'
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+          example: invalid_request
+        message:
+          type: string
+          example: invalid request
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+    ErrorDetail:
+      type: object
+      properties:
+        field:
+          type: string
+          example: email
+        code:
+          type: string
+          example: required
+        message:
+          type: string
+          example: email is required
