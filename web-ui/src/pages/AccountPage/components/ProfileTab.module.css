@@ -1,97 +1,103 @@
 .container {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 60px;
     padding: 24px;
 }
 
 .card {
-    background: var(--lonetrail-orange-glow);
-    border: 1px solid #e5e7eb;
+    background: var(--lonetrail-grey);
     padding: 20px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    width: -webkit-fill-available;
+    display: flex;
+    flex-direction: column;
 }
 
 .title {
     margin: 0 0 18px;
-    font-size: 20px;
-    font-weight: 600;
-    color: #222;
+    font-size: 40px;
+    font-family: var(--header-font);
+    color: var(--lonetrail-white);
 }
 
 .user {
     display: flex;
     align-items: center;
-    gap: 20px;
 }
 
 .avatar {
-    width: 96px;
-    height: 96px;
+    width: 200px;
+    height: 200px;
+    padding: 20px;
+    padding-right: 60px;
     border-radius: 50%;
     object-fit: cover;
-    border: 3px solid #f1f5f9;
 }
 
 .info {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    height: -webkit-fill-available;
+    justify-content: space-around;
 }
 
-.info h3 {
+.info h1 {
     margin: 0;
-    font-size: 22px;
+    font-size: 40px;
     font-family: var(--header-font);
+    color: var(--lonetrail-white);
 }
 
 .info p {
     margin: 0;
-    color: #666;
     font-family: var(--header-font);
+    color: var(--lonetrail-white);
 }
 
 .button {
-    margin-top: 12px;
     width: fit-content;
-    padding: 10px 18px;
+    padding: 0;
+    text-align: left;
     border: none;
     cursor: pointer;
     transition: 0.2s;
 
-    background: var(--lonetrail-teal);
-    color: var(--lonetrail-white);
+    background: none;
+    color: var(--lonetrail-teal);
     font-family: var(--header-font);
 }
 
 .button:hover {
-    background: #1d4ed8;
+    color: var(--lonetrail-white);
 }
 
 .table {
     width: 100%;
     border-collapse: collapse;
+    font-family: var(--header-font);
 }
 
 .table thead {
-    background: #f8fafc;
+    background: var(--lonetrail-orange-glow);
 }
 
 .table th {
     padding: 14px;
     text-align: left;
     font-size: 14px;
-    color: #555;
-    border-bottom: 2px solid #e5e7eb;
+    color: var(--lonetrail-yellow);
+    background: var(--lonetrail-grey);
+    border-bottom: 1px solid var(--lonetrail-white);
 }
 
 .table td {
     padding: 14px;
-    border-bottom: 1px solid #ececec;
+    color: var(--lonetrail-white);
+    border-bottom: 1px solid var(--lonetrail-white);
 }
 
 .table tbody tr:hover {
-    background: #fafafa;
+    background: var(--lonetrail-orange);
 }
 
 @media (max-width: 768px) {

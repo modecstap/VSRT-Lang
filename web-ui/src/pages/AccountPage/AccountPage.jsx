@@ -5,6 +5,7 @@ function AccountPage() {
     return (
         <main className={styles.container}>
             <aside className={styles.sidebar}>
+                <h1 className={styles.title}> MENU</h1>
                 <NavLink
                     to="profile"
                     className={({ isActive }) =>

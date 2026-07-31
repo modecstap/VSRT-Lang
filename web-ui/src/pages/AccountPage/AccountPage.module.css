@@ -12,6 +12,13 @@
     gap: 10px;
 }
 
+.title {
+    margin: 0 0 18px;
+    font-size: 40px;
+    font-family: var(--header-font);
+    color: var(--lonetrail-white);
+}
+
 .content {
     flex: 1;
     padding: 24px;
