@@ -1,16 +1,16 @@
-.lonetrailWrapper {
+.wrapper {
   position: relative;
-  width: -webkit-fill-available;
+  width: 100%;
 }
 
-.lonetrailCard {
+.card {
   display: flex;
   align-items: stretch;
-  width: -webkit-fill-available;
+  width: 100%;
 }
 
-.lonetrailTopOberation,
-.lonetrailBottomOberation {
+.topDecoration,
+.bottomDecoration {
   position: absolute;
   left: 0;
   right: 0;
@@ -18,25 +18,25 @@
   pointer-events: none;
 }
 
-.lonetrailTopOberation {
+.topDecoration {
   top: -25px;
   background: linear-gradient(
     to top,
-    color-mix(in srgb, var(--lonetrail-olive) 35%, transparent) 0%,
+    color-mix(in srgb, var(--highlight-success) 35%, transparent) 0%,
     transparent 100%
   );
 }
 
-.lonetrailBottomOberation {
+.bottomDecoration {
   bottom: -25px;
   background: linear-gradient(
     to bottom,
-    color-mix(in srgb, var(--lonetrail-red) 35%, transparent) 0%,
+    color-mix(in srgb, var(--highlight-danger) 35%, transparent) 0%,
     transparent 100%
   );
 }
 
-.lonetrailTricolor{
+.accentBar {
   width: var(--tri-bar-width);
   background: var(--lonetrail-tricolor-vert);
   flex-shrink: 0;

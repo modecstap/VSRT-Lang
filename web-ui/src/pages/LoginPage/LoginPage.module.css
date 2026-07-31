@@ -3,21 +3,21 @@
   min-height: 100vh;
   display: grid;
   place-items: center;
-  padding: 32px 16px;
+  padding: var(--spacing-8) var(--spacing-4);
   background: var(--lonetrail-bg);
 }
 
 .panel {
-  width: min(675px);
-  padding: 32px;
-  background: var(--lonetrail-grey);
+  width: 675px;
+  padding: var(--spacing-8);
+  background: var(--surface-card);
 }
 
 .title {
-  margin: 0;
+  margin: 0 0 var(--spacing-6);
   font-family: var(--header-font);
   font-size: 2rem;
-  color: var(--lonetrail-white);
+  color: var(--text-color);
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.08em;

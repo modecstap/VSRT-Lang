@@ -1,33 +1,39 @@
 .form {
   display: grid;
-  gap: 16px;
+  gap: var(--spacing-4);
 }
 
 .grid {
   display: grid;
-  gap: 7px;
+  gap: var(--spacing-2);
 }
 
 .actions {
-  margin-top: 8px;
+  margin-top: var(--spacing-2);
   display: grid;
-  gap: 10px;
+  gap: var(--spacing-3);
 }
 
-.additional{
+.additional {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-4);
+  flex-wrap: wrap;
 }
 
 .link {
-  color: var(--lonetrail-teal);
+  color: var(--text-accent);
   font-family: var(--text-font);
   text-decoration: none;
   font-size: 0.8rem;
   background: none;
   border: 0;
+  padding: 0;
+  cursor: pointer;
+  transition: color var(--transition-fast);
 }
 
 .link:hover {
-  color: var(--lonetrail-white);
+  color: var(--text-color);
 }
