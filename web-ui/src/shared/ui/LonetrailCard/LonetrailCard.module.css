@@ -38,6 +38,6 @@
 
 .lonetrailTricolor{
   width: var(--tri-bar-width);
-  background: var(--lonetrail-tricolor-horiz);
+  background: var(--lonetrail-tricolor-vert);
   flex-shrink: 0;
 }

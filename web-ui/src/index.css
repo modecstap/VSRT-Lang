@@ -33,20 +33,20 @@ body {
   --accent-color: var(--lonetrail-light-blue);
   --lonetrail-tricolor-vert: linear-gradient(
     to left,
-    var(--lonetrail-olive) 33%,
+    var(--lonetrail-red) 33%,
     var(--lonetrail-yellow) 33%,
     var(--lonetrail-yellow) 66%,
-    var(--lonetrail-red) 66%
+    var(--lonetrail-olive) 66%
   );
   --lonetrail-tricolor-horiz: linear-gradient(
     to bottom,
-    var(--lonetrail-olive) 33%,
+    var(--lonetrail-red) 33%,
     var(--lonetrail-yellow) 33%,
     var(--lonetrail-yellow) 66%,
-    var(--lonetrail-red) 66%
+    var(--lonetrail-olive) 66%
   );
   
-  --tri-bar-width: 15px;
+  --tri-bar-width: min(4%, 30px);
 
   --lonetrail-bg:
     radial-gradient(circle at top, var(--lonetrail-faded-grey), transparent 42%),
