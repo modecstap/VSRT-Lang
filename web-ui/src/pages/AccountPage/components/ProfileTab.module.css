@@ -1,0 +1,112 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 24px;
+}
+
+.card {
+    background: var(--lonetrail-orange-glow);
+    border: 1px solid #e5e7eb;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.title {
+    margin: 0 0 18px;
+    font-size: 20px;
+    font-weight: 600;
+    color: #222;
+}
+
+.user {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.avatar {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #f1f5f9;
+}
+
+.info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.info h3 {
+    margin: 0;
+    font-size: 22px;
+    font-family: var(--header-font);
+}
+
+.info p {
+    margin: 0;
+    color: #666;
+    font-family: var(--header-font);
+}
+
+.button {
+    margin-top: 12px;
+    width: fit-content;
+    padding: 10px 18px;
+    border: none;
+    cursor: pointer;
+    transition: 0.2s;
+
+    background: var(--lonetrail-teal);
+    color: var(--lonetrail-white);
+    font-family: var(--header-font);
+}
+
+.button:hover {
+    background: #1d4ed8;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table thead {
+    background: #f8fafc;
+}
+
+.table th {
+    padding: 14px;
+    text-align: left;
+    font-size: 14px;
+    color: #555;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.table td {
+    padding: 14px;
+    border-bottom: 1px solid #ececec;
+}
+
+.table tbody tr:hover {
+    background: #fafafa;
+}
+
+@media (max-width: 768px) {
+    .user {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .avatar {
+        width: 80px;
+        height: 80px;
+    }
+
+    .table {
+        display: block;
+        overflow-x: auto;
+    }
+}
