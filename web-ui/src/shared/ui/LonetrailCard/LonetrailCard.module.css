@@ -1,12 +1,12 @@
 .lonetrailWrapper {
   position: relative;
-  width: fit-content;
+  width: -webkit-fill-available;
 }
 
 .lonetrailCard {
   display: flex;
   align-items: stretch;
-  width: fit-content;
+  width: -webkit-fill-available;
 }
 
 .lonetrailTopOberation,

@@ -13,16 +13,18 @@ function LoginPage() {
 
   return (
     <main className={styles.page}>
-      <LonetrailCard>
-        <section className={styles.panel}>
-          <h1 className={styles.title}>{isRegistering ? 'REGISTER' : 'LOGIN'}</h1>
-          {isRegistering ? (
-            <RegisterForm onSwitchToLogin={handleSwitchToLogin} />
-          ) : (
-            <LoginForm onSwitchToRegister={() => setIsRegistering(true)} />
-          )}
-        </section>
-      </LonetrailCard>
+      <div>
+        <LonetrailCard>
+          <section className={styles.panel}>
+            <h1 className={styles.title}>{isRegistering ? 'REGISTER' : 'LOGIN'}</h1>
+            {isRegistering ? (
+              <RegisterForm onSwitchToLogin={handleSwitchToLogin} />
+            ) : (
+              <LoginForm onSwitchToRegister={() => setIsRegistering(true)} />
+            )}
+          </section>
+        </LonetrailCard>
+      </div>
     </main>
   );
 }
