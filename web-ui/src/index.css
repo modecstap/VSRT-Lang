@@ -4,12 +4,12 @@ body {
 
 @font-face {
   font-family: "Lonetrail Bold";
-  src: url("../public/fonts/Lonetrail-Bold.otf") format("opentype");
+  src: url("../public/fonts/Lonetrail-Bold.woff2") format("woff2");
 }
 
 @font-face {
   font-family: "Lonetrail Regular";
-  src: url("../public/fonts/Lonetrail-Regular.otf") format("opentype");
+  src: url("../public/fonts/Lonetrail-Regular.woff2") format("woff2");
 }
 
 :root {
