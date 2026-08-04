@@ -1,5 +1,5 @@
+import Button from "../../../shared/ui/Button/Button";
 import styles from "./ProfileTab.module.css";
-import LonetrailCard from "../../../shared/ui/LonetrailCard/LonetrailCard"
 
 function ProfileTab() {
     const user = {
@@ -51,9 +51,9 @@ function ProfileTab() {
                             <p>{user.email}</p>
                         </div>
 
-                        <button className={styles.button}>
+                        <Button className={styles.button}>
                             CHANGE
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </div>

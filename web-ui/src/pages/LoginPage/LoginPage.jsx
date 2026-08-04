@@ -2,7 +2,6 @@ import { useState } from 'react';
 import styles from './LoginPage.module.css';
 import LoginForm from './components/LoginForm/LoginForm';
 import RegisterForm from './components/RegisterForm/RegisterForm';
-import LonetrailCard from '../../shared/ui/LonetrailCard/LonetrailCard';
 
 function LoginPage() {
   const [isRegistering, setIsRegistering] = useState(false);

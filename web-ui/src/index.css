@@ -30,7 +30,7 @@ body {
 
   --text-color: var(--lonetrail-grey);
   --text-muted: var(--lonetrail-light-grey);
-  --text-accent: var(--lonetrail-teal);
+  --text-accent: var(--lonetrail-olive);
 
   --surface-primary: var(--lonetrail-orange-glow);
   --surface-secondary: var(--lonetrail-faded-grey);

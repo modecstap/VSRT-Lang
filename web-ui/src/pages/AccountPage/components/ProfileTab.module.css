@@ -73,7 +73,8 @@
 }
 
 .button:hover {
-    color: var(--text-color);
+    color: var(--text-accent);
+    background: none;
 }
 
 .table {
