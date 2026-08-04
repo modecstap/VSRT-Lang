@@ -5,21 +5,20 @@
   place-items: center;
   padding: var(--spacing-8) var(--spacing-4);
   
-  background: var(--lonetrail-bg);
+  background: var(--bg-color);
 
 }
 
 .panel {
   width: 675px;
   padding: var(--spacing-8);
-  background: var(--surface-card);
 }
 
 .title {
   margin: 0 0 var(--spacing-6);
   font-family: var(--header-font);
   font-size: 3rem;
-  color: var(--lonetrail-grey);
+  color: var(--text-color);
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.08em;

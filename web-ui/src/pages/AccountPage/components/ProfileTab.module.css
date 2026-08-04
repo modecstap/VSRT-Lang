@@ -41,7 +41,7 @@
     display: flex;
     flex-direction: column;
     justify-content: space-around;
-    background: var(--lonetrail-yellow);
+    background: var(--bg-higlight);
     width: 100%;
     padding: var(--spacing-8);
     gap: var(--spacing-3);
@@ -68,7 +68,7 @@
     cursor: pointer;
     transition: color var(--transition-fast);
     background: none;
-    color: var(--lonetrail-white);
+    color: var(--text-contrast);
     font-family: var(--header-font);
 }
 
@@ -92,19 +92,17 @@
     text-align: left;
     font-size: 1rem;
     color: var(--text-color);
-    background: var(--lonetrail-yellow);
-    border-bottom: 1px solid var(--border-strong);
+    background: var(--bg-higlight);
 }
 
 .table td {
     padding: var(--spacing-4);
     color: var(--text-color);
     font-family: var(--text-font);
-    border-bottom: 1px solid var(--border-strong);
 }
 
 .table tbody tr:hover {
-    background: var(--highlight-accent);
+    background: var(--bg-select);
 }
 
 @media (max-width: 768px) {

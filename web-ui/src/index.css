@@ -29,26 +29,14 @@ body {
   --lonetrail-brass: #cdc56a;
 
   --text-color: var(--lonetrail-grey);
-  --text-muted: var(--lonetrail-light-grey);
+  --text-contrast: var(--lonetrail-white);
   --text-accent: var(--lonetrail-olive);
-
-  --surface-primary: var(--lonetrail-orange-glow);
-  --surface-secondary: var(--lonetrail-faded-grey);
-  --surface-contrast: var(--lonetrail-blue);
-  --surface-hover: var(--lonetrail-light-blue);
-
-  --border-accent: var(--lonetrail-teal);
-  --border-strong: var(--lonetrail-white);
-
-  --highlight-warning: var(--lonetrail-yellow);
-  --highlight-danger: var(--lonetrail-red);
-  --highlight-success: var(--lonetrail-olive);
-  --highlight-accent: var(--lonetrail-orange);
 
   --header-font: "Lonetrail Bold";
   --text-font: "Lonetrail Regular";
 
   --accent-color: var(--lonetrail-light-blue);
+
   --lonetrail-tricolor-vert: linear-gradient(
     to left,
     var(--lonetrail-red) 33%,
@@ -64,6 +52,12 @@ body {
     var(--lonetrail-olive) 66%
   );
 
+  --bg-color: var(--lonetrail-orange-glow);
+  --bg-higlight: var(--lonetrail-yellow);
+  --bg-select: var(--lonetrail-orange);
+
+  --button-color: var(--lonetrail-olive);
+
   --spacing-1: 0.25rem;
   --spacing-2: 0.5rem;
   --spacing-3: 0.75rem;
@@ -75,20 +69,5 @@ body {
 
   --transition-fast: 180ms ease;
   --transition-base: 240ms ease;
-
-  --surface-card: var(--surface-primary);
-  --content-width: min(675px, 100%);
-  --sidebar-width: 330px;
-  
-  --tri-bar-width: min(4%, 30px);
-  --tri-bar-height: 5px;
-
-  --lonetrail-bg:
-    radial-gradient(circle at top, var(--lonetrail-white), transparent 42%),
-    linear-gradient(135deg, var(--lonetrail-white),  var(--lonetrail-orange-glow));
-
-  --lonetrail-oberation:
-    drop-shadow(0 -2px 3px var(--lonetrail-olive))
-    drop-shadow(0  2px 3px var(--lonetrail-red));
 }
 

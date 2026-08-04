@@ -7,12 +7,12 @@
 .container {
     flex: 1;
     display: flex;
-    background: var(--lonetrail-bg);
+    background: var(--bg-color);
     border: var(--lonetrail-tricolor-vert);
 }
 
 .sidebar {
-    width: var(--sidebar-width);
+    width: 330px;
     display: flex;
     flex-direction: column;
     padding: var(--spacing-6);
@@ -33,7 +33,7 @@
 
 .link,
 .active {
-    color: var(--text-accent);
+    color: var(--text-color);
     font-family: var(--text-font);
     padding: var(--spacing-3) var(--spacing-4);
     text-decoration: none;
@@ -45,8 +45,8 @@
 }
 
 .active {
-    background: var(--highlight-success);
-    color: var(--lonetrail-white);
+    background: var(--button-color);
+    color: var(--text-contrast);
 }
 
 .footer {
