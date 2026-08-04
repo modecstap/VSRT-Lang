@@ -1,0 +1,108 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 90vh;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-areas:
+    "list list details details meaning meaning"
+    "list list details details meaning meaning"
+    "list list details details meaning meaning"
+    "list list details details meaning meaning"
+    "list list details details meaning meaning"
+    "list list details details meaning meaning"
+    "context context context context word button";
+  gap: var(--spacing-3);
+  width: 100%;
+  font-family: var(--header-font);
+  height: -webkit-fill-available;
+}
+
+.panel {
+  box-sizing: border-box;
+}
+
+.card,
+.listCard,
+.wordCard {
+  display: grid;
+  gap: var(--spacing-3);
+}
+
+.listCard {
+  grid-area: list;
+  background: var(--lonetrail-grey);
+  padding: var(--spacing-4);
+}
+
+.wordCard {
+  grid-area: details;
+  grid-template-rows: 1fr 1fr 1fr;
+}
+
+.card {
+  grid-area: meaning;
+}
+
+.contextField {
+  color: var(--text-contrast);
+  grid-area: context;
+  background: var(--lonetrail-grey);
+}
+
+.wordField {
+  color: var(--text-contrast);
+  background: var(--lonetrail-grey);
+  grid-area: word;
+}
+
+.submitButton {
+  grid-area: button;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+}
+
+.wordItem {
+  border: 1px solid transparent;
+  color: var(--text-contrast);
+  cursor: pointer;
+  text-align: left;
+  padding: 0;
+}
+
+.wordItem:hover,
+.wordItemActive {
+  background: var(--bg-select);
+}
+
+.value {
+  margin: 0;
+  padding: var(--spacing-4);
+  background: var(--lonetrail-grey);
+  color: var(--text-contrast);
+}
+
+.form {
+    grid-area: form;
+    display: grid;
+    grid-template-columns: 6fr 2fr 1fr;
+    color: var(--text-contrast);
+}
+
+.button {
+    color: var(--text-accent);
+    border: none;
+    width: 100%;
+    height: 100%;
+}
+
+.input{
+    resize: none;
+}

@@ -1,4 +1,4 @@
-import Button from "../../../shared/ui/Button/Button";
+import Button from "../../../../shared/ui/Button/Button";
 import styles from "./ProfileTab.module.css";
 
 function ProfileTab() {

@@ -20,6 +20,12 @@
   background: var(--text-color);
 }
 
+.textarea {
+  resize: none;
+  outline: none;
+  border: none;
+}
+
 .input::placeholder {
   color: var(--text-muted);
 }
