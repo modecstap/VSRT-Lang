@@ -1,5 +1,5 @@
+import Button from "../../../shared/ui/Button/Button";
 import styles from "./ProfileTab.module.css";
-import LonetrailCard from "../../../shared/ui/LonetrailCard/LonetrailCard"
 
 function ProfileTab() {
     const user = {
@@ -37,54 +37,50 @@ function ProfileTab() {
     return (
         <div className={styles.container}>
             
-            <LonetrailCard>
-                <div className={styles.card}>
-                    <div className={styles.user}>
-                        <img
-                            src={user.avatar}
-                            alt={user.login}
-                            className={styles.avatar}
-                        />
+            <div className={styles.card}>
+                <div className={styles.user}>
+                    <img
+                        src={user.avatar}
+                        alt={user.login}
+                        className={styles.avatar}
+                    />
 
-                        <div className={styles.info}>
-                            <div>
-                                <h1>{user.login}</h1>
-                                <p>{user.email}</p>
-                            </div>
-
-                            <button className={styles.button}>
-                                CHANGE
-                            </button>
+                    <div className={styles.info}>
+                        <div>
+                            <h1>{user.login}</h1>
+                            <p>{user.email}</p>
                         </div>
+
+                        <Button className={styles.button}>
+                            CHANGE
+                        </Button>
                     </div>
                 </div>
-            </LonetrailCard>
+            </div>
 
-            <LonetrailCard>
-                <section className={styles.card}>
-                    <h1 className={styles.title}>SESSIONS</h1>
+            <section className={styles.card}>
+                <h1 className={styles.title}>SESSIONS</h1>
 
-                    <table className={styles.table}>
-                        <thead>
-                            <tr>
-                                <th>DATE</th>
-                                <th>NAME</th>
-                                <th>SAVED COUNT</th>
+                <table className={styles.table}>
+                    <thead>
+                        <tr>
+                            <th>DATE</th>
+                            <th>NAME</th>
+                            <th>SAVED COUNT</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {sessions.map((session) => (
+                            <tr key={session.id}>
+                                <td>{session.date}</td>
+                                <td>{session.name}</td>
+                                <td>{session.saved}</td>
                             </tr>
-                        </thead>
-
-                        <tbody>
-                            {sessions.map((session) => (
-                                <tr key={session.id}>
-                                    <td>{session.date}</td>
-                                    <td>{session.name}</td>
-                                    <td>{session.saved}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </section>
-            </LonetrailCard>
+                        ))}
+                    </tbody>
+                </table>
+            </section>
         </div>
     );
 }

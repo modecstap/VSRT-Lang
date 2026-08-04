@@ -4,16 +4,12 @@
   font-weight: 700;
   cursor: pointer;
   padding: var(--spacing-3) var(--spacing-4);
-  background: var(--surface-contrast);
-  color: var(--text-color);
+  background: none;
+  color: var(  --lonetrail-grey);
   transition: background var(--transition-fast), color var(--transition-fast);
 }
 
 .button:hover {
-  background: var(--surface-hover);
-}
-
-.button:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
+  background: var( --lonetrail-olive);
+  color: var(  --lonetrail-white);
 }

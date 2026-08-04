@@ -1,7 +1,14 @@
-.container {
+.page {
     display: flex;
+    flex-direction: column;
     min-height: 100vh;
+}
+
+.container {
+    flex: 1;
+    display: flex;
     background: var(--lonetrail-bg);
+    border: var(--lonetrail-tricolor-vert);
 }
 
 .sidebar {
@@ -39,5 +46,11 @@
 
 .active {
     background: var(--highlight-success);
-    color: var(--text-color);
+    color: var(--lonetrail-white);
+}
+
+.footer {
+    height: 5px;
+    background: var(--lonetrail-tricolor-vert);
+    flex-shrink: 0;
 }
