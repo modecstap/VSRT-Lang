@@ -4,7 +4,9 @@
   display: grid;
   place-items: center;
   padding: var(--spacing-8) var(--spacing-4);
+  
   background: var(--lonetrail-bg);
+
 }
 
 .panel {
@@ -16,9 +18,10 @@
 .title {
   margin: 0 0 var(--spacing-6);
   font-family: var(--header-font);
-  font-size: 2rem;
-  color: var(--text-color);
+  font-size: 3rem;
+  color: var(--lonetrail-grey);
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
+

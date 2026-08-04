@@ -26,16 +26,20 @@ body {
   --lonetrail-light-blue: #6e8596;
   --lonetrail-blue: #526370;
   --lonetrail-dark-blue: #343f47;
+  --lonetrail-brass: #cdc56a;
 
-  --text-color: var(--lonetrail-white);
+  --text-color: var(--lonetrail-grey);
   --text-muted: var(--lonetrail-light-grey);
   --text-accent: var(--lonetrail-teal);
-  --surface-primary: var(--lonetrail-grey);
+
+  --surface-primary: var(--lonetrail-orange-glow);
   --surface-secondary: var(--lonetrail-faded-grey);
   --surface-contrast: var(--lonetrail-blue);
   --surface-hover: var(--lonetrail-light-blue);
+
   --border-accent: var(--lonetrail-teal);
   --border-strong: var(--lonetrail-white);
+
   --highlight-warning: var(--lonetrail-yellow);
   --highlight-danger: var(--lonetrail-red);
   --highlight-success: var(--lonetrail-olive);
@@ -71,16 +75,17 @@ body {
 
   --transition-fast: 180ms ease;
   --transition-base: 240ms ease;
-  --focus-ring: rgba(152, 188, 177, 0.35);
 
   --surface-card: var(--surface-primary);
   --content-width: min(675px, 100%);
   --sidebar-width: 330px;
+  
   --tri-bar-width: min(4%, 30px);
+  --tri-bar-height: 5px;
 
   --lonetrail-bg:
-    radial-gradient(circle at top, var(--lonetrail-faded-grey), transparent 42%),
-    linear-gradient(135deg, var(--lonetrail-faded-grey),  var(--lonetrail-grey));
+    radial-gradient(circle at top, var(--lonetrail-white), transparent 42%),
+    linear-gradient(135deg, var(--lonetrail-white),  var(--lonetrail-orange-glow));
 
   --lonetrail-oberation:
     drop-shadow(0 -2px 3px var(--lonetrail-olive))
