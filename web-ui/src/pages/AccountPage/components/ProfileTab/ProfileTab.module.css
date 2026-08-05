@@ -102,7 +102,7 @@
 }
 
 .table tbody tr:hover {
-    background: var(--bg-select);
+    box-shadow: inset 5px 0 0 var(--lonetrail-red);
 }
 
 @media (max-width: 768px) {
