@@ -1,15 +1,19 @@
 package main
 
 import (
+	"VSRT-Lang/internal"
 	"VSRT-Lang/internal/auth"
 	"VSRT-Lang/internal/database/postgres/migrations"
 	"VSRT-Lang/internal/database/postgres/refresh_token_repository"
+	"VSRT-Lang/internal/database/postgres/session_repository"
 	"VSRT-Lang/internal/database/postgres/user_repository"
 	myHttp "VSRT-Lang/internal/http"
 	auth_handler "VSRT-Lang/internal/http/handlers/auth"
+	session_handler "VSRT-Lang/internal/http/handlers/session"
 	"VSRT-Lang/internal/http/middleware"
 	"database/sql"
 	"net/http"
+
 	_ "github.com/lib/pq"
 )
 
@@ -31,9 +35,13 @@ func main() {
 		auth.NewJWTService("StrongSecretString"),
 	)
 	authHandler := auth_handler.NewAuth(service)
+	sessionRepo := session_repository.New(db)
+	sessionHandler := session_handler.NewHandler(sessionRepo, internal.MockTranslator{})
 
 	handlers := myHttp.Handlers{
-		Auth: authHandler,
+		Auth:           authHandler,
+		Session:        sessionHandler,
+		AuthMiddleware: middleware.Auth(auth.NewJWTService("StrongSecretString")),
 	}
 
 	cors := middleware.CORS(middleware.CORSConfig{
