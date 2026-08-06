@@ -23,7 +23,7 @@ function SessionTab() {
                         {words.map((word) => (
                             <Button
                                 key={word.id}
-                                className={`${styles.wordItem} ${selectedWord?.id === word.id ? styles.wordItemActive : ''}`}
+                                className={`${styles.wordItem} ${selectedWord?.word === word.word ? styles.wordItemActive : ''}`}
                                 type="button"
                                 onClick={() => handleSelectWord(word)}
                             >
@@ -58,6 +58,7 @@ function SessionTab() {
                         className={styles.input}
                         id="context"
                         name="context"
+                        label="Context"
                         placeholder="Type a context"
                         value={form.context}
                         onChange={handleContextChange}
@@ -70,6 +71,7 @@ function SessionTab() {
                         className={styles.input}
                         id="word"
                         name="word"
+                        label="Word"
                         placeholder="Type a word"
                         value={form.word}
                         onChange={handleWordChange}

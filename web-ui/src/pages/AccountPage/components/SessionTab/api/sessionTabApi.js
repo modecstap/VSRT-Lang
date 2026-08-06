@@ -1,58 +1,90 @@
-const storedWords = [
-  {
-    id: 1,
-    word: 'apple',
-    translation: 'яблоко',
-    synonyms: ['fruit'],
-    antonyms: ['orange'],
-    meaning: 'A round fruit often eaten fresh.',
-    contexts: ['An apple a day keeps the doctor away.'],
-  },
-  {
-    id: 2,
-    word: 'river',
-    translation: 'река',
-    synonyms: ['stream'],
-    antonyms: ['desert'],
-    meaning: 'A natural watercourse flowing toward a sea or lake.',
-    contexts: ['The river was calm at sunrise.'],
-  },
-];
+import axios from 'axios';
+import { getAuthHeaders } from '../../../../../api/auth';
 
-const normalizeWord = (word = '') => word.trim().toLowerCase();
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+const SESSION_STORAGE_KEY = 'session_tab_session_id';
+
+const getOrCreateSessionId = async () => {
+  const storedSessionId = localStorage.getItem(SESSION_STORAGE_KEY);
+
+  if (storedSessionId) {
+    return storedSessionId;
+  }
+
+  const sessionResponse = await axios.post(
+    `${API_BASE_URL}/sessions`,
+    { name: 'Session' },
+    getAuthHeaders()
+  );
+
+  const sessionId = sessionResponse.data?.id;
+
+  localStorage.setItem(SESSION_STORAGE_KEY, String(sessionId));
+
+  return sessionId;
+};
+
+const mapRecordToWord = (record) => ({
+  word: record.Phrase,
+  translation: record.Translations?.[0] || '—',
+  synonyms: record.Synonyms || [],
+  antonyms: record.Antonyms || [],
+  meaning: record.BaseForm || record.Phrase,
+  contexts: (record.Contexts || []).map((item) => item.Phrase || item.Translation || ''),
+});
 
 export async function loadSavedWords() {
-  return storedWords.map((item) => ({ ...item }));
+  const sessionId = await getOrCreateSessionId();
+
+  if (!sessionId) {
+    return [];
+  }
+
+  const recordsResponse = await axios.get(
+    `${API_BASE_URL}/sessions/${sessionId}/records`,
+    getAuthHeaders()
+  );
+
+  const records = recordsResponse.data?.records || [];
+
+  return records.map(mapRecordToWord);
 }
 
-export async function fetchWordEntry(word) {
-  const normalized = normalizeWord(word);
-  const entry = storedWords.find((item) => normalizeWord(item.word) === normalized);
+export async function fetchWordEntry(word, words = null) {
+  if (Array.isArray(words)) {
+    const normalized = word.trim().toLowerCase();
+    return words.find((item) => item.word.trim().toLowerCase() === normalized) || null;
+  }
 
-  return entry ? { ...entry } : null;
+  const allWords = await loadSavedWords();
+  const normalized = word.trim().toLowerCase();
+
+  return allWords.find((item) => item.word.trim().toLowerCase() === normalized) || null;
 }
 
 export async function saveWordEntry(payload) {
-  const normalized = normalizeWord(payload.word);
-  const existingIndex = storedWords.findIndex(
-    (item) => normalizeWord(item.word) === normalized
-  );
+  const sessionId = await getOrCreateSessionId();
 
-  const entry = {
-    id: existingIndex >= 0 ? storedWords[existingIndex].id : Date.now(),
-    word: payload.word.trim(),
-    translation: payload.translation || '—',
-    synonyms: payload.synonyms || [],
-    antonyms: payload.antonyms || [],
-    meaning: payload.meaning || 'Saved from the session form.',
-    contexts: payload.context ? [payload.context] : [],
-  };
-
-  if (existingIndex >= 0) {
-    storedWords[existingIndex] = entry;
-  } else {
-    storedWords.unshift(entry);
+  if (!sessionId) {
+    throw new Error('Session was not created');
   }
 
-  return storedWords.map((item) => ({ ...item }));
+  await axios.post(
+    `${API_BASE_URL}/sessions/${sessionId}/records`,
+    {
+      phrase: payload.word.trim(),
+      context: payload.context,
+    },
+    getAuthHeaders()
+  );
+
+  const recordsResponse = await axios.get(
+    `${API_BASE_URL}/sessions/${sessionId}/records`,
+    getAuthHeaders()
+  );
+
+  console.log('Records response:', recordsResponse.data);
+  const records = recordsResponse.data?.records || [];
+
+  return records.map(mapRecordToWord);
 }

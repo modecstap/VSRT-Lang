@@ -16,13 +16,26 @@ function useSessionTab() {
   useEffect(() => {
     let ignore = false;
 
-    loadSavedWords().then((savedWords) => {
-      if (!ignore) {
-        setWords(savedWords);
-        setDetails(buildWordDetails(savedWords[0] || null));
-        setSelectedWord(savedWords[0] || null);
+    const loadData = async () => {
+      try {
+        const savedWords = await loadSavedWords();
+
+        if (!ignore) {
+          const nextWords = savedWords || [];
+          setWords(nextWords);
+          setDetails(buildWordDetails(nextWords[0] || null));
+          setSelectedWord(nextWords[0] || null);
+        }
+      } catch (error) {
+        if (!ignore) {
+          setWords([]);
+          setDetails(null);
+          setSelectedWord(null);
+        }
       }
-    });
+    };
+
+    loadData();
 
     return () => {
       ignore = true;
@@ -38,9 +51,14 @@ function useSessionTab() {
       return;
     }
 
-    const entry = await fetchWordEntry(nextWord);
-    setDetails(buildWordDetails(entry));
-    setSelectedWord(entry);
+    try {
+      const entry = await fetchWordEntry(nextWord, words);
+      setDetails(buildWordDetails(entry));
+      setSelectedWord(entry);
+    } catch (error) {
+      setDetails(null);
+      setSelectedWord(null);
+    }
   };
 
   const handleContextChange = (event) => {
@@ -59,10 +77,6 @@ function useSessionTab() {
 
     const savedWords = await saveWordEntry({
       word,
-      translation: '—',
-      synonyms: [],
-      antonyms: [],
-      meaning: 'Saved from the session form.',
       context,
     });
 

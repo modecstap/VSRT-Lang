@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { saveAuthTokens } from '../../../api/auth';
 import { login } from '../api/login';
 import {
   createInitialLoginForm,
@@ -38,12 +39,11 @@ export function useLoginForm() {
     try {
       const data = await login(form);
 
-      if (data?.access_token) {
-        localStorage.setItem('access_token', data.access_token);
-        localStorage.setItem('refresh_token', data.refresh_token || '');
+      if (data?.AccessToken) {
+        saveAuthTokens(data);
       }
 
-      window.location.assign('/');
+      window.location.assign('/account');
     } catch (submitError) {
       setError(submitError.response?.data?.error?.message || submitError.message || 'Unable to sign in');
     } finally {
