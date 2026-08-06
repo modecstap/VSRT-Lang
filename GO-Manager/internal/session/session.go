@@ -13,6 +13,19 @@ type Session struct {
 
 type Interphase interface {
 	SaveRecord(context string, window string) (record Record)
+	GetRecords() []Record
+}
+
+func NewSession(
+	user UserId, 
+	name string, 
+	translator Translator,
+	) *Session {
+	return &Session{
+		User:       user,
+		Name:       name,
+		Translator: translator,
+	}
 }
 
 func (s *Session) SaveRecord(context string, window string) (record Record) {
@@ -23,4 +36,8 @@ func (s *Session) SaveRecord(context string, window string) (record Record) {
 	)
 	s.Records = append(s.Records, record)
 	return record
+}
+
+func (s *Session) GetRecords() []Record {
+	return s.Records
 }

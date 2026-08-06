@@ -96,6 +96,118 @@ paths:
                 error:
                   code: unauthorized
                   message: invalid credentials
+  /sessions:
+    post:
+      summary: Create session
+      tags:
+        - session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSessionRequest'
+      security:
+        - bearerAuth: []
+      responses:
+        '201':
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /sessions/{id}/records:
+    post:
+      summary: Save record to session
+      tags:
+        - session
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRecordRequest'
+      responses:
+        '201':
+          description: Record saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                example:
+                  message: record saved
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      summary: Get session records
+      tags:
+        - session
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Records list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecordsResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 components:
   schemas:
     RegisterRequest:
@@ -159,3 +271,70 @@ components:
         message:
           type: string
           example: email is required
+    CreateSessionRequest:
+      type: object
+      properties:
+        name:
+          type: string
+      required:
+        - name
+    SessionResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+    CreateRecordRequest:
+      type: object
+      properties:
+        phrase:
+          type: string
+        context:
+          type: string
+      required:
+        - phrase
+        - context
+    Context:
+      type: object
+      properties:
+        phrase:
+          type: string
+        translation:
+          type: string
+    Record:
+      type: object
+      properties:
+        phrase:
+          type: string
+        translations:
+          type: array
+          items:
+            type: string
+        synonyms:
+          type: array
+          items:
+            type: string
+        antonyms:
+          type: array
+          items:
+            type: string
+        baseForm:
+          type: string
+        contexts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Context'
+    RecordsResponse:
+      type: object
+      properties:
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/Record'
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Enter JWT token as `Bearer <token>`

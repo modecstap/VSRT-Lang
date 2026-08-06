@@ -2,11 +2,15 @@ package router
 
 import (
 	"VSRT-Lang/internal/http/handlers/auth"
+	sessionhandler "VSRT-Lang/internal/http/handlers/session"
+	"VSRT-Lang/internal/http/middleware"
 	"net/http"
 )
 
 type Handlers struct {
 	Auth *auth.Handler
+	Session *sessionhandler.Handler
+	AuthMiddleware middleware.Middleware
 }
 
 func NewServeMux(h Handlers) *http.ServeMux {
@@ -14,7 +18,18 @@ func NewServeMux(h Handlers) *http.ServeMux {
 
 	mux.HandleFunc("POST /register", h.Auth.Register)
 	mux.HandleFunc("POST /login", h.Auth.Login)
-	// register embedded swagger handlers
+
+	if h.Session != nil {
+		protected := h.AuthMiddleware
+		if protected == nil {
+			protected = func(next http.Handler) http.Handler { return next }
+		}
+
+		mux.Handle("POST /sessions", protected(http.HandlerFunc(h.Session.CreateSession)))
+		mux.Handle("POST /sessions/", protected(http.HandlerFunc(h.Session.SaveRecord)))
+		mux.Handle("GET /sessions/", protected(http.HandlerFunc(h.Session.GetRecords)))
+	}
+
 	RegisterSwagger(mux)
 
 	return mux
