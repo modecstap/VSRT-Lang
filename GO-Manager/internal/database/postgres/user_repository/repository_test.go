@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"regexp"
 	"testing"
-	"time"
 
-	"VSRT-Lang/internal/auth"
+	"VSRT-Lang/internal/user"
+
 	"github.com/DATA-DOG/go-sqlmock"
 )
 
@@ -20,16 +20,10 @@ func setupDB(t *testing.T) (*sql.DB, sqlmock.Sqlmock) {
 	return db, mock
 }
 
-
 func TestRepository_Create_SetsIDWhenEmpty(t *testing.T) {
 	db, mock := setupDB(t)
 
-	user := &auth.User{
-		Username:  "demo",
-		Email:     "demo@example.com",
-		Password:  "secret",
-		CreatedAt: time.Now(),
-	}
+	user := user.NewUser("demo", "demo@example.com", "secret")
 
 	mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO users (id, username, email, password, created_at)
 		VALUES ($1, $2, $3, $4, $5)`)).
@@ -39,7 +33,7 @@ func TestRepository_Create_SetsIDWhenEmpty(t *testing.T) {
 	defer db.Close()
 
 	repo := New(db)
-	
+
 	if err := repo.Create(user); err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -57,13 +51,7 @@ func TestRepository_Create_UsesProvidedID(t *testing.T) {
 	db, mock := setupDB(t)
 	defer db.Close()
 
-		user := &auth.User{
-		ID:		"user-123",
-		Username:  "demo",
-		Email:     "demo@example.com",
-		Password:  "secret",
-		CreatedAt: time.Now(),
-	}
+	user := user.NewUser("demo", "demo@example.com", "secret")
 
 	mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO users (id, username, email, password, created_at)
 		VALUES ($1, $2, $3, $4, $5)`)).
@@ -85,13 +73,7 @@ func TestRepository_FindByEmail_ReturnsUser(t *testing.T) {
 	db, mock := setupDB(t)
 	defer db.Close()
 
-	expected := &auth.User{
-		ID:        "user-123",
-		Username:  "demo",
-		Email:     "demo@example.com",
-		Password:  "secret",
-		CreatedAt: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
-	}
+	expected := user.NewUser("demo", "demo@example.com", "secret")
 
 	rows := sqlmock.NewRows([]string{"id", "username", "email", "password", "created_at"}).
 		AddRow(expected.ID, expected.Username, expected.Email, expected.Password, expected.CreatedAt)
@@ -142,13 +124,7 @@ func TestRepository_FindByUsername_ReturnsUser(t *testing.T) {
 	db, mock := setupDB(t)
 	defer db.Close()
 
-	expected := &auth.User{
-		ID:        "user-123",
-		Username:  "demo",
-		Email:     "demo@example.com",
-		Password:  "secret",
-		CreatedAt: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
-	}
+	expected := user.NewUser("demo", "demo@example.com", "secret")
 
 	rows := sqlmock.NewRows([]string{"id", "username", "email", "password", "created_at"}).
 		AddRow(expected.ID, expected.Username, expected.Email, expected.Password, expected.CreatedAt)
@@ -199,13 +175,7 @@ func TestRepository_FindByID_ReturnsUser(t *testing.T) {
 	db, mock := setupDB(t)
 	defer db.Close()
 
-	expected := &auth.User{
-		ID:        "user-123",
-		Username:  "demo",
-		Email:     "demo@example.com",
-		Password:  "secret",
-		CreatedAt: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
-	}
+	expected := user.NewUser("demo", "demo@example.com", "secret")
 
 	rows := sqlmock.NewRows([]string{"id", "username", "email", "password", "created_at"}).
 		AddRow(expected.ID, expected.Username, expected.Email, expected.Password, expected.CreatedAt)

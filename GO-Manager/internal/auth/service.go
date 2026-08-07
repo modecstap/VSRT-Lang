@@ -5,6 +5,8 @@ import (
 	"encoding/hex"
 	"fmt"
 	"time"
+
+	"VSRT-Lang/internal/user"
 )
 
 type TokenPair struct {
@@ -13,12 +15,12 @@ type TokenPair struct {
 }
 
 type Service struct {
-	userRepo    UserRepository
+	userRepo    user.Repository
 	refreshRepo RefreshTokenRepository
 	jwtService  *JWTService
 }
 
-func NewService(userRepo UserRepository, refreshRepo RefreshTokenRepository, jwtService *JWTService) *Service {
+func NewService(userRepo user.Repository, refreshRepo RefreshTokenRepository, jwtService *JWTService) *Service {
 	return &Service{
 		userRepo:    userRepo,
 		refreshRepo: refreshRepo,
@@ -26,50 +28,45 @@ func NewService(userRepo UserRepository, refreshRepo RefreshTokenRepository, jwt
 	}
 }
 
-func (s *Service) Register(username, email, password string) (*User, error) {
+func (s *Service) Register(username, email, password string) (*user.User, error) {
 	if username == "" {
 		username = email
 	}
-	if !ValidateEmail(email) {
-		return nil, errInvalidEmail
+	if !user.ValidateEmail(email) {
+		return nil, user.ErrInvalidEmail
 	}
-	if !ValidatePassword(password) {
-		return nil, errWeakPassword
+	if !user.ValidatePassword(password) {
+		return nil, user.ErrWeakPassword
 	}
 
-	hashed, err := HashPassword(password)
+	hashed, err := user.HashPassword(password)
 	if err != nil {
 		return nil, err
 	}
 
-	user := &User{
-		Username: username, 
-		Email: email, Password: 
-		hashed, CreatedAt: time.Now(),
-	}
-
-	err = s.userRepo.Create(user)
+	u := user.NewUser(username, email, hashed)
+	err = s.userRepo.Create(u)
 	if err != nil {
 		return nil, err
 	}
 
-	return user, nil
+	return u, nil
 }
 
 func (s *Service) Login(login, password string) (*TokenPair, error) {
-	user, err := s.findUser(login)
+	foundUser, err := s.findUser(login)
 	if err != nil {
 		return nil, err
 	}
 
-	if !ComparePassword(user.Password, password) {
+	if !user.ComparePassword(foundUser.Password, password) {
 		return nil, fmt.Errorf("invalid password")
 	}
 
 	accessToken, err := s.jwtService.GenerateAccessToken(
-		user.ID, 
-		user.Username, 
-		user.Email,
+		foundUser.ID,
+		foundUser.Username,
+		foundUser.Email,
 	)
 	if err != nil {
 		return nil, err
@@ -78,7 +75,7 @@ func (s *Service) Login(login, password string) (*TokenPair, error) {
 	refreshTokenValue := s.jwtService.GenerateRefreshToken()
 	refreshHash := hashToken(refreshTokenValue)
 	refreshToken := &RefreshToken{
-		UserID:    user.ID,
+		UserID:    foundUser.ID,
 		TokenHash: refreshHash,
 		ExpiresAt: time.Now().Add(refreshTokenTTL),
 		CreatedAt: time.Now(),
@@ -92,14 +89,14 @@ func (s *Service) Login(login, password string) (*TokenPair, error) {
 	return &TokenPair{AccessToken: accessToken, RefreshToken: refreshTokenValue}, nil
 }
 
-func (s *Service) findUser(login string) (*User, error) {
-	user, err := s.userRepo.FindByUsername(login)
+func (s *Service) findUser(login string) (*user.User, error) {
+	foundUser, err := s.userRepo.FindByUsername(login)
 	if err != nil {
 		return nil, err
 	}
 
-	if user != nil{
-		return user, nil
+	if foundUser != nil {
+		return foundUser, nil
 	}
 
 	return s.userRepo.FindByEmail(login)
@@ -122,7 +119,7 @@ func (s *Service) Refresh(accessToken, refreshTokenValue string) (*TokenPair, er
 	}
 
 	tokenPair := &TokenPair{
-		AccessToken: newAccessToken, 
+		AccessToken:  newAccessToken,
 		RefreshToken: newRefreshTokenValue,
 	}
 	return tokenPair, nil

@@ -6,8 +6,6 @@ import (
 	domain "VSRT-Lang/internal/session"
 	"encoding/json"
 	"net/http"
-	"strconv"
-	"strings"
 )
 
 type sessionResponse struct {
@@ -44,15 +42,7 @@ func (h *Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var user domain.UserId
-	for _, part := range strings.Split(userID, "-") {
-		if parsed, err := strconv.ParseInt(part, 10, 64); err == nil {
-			user = domain.UserId(parsed)
-			break
-		}
-	}
-
-	sess := domain.NewSession(user, req.Name, h.translator)
+	sess := domain.NewSession(userID, req.Name, h.translator)
 
 	if err := h.repo.Save(sess); err != nil {
 		handlers.WriteError(w, http.StatusInternalServerError, "session_save_failed", err.Error())

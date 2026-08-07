@@ -83,7 +83,7 @@ func TestSaveAndGetRecords(t *testing.T) {
 		t.Fatalf("decode created session: %v", err)
 	}
 
-	saveReq := httptest.NewRequest(http.MethodPost, "/sessions/1/records", strings.NewReader(`{"phrase":"hello","context":"world"}`))
+	saveReq := httptest.NewRequest(http.MethodPost, "/sessions/0/records", strings.NewReader(`{"phrase":"hello","context":"world"}`))
 	saveReq.Header.Set("Content-Type", "application/json")
 	saveReq.Header.Set("Authorization", "Bearer "+token)
 	saveRW := httptest.NewRecorder()
@@ -93,7 +93,7 @@ func TestSaveAndGetRecords(t *testing.T) {
 		t.Fatalf("expected status 201, got %d", saveRW.Code)
 	}
 
-	getReq := httptest.NewRequest(http.MethodGet, "/sessions/1/records", nil)
+	getReq := httptest.NewRequest(http.MethodGet, "/sessions/0/records", nil)
 	getReq.Header.Set("Authorization", "Bearer "+token)
 	getRW := httptest.NewRecorder()
 	middleware.Auth(jwt)(http.HandlerFunc(h.GetRecords)).ServeHTTP(getRW, getReq)

@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"VSRT-Lang/internal/auth"
+	"VSRT-Lang/internal/user"
 	"context"
 	"net/http"
 	"strings"
@@ -44,12 +45,12 @@ func Auth(jwt *auth.JWTService) Middleware {
 	}
 }
 
-func UserFromContext(ctx context.Context) (string, string, bool) {
+func UserFromContext(ctx context.Context) (user.UserId, string, bool) {
 	userID, ok := ctx.Value(userIDContextKey).(string)
 	if !ok || userID == "" {
 		return "", "", false
 	}
 
 	email, _ := ctx.Value(emailContextKey).(string)
-	return userID, email, true
+	return user.UserId(userID), email, true
 }

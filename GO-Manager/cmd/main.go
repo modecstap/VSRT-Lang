@@ -33,7 +33,7 @@ func main() {
 	repository := session_repository.New(db)
 
 	testSession := session.Session{
-		User:       0,
+		User:       "",
 		Name:       "test",
 		Records:    nil,
 		Translator: internal.MockTranslator{},

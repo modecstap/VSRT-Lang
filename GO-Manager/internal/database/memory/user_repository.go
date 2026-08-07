@@ -1,7 +1,7 @@
 package memory
 
 import (
-	"VSRT-Lang/internal/auth"
+	"VSRT-Lang/internal/user"
 	"errors"
 	"sync"
 	"time"
@@ -9,20 +9,20 @@ import (
 
 type UserRepository struct {
 	mu              sync.RWMutex
-	usersByID       map[string]*auth.User
-	usersByEmail    map[string]*auth.User
-	usersByUsername map[string]*auth.User
+	usersByID       map[string]*user.User
+	usersByEmail    map[string]*user.User
+	usersByUsername map[string]*user.User
 }
 
 func NewUserRepository() *UserRepository {
 	return &UserRepository{
-		usersByID:       make(map[string]*auth.User),
-		usersByEmail:    make(map[string]*auth.User),
-		usersByUsername: make(map[string]*auth.User),
+		usersByID:       make(map[string]*user.User),
+		usersByEmail:    make(map[string]*user.User),
+		usersByUsername: make(map[string]*user.User),
 	}
 }
 
-func (r *UserRepository) Create(user *auth.User) error {
+func (r *UserRepository) Create(user *user.User) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if _, exists := r.usersByEmail[user.Email]; exists {
@@ -39,7 +39,7 @@ func (r *UserRepository) Create(user *auth.User) error {
 	return nil
 }
 
-func (r *UserRepository) FindByEmail(email string) (*auth.User, error) {
+func (r *UserRepository) FindByEmail(email string) (*user.User, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	user, ok := r.usersByEmail[email]
@@ -49,7 +49,7 @@ func (r *UserRepository) FindByEmail(email string) (*auth.User, error) {
 	return user, nil
 }
 
-func (r *UserRepository) FindByUsername(username string) (*auth.User, error) {
+func (r *UserRepository) FindByUsername(username string) (*user.User, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	user, ok := r.usersByUsername[username]
@@ -59,7 +59,7 @@ func (r *UserRepository) FindByUsername(username string) (*auth.User, error) {
 	return user, nil
 }
 
-func (r *UserRepository) FindByID(id string) (*auth.User, error) {
+func (r *UserRepository) FindByID(id string) (*user.User, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	user, ok := r.usersByID[id]

@@ -1,13 +1,13 @@
 package user_repository
 
 import (
-	"VSRT-Lang/internal/auth"
+	"VSRT-Lang/internal/user"
 	"database/sql"
 	"errors"
 )
 
-func (r *Repository) FindByUsername(username string) (*auth.User, error) {
-	user := &auth.User{}
+func (r *Repository) FindByUsername(username string) (*user.User, error) {
+	user := &user.User{}
 	err := r.db.QueryRow(
 		`SELECT id, username, email, password, created_at
          FROM users

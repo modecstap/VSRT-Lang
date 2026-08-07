@@ -1,10 +1,10 @@
 package session
 
-type UserId int
+import "VSRT-Lang/internal/user"
 
 type Session struct {
 	ID      int64
-	User    UserId
+	User    user.UserId
 	Name    string
 	Records []Record
 
@@ -17,10 +17,10 @@ type Interphase interface {
 }
 
 func NewSession(
-	user UserId, 
-	name string, 
+	user user.UserId,
+	name string,
 	translator Translator,
-	) *Session {
+) *Session {
 	return &Session{
 		User:       user,
 		Name:       name,
