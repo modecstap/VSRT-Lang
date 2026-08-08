@@ -7,8 +7,6 @@ type Session struct {
 	User    user.UserId
 	Name    string
 	Records []Record
-
-	Translator Translator
 }
 
 type Interphase interface {
@@ -22,15 +20,14 @@ func NewSession(
 	translator Translator,
 ) *Session {
 	return &Session{
-		User:       user,
-		Name:       name,
-		Translator: translator,
+		User: user,
+		Name: name,
 	}
 }
 
-func (s *Session) SaveRecord(context string, window string) (record Record) {
+func (s *Session) SaveRecord(context string, window string, translator Translator) (record Record) {
 	record = *NewRecord(
-		s.Translator,
+		translator,
 		window,
 		context,
 	)

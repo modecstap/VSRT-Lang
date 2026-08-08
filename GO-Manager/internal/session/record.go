@@ -1,17 +1,17 @@
 package session
 
 type Context struct {
-	Phrase      string
-	Translation string
+	Phrase       string `json:"phrase"`
+	Translation  string `json:"translation"`
 }
 
 type Record struct {
-	Phrase       string
-	Translations []string
-	Synonyms     []string
-	Antonyms     []string
-	BaseForm     string
-	Contexts     []Context
+	Phrase       string    `json:"phrase"`
+	Translations []string  `json:"translations"`
+	Synonyms     []string  `json:"synonyms"`
+	Antonyms     []string  `json:"antonyms"`
+	BaseForm     string    `json:"base_form"`
+	Contexts     []Context `json:"contexts"`
 }
 
 func NewRecord(

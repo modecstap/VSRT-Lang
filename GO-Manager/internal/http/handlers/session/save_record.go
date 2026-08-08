@@ -53,8 +53,7 @@ func (h *Handler) SaveRecord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stored.Translator = internal.MockTranslator{}
-	stored.SaveRecord(req.Phrase, req.Context)
+	stored.SaveRecord(req.Phrase, req.Context, internal.MockTranslator{})
 	if err := h.repo.Save(&stored); err != nil {
 		handlers.WriteError(w, http.StatusInternalServerError, "record_save_failed", err.Error())
 		return
