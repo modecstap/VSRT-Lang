@@ -36,8 +36,9 @@ func main() {
 		User:       "",
 		Name:       "test",
 		Records:    nil,
-		Translator: internal.MockTranslator{},
 	}
+
+	translator := internal.MockTranslator{}
 
 	err = repository.Save(&testSession)
 	if err != nil {
@@ -47,6 +48,7 @@ func main() {
 	record := testSession.SaveRecord(
 		"simple sentence to show work of app",
 		"simple sentence",
+		translator,
 	)
 
 	printRecord(record)
