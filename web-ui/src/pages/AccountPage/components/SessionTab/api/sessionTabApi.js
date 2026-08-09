@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getAuthHeaders } from '../../../../../api/auth';
+import { normalizeWord } from '../model/sessionTabModel';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
 const SESSION_STORAGE_KEY = 'session_tab_session_id';
@@ -24,14 +25,24 @@ const getOrCreateSessionId = async () => {
   return sessionId;
 };
 
-const mapRecordToWord = (record) => ({
-  word: record.Phrase,
-  translation: record.Translations?.[0] || '—',
-  synonyms: record.Synonyms || [],
-  antonyms: record.Antonyms || [],
-  meaning: record.BaseForm || record.Phrase,
-  contexts: (record.Contexts || []).map((item) => item.Phrase || item.Translation || ''),
-});
+const mapRecordToWord = (record, index = 0) => {
+  const phrase = record?.phrase || record?.Phrase || '';
+  const translations = record?.translations || record?.Translations || [];
+  const synonyms = record?.synonyms || record?.Synonyms || [];
+  const antonyms = record?.antonyms || record?.Antonyms || [];
+  const baseForm = record?.baseForm || record?.BaseForm || phrase;
+  const contexts = record?.contexts || record?.Contexts || [];
+
+  return {
+    id: record?.id || `${normalizeWord(phrase) || 'word'}-${index}`,
+    word: phrase,
+    translation: translations[0] || '—',
+    synonyms,
+    antonyms,
+    meaning: baseForm || 'No meaning provided yet.',
+    contexts: contexts.map((item) => item?.phrase || item?.Phrase || item?.translation || item?.Translation || ''),
+  };
+};
 
 export async function loadSavedWords() {
   const sessionId = await getOrCreateSessionId();
@@ -47,7 +58,7 @@ export async function loadSavedWords() {
 
   const records = recordsResponse.data?.records || [];
 
-  return records.map(mapRecordToWord);
+  return records.map((record, index) => mapRecordToWord(record, index));
 }
 
 export async function fetchWordEntry(word, words = null) {
@@ -83,8 +94,7 @@ export async function saveWordEntry(payload) {
     getAuthHeaders()
   );
 
-  console.log('Records response:', recordsResponse.data);
   const records = recordsResponse.data?.records || [];
 
-  return records.map(mapRecordToWord);
+  return records.map((record, index) => mapRecordToWord(record, index));
 }

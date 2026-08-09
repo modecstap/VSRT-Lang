@@ -1,4 +1,5 @@
 import Button from "../../../../shared/ui/Button/Button";
+import useProfileTab from './hooks/useProfileTab';
 import styles from "./ProfileTab.module.css";
 
 function ProfileTab() {
@@ -8,35 +9,10 @@ function ProfileTab() {
         avatar: "https://i.pravatar.cc/150?img=12",
     };
 
-    const sessions = [
-        {
-            id: 1,
-            date: "01.08.2026",
-            name: "Summer project",
-            saved: 24,
-        },{
-            id: 1,
-            date: "01.08.2026",
-            name: "Summer project",
-            saved: 24,
-        },
-        {
-            id: 2,
-            date: "29.07.2026",
-            name: "Test session",
-            saved: 8,
-        },
-        {
-            id: 3,
-            date: "22.07.2026",
-            name: "Portfolio",
-            saved: 41,
-        },
-    ];
+    const { sessions, loading, error } = useProfileTab();
 
     return (
         <div className={styles.container}>
-            
             <div className={styles.card}>
                 <div className={styles.user}>
                     <img
@@ -61,25 +37,31 @@ function ProfileTab() {
             <section className={styles.card}>
                 <h1 className={styles.title}>SESSIONS</h1>
 
-                <table className={styles.table}>
-                    <thead>
-                        <tr>
-                            <th>DATE</th>
-                            <th>NAME</th>
-                            <th>SAVED COUNT</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        {sessions.map((session) => (
-                            <tr key={session.id}>
-                                <td>{session.date}</td>
-                                <td>{session.name}</td>
-                                <td>{session.saved}</td>
+                {loading ? (
+                    <p>Loading sessions...</p>
+                ) : error ? (
+                    <p>{error}</p>
+                ) : (
+                    <table className={styles.table}>
+                        <thead>
+                            <tr>
+                                <th>DATE</th>
+                                <th>NAME</th>
+                                <th>SAVED COUNT</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+
+                        <tbody>
+                            {sessions.map((session) => (
+                                <tr key={session.id}>
+                                    <td>{session.date}</td>
+                                    <td>{session.name}</td>
+                                    <td>{session.saved}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
             </section>
         </div>
     );
