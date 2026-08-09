@@ -92,35 +92,21 @@ func (r *Repository) updateRecords(s *session.Session, tx *sql.Tx) error {
 }
 
 func (r *Repository) saveSession(s *session.Session, tx *sql.Tx) error {
-	var exists bool
-
-	err := tx.QueryRow(`
-		SELECT EXISTS(
-			SELECT 1
-			FROM sessions
-			WHERE id = $1
-		)
-	`, s.ID).Scan(&exists)
-	if err != nil {
-		return err
+	if s.ID == 0 {
+		return tx.QueryRow(`
+			INSERT INTO sessions (user_id, name)
+			VALUES ($1, $2)
+			RETURNING id
+		`, s.User, s.Name).Scan(&s.ID)
 	}
 
-	if exists {
-		_, err = tx.Exec(`
-			UPDATE sessions
-			SET user_id = $1,
-			    name = $2
-			WHERE id = $3
-		`, s.User, s.Name, s.ID)
-
-		return err
-	}
-
-	err = tx.QueryRow(`
-		INSERT INTO sessions (user_id, name)
-		VALUES ($1, $2)
-		RETURNING id
-	`, s.User, s.Name).Scan(&s.ID)
+	_, err := tx.Exec(`
+		INSERT INTO sessions (id, user_id, name)
+		VALUES ($1, $2, $3)
+		ON CONFLICT (id) DO UPDATE
+		SET user_id = EXCLUDED.user_id,
+		    name = EXCLUDED.name
+	`, s.ID, s.User, s.Name)
 
 	return err
 }

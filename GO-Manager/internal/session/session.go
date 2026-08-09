@@ -22,6 +22,7 @@ func NewSession(
 	return &Session{
 		User: user,
 		Name: name,
+		Records: make([]Record, 0),
 	}
 }
 
