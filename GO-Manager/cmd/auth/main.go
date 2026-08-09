@@ -10,6 +10,7 @@ import (
 	myHttp "VSRT-Lang/internal/http"
 	auth_handler "VSRT-Lang/internal/http/handlers/auth"
 	session_handler "VSRT-Lang/internal/http/handlers/session"
+	user_handler "VSRT-Lang/internal/http/handlers/user"
 	"VSRT-Lang/internal/http/middleware"
 	"database/sql"
 	"net/http"
@@ -35,12 +36,18 @@ func main() {
 		auth.NewJWTService("StrongSecretString"),
 	)
 	authHandler := auth_handler.NewAuth(service)
+
 	sessionRepo := session_repository.New(db)
 	sessionHandler := session_handler.NewHandler(sessionRepo, internal.MockTranslator{})
 
+	userRepo := user_repository.New(db)
+
+	userHandler := user_handler.NewHandler(userRepo, sessionRepo)
+
 	handlers := myHttp.Handlers{
-		Auth:           authHandler,
-		Session:        sessionHandler,
+		Auth:                 authHandler,
+		Session:            sessionHandler,
+		User:                  userHandler,
 		AuthMiddleware: middleware.Auth(auth.NewJWTService("StrongSecretString")),
 	}
 
