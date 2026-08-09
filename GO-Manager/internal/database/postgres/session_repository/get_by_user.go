@@ -28,11 +28,11 @@ func (r *Repository) FindByUser(userId user.UserId) ([]session.Session, error) {
 	for rows.Next(){
 		var s session.Session
 
-		rows.Scan(
+		err = rows.Scan(
 			&s.ID,
-			&s.Name,
 			&s.User,
-		)		
+			&s.Name,
+		)
 
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {

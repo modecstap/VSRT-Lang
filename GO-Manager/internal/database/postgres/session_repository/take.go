@@ -30,6 +30,9 @@ func (r *Repository) Take(sessionID int) (session.Session, error) {
 	}
 
 	s, err = r.applyRecords(&s)
+	if err != nil {
+		return s, err
+	}
 
 	return s, nil
 }
