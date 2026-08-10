@@ -5,6 +5,24 @@ import { normalizeWord } from '../model/sessionTabModel';
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
 const SESSION_STORAGE_KEY = 'session_tab_session_id';
 
+export async function createSession(sessionName = 'Session') {
+  const response = await axios.post(
+    `${API_BASE_URL}/sessions`,
+    { name: sessionName },
+    getAuthHeaders()
+  );
+
+  const sessionId = response.data?.id;
+
+  if (!sessionId) {
+    throw new Error('Session was not created');
+  }
+
+  localStorage.setItem(SESSION_STORAGE_KEY, String(sessionId));
+
+  return sessionId;
+}
+
 const getOrCreateSessionId = async () => {
   const storedSessionId = localStorage.getItem(SESSION_STORAGE_KEY);
 
@@ -12,17 +30,7 @@ const getOrCreateSessionId = async () => {
     return storedSessionId;
   }
 
-  const sessionResponse = await axios.post(
-    `${API_BASE_URL}/sessions`,
-    { name: 'Session' },
-    getAuthHeaders()
-  );
-
-  const sessionId = sessionResponse.data?.id;
-
-  localStorage.setItem(SESSION_STORAGE_KEY, String(sessionId));
-
-  return sessionId;
+  return createSession();
 };
 
 const mapRecordToWord = (record, index = 0) => {

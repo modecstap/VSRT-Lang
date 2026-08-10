@@ -1,4 +1,5 @@
 import Button from "../../../../shared/ui/Button/Button";
+import Input from "../../../../shared/ui/Input/Input";
 import useProfileTab from './hooks/useProfileTab';
 import styles from "./ProfileTab.module.css";
 
@@ -9,7 +10,15 @@ function ProfileTab() {
         avatar: "https://i.pravatar.cc/150?img=12",
     };
 
-    const { sessions, loading, error } = useProfileTab();
+    const {
+      sessions,
+      loading,
+      error,
+      creating,
+      sessionName,
+      handleSessionNameChange,
+      handleCreateSession,
+    } = useProfileTab();
 
     return (
         <div className={styles.container}>
@@ -35,7 +44,26 @@ function ProfileTab() {
             </div>
 
             <section className={styles.card}>
-                <h1 className={styles.title}>SESSIONS</h1>
+                <div className={styles.header}>
+                    <h1 className={styles.title}>SESSIONS</h1>
+                    <div className={styles.createSession}> 
+                        <Input
+                            id="sessionName"
+                            name="sessionName"
+                            placeholder="Session name"
+                            value={sessionName}
+                            onChange={handleSessionNameChange}
+                        />
+                        <Button
+                            type="button"
+                            className={styles.newButton}
+                            onClick={handleCreateSession}
+                            disabled={creating}
+                        >
+                            NEW
+                        </Button>
+                    </div>
+                </div>
 
                 {loading ? (
                     <p>Loading sessions...</p>

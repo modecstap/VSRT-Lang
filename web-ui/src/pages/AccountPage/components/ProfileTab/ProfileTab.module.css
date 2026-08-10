@@ -16,10 +16,29 @@
 }
 
 .title {
-    margin: 0 0 var(--spacing-4);
+    margin: 0;
     font-size: 2.5rem;
     font-family: var(--header-font);
     color: var(--text-color);
+}
+
+.header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--spacing-4);
+    margin-bottom: var(--spacing-4);
+}
+
+.createSession {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-4);
+}
+
+.newButton {
+    width: fit-content;
+    padding: var(--spacing-3) var(--spacing-5);
 }
 
 .user {
