@@ -14,7 +14,7 @@
   width: 100%;
   box-sizing: border-box;
   padding: var(--spacing-3) var(--spacing-4);
-  border: 1px solid transparent;
+  border: 0;
   font-size: 1rem;
   color: var(--text-contrast);
   background: var(--text-color);
