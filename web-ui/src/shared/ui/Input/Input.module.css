@@ -16,7 +16,7 @@
   padding: var(--spacing-3) var(--spacing-4);
   border: 1px solid transparent;
   font-size: 1rem;
-  color: var(--surface-primary);
+  color: var(--text-contrast);
   background: var(--text-color);
 }
 
