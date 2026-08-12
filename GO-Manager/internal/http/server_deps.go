@@ -18,13 +18,13 @@ type ServerDependens struct {
 	Translator  session.Translator
 }
 
-func New(db *sql.DB) *ServerDependens {
+func New(db *sql.DB, secret string) *ServerDependens {
 	userRepo := user_repository.New(db)
 	tokenRepo := refresh_token_repository.New(db)
 	sessionRepo := session_repository.New(db)
 
 	translator := internal.MockTranslator{}
-	jwtService := auth.NewJWTService("StrongSecretString")
+	jwtService := auth.NewJWTService(secret)
 	authService := auth.NewService(
 		userRepo,
 		tokenRepo,

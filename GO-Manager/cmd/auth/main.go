@@ -11,6 +11,7 @@ import (
 	"VSRT-Lang/internal/http/middleware"
 	"database/sql"
 	"net/http"
+	"os"
 
 	_ "github.com/lib/pq"
 )
@@ -20,7 +21,12 @@ func main() {
 
 	db := setupDb()
 
-	deps := router.New(db)
+	secret, ok := os.LookupEnv("SECRET_KEY")
+	if !ok {
+		panic("environment variable SECRET_KEY not found")
+	}
+
+	deps := router.New(db, secret)
 
 	cors, mux := setupServer(deps)
 
