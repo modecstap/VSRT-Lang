@@ -1,14 +1,10 @@
 package main
 
 import (
-	"VSRT-Lang/internal"
-	"VSRT-Lang/internal/auth"
 	"VSRT-Lang/internal/database/postgres"
 	"VSRT-Lang/internal/database/postgres/migrations"
-	"VSRT-Lang/internal/database/postgres/refresh_token_repository"
-	"VSRT-Lang/internal/database/postgres/session_repository"
-	"VSRT-Lang/internal/database/postgres/user_repository"
 	myHttp "VSRT-Lang/internal/http"
+	router "VSRT-Lang/internal/http"
 	auth_handler "VSRT-Lang/internal/http/handlers/auth"
 	session_handler "VSRT-Lang/internal/http/handlers/session"
 	user_handler "VSRT-Lang/internal/http/handlers/user"
@@ -24,7 +20,9 @@ func main() {
 
 	db := setupDb()
 
-	cors, mux := setupServer(db)
+	deps := router.New(db)
+
+	cors, mux := setupServer(deps)
 
 	http.ListenAndServe(host, cors(mux))
 }
@@ -47,28 +45,12 @@ func setupDb() *sql.DB {
 	return db
 }
 
-func setupServer(db *sql.DB) (func(http.Handler) http.Handler, *http.ServeMux) {
-	userRepo := user_repository.New(db)
-	tokenRepo := refresh_token_repository.New(db)
-	jwtService := auth.NewJWTService("StrongSecretString")
-	service := auth.NewService(
-		userRepo,
-		tokenRepo,
-		jwtService,
-	)
-	authHandler := auth_handler.NewAuth(service)
-
-	sessionRepo := session_repository.New(db)
-	sessionTranslator := internal.MockTranslator{}
-	sessionHandler := session_handler.NewHandler(sessionRepo, sessionTranslator)
-
-	userHandler := user_handler.NewHandler(userRepo, sessionRepo)
-
+func setupServer(deps *router.ServerDependens) (func(http.Handler) http.Handler, *http.ServeMux) {
 	handlers := myHttp.Handlers{
-		Auth:           authHandler,
-		Session:        sessionHandler,
-		User:           userHandler,
-		AuthMiddleware: middleware.Auth(jwtService),
+		Auth:           auth_handler.NewAuth(deps.AuthService),
+		Session:        session_handler.NewHandler(deps.SessionRepo, deps.Translator),
+		User:           user_handler.NewHandler(deps.UserRepo, deps.SessionRepo),
+		AuthMiddleware: middleware.Auth(deps.JwtService),
 	}
 
 	cors := middleware.CORS(middleware.CORSConfig{
@@ -90,5 +72,6 @@ func setupServer(db *sql.DB) (func(http.Handler) http.Handler, *http.ServeMux) {
 	})
 
 	mux := myHttp.NewServeMux(handlers)
+	
 	return cors, mux
 }
