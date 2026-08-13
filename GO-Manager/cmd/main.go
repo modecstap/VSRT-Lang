@@ -11,26 +11,17 @@ import (
 	"VSRT-Lang/internal/http/middleware"
 	"database/sql"
 	"net/http"
-	"os"
 
 	_ "github.com/lib/pq"
 )
 
 func main() {
-	host := "localhost:8080"
 
 	db := setupDb()
 
-	secret, ok := os.LookupEnv("SECRET_KEY")
-	if !ok {
-		panic("environment variable SECRET_KEY not found")
-	}
+	deps := router.DependensFromEnv(db)
 
-	deps := router.New(db, secret)
-
-	cors, mux := setupServer(deps)
-
-	http.ListenAndServe(host, cors(mux))
+	startServer(deps)
 }
 
 func setupDb() *sql.DB {
@@ -51,7 +42,7 @@ func setupDb() *sql.DB {
 	return db
 }
 
-func setupServer(deps *router.ServerDependens) (func(http.Handler) http.Handler, *http.ServeMux) {
+func startServer(deps *router.ServerDependens) {
 	handlers := myHttp.Handlers{
 		Auth:           auth_handler.NewAuth(deps.AuthService),
 		Session:        session_handler.NewHandler(deps.SessionRepo, deps.Translator),
@@ -78,6 +69,6 @@ func setupServer(deps *router.ServerDependens) (func(http.Handler) http.Handler,
 	})
 
 	mux := myHttp.NewServeMux(handlers)
-	
-	return cors, mux
+
+	http.ListenAndServe(deps.Host, cors(mux))
 }
