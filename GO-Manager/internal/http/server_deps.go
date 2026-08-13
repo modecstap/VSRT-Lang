@@ -8,6 +8,7 @@ import (
 	"VSRT-Lang/internal/database/postgres/user_repository"
 	"VSRT-Lang/internal/session"
 	"database/sql"
+	"errors"
 	"os"
 )
 
@@ -20,15 +21,15 @@ type ServerDependens struct {
 	Host        string
 }
 
-func DependensFromEnv(db *sql.DB) *ServerDependens {
+func DependensFromEnv(db *sql.DB) (*ServerDependens, error) {
 	host, ok := os.LookupEnv("MANAGER_HOST")
 	if !ok {
-		panic("environment variable MANAGER_HOST not found")
+		return nil, errors.New("environment variable MANAGER_HOST not found")
 	}
 
 	secret, ok := os.LookupEnv("SECRET_KEY")
 	if !ok {
-		panic("environment variable SECRET_KEY not found")
+		return nil, errors.New("environment variable SECRET_KEY not found")
 	}
 
 	userRepo := user_repository.New(db)
@@ -50,5 +51,5 @@ func DependensFromEnv(db *sql.DB) *ServerDependens {
 		JwtService:  jwtService,
 		Translator:  translator,
 		Host:        host,
-	}
+	}, nil
 }

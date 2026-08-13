@@ -19,7 +19,10 @@ func main() {
 
 	db := setupDb()
 
-	deps := router.DependensFromEnv(db)
+	deps, err := router.DependensFromEnv(db)
+	if err != nil {
+		panic(err)
+	}
 
 	startServer(deps)
 }
