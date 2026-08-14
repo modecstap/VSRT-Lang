@@ -1,6 +1,47 @@
 version: '3.8'
 
 services:
+  manager:
+    container_name: manager
+    build: ./GO-Manager
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - MANAGER_HOST=${MANAGER_HOST}
+      - DB_HOST=database
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+    depends_on:
+      - database
+
+  translator:
+    container_name: translator
+    build: ./translator
+    restart: always
+    ports:
+      - "8081:8080"
+    environment:
+      - LIBRETRANSLATE_URL=libretranslate:5000
+      - LIBRETRANSLATE_API_KEY=""
+      - TRANS_HOST=0.0.0.0
+    command: "python main.py"
+    depends_on:
+      - libretranslate
+
+  web-ui:
+    container_name: web-ui
+    build:
+      context: ./web-ui
+    restart: always
+    ports:
+      - 80:80
+    depends_on:
+      - manager
+
   database:
     container_name: database
     image: postgres:16.4
@@ -15,22 +56,15 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
-  manager:
-    container_name: manager
-    build: ./GO-Manager
-    restart: always
+  libretranslate:
+    image: libretranslate/libretranslate:latest
+    container_name: libretranslate
+    restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "5000:5000"
     environment:
-      - SECRET_KEY=${SECRET_KEY}
-      - MANAGER_HOST=${MANAGER_HOST}
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT}
-      - DB_NAME=${DB_NAME}
-      - DB_USER=${DB_USER}
-      - DB_PASS=${DB_PASS}
-    depends_on:
-      - database
-      
+      - LT_LOAD_ONLY=en,ru
+      - LT_UPDATE_MODELS=true
+
 volumes:
   pgdata:

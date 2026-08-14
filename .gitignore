@@ -3,7 +3,7 @@ web-ui/node_modules
 
 Translator/.venv
 Translator/.idea
-Translator/__pycache__
+Translator/__pycache__/
 
 GO-Manager/.vscode
 GO-Manager/.idea

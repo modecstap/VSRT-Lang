@@ -11,6 +11,6 @@ class ServerConfig(BaseModel):
     @classmethod
     def from_env(cls) -> "ServerConfig":
         return cls(
-            address=os.getenv("TRANS_HOST", "localhost"),
+            address=os.getenv("TRANS_HOST", "0.0.0.0"),
             port=int(os.getenv("TRANS_PORT", 8080)),
         )

@@ -11,6 +11,7 @@ class TranslatorFactory:
             "LIBRETRANSLATE_URL",
             "localhost:5000",
         )
-        url = "http://"+url
+        url = "http://"+url+"/"
+        print(url)
         key = os.getenv("LIBRETRANSLATE_API_KEY", "")
         return Translator(url, key)
