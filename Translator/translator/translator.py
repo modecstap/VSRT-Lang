@@ -1,7 +1,6 @@
-import argostranslate.package
-import argostranslate.translate
-from argostranslate.translate import Hypothesis
-from argostranslate.translate import Language
+from urllib import error, request
+import json
+
 from nltk.corpus import wordnet
 
 from translator.i_translator import ITranslator, TranslatorError
@@ -18,11 +17,12 @@ class TranslationExecutionError(TranslatorError):
 
 
 class Translator(ITranslator):
-    """English to Russian translator based on NLTK and Argos Translate."""
+    """English to Russian translator based on NLTK and LibreTranslate API."""
 
-    def __init__(self) -> None:
+    def __init__(self, url: str, key: str) -> None:
         """Initialize translator."""
-        self._translator = self._load_translator()
+        self._url = url
+        self._api_key = key
         self.translate("initial")
 
     def translate(self, phrase: str, count: int = 4) -> Translation:
@@ -30,22 +30,16 @@ class Translator(ITranslator):
         Translate phrase from English to Russian.
 
         :param phrase: source phrase
-        :param count: count of Translation
+        :param count: count of translations
 
         :raises TranslationExecutionError:
 
         :return: translation result
         """
         translated = self._translate_text(phrase, count)
-        return Translation(
-            original=phrase,
-            translations=translated,
-        )
+        return Translation(original=phrase, translations=translated)
 
-    def translate_bulk(
-        self,
-        phrase: list[str],
-    ) -> list[Translation]:
+    def translate_bulk(self, phrase: list[str]) -> list[Translation]:
         """
         Translate multiple phrases.
 
@@ -65,10 +59,7 @@ class Translator(ITranslator):
 
         :return: synonym list
         """
-        return self._collect_related_words(
-            target.content,
-            antonyms=False,
-        )
+        return self._collect_related_words(target.content, antonyms=False)
 
     def take_antonyms(self, target: Word) -> list[Word]:
         """
@@ -78,10 +69,7 @@ class Translator(ITranslator):
 
         :return: antonym list
         """
-        return self._collect_related_words(
-            target.content,
-            antonyms=True,
-        )
+        return self._collect_related_words(target.content, antonyms=True)
 
     def take_context(self, target: Word) -> list[Translation]:
         """
@@ -99,52 +87,89 @@ class Translator(ITranslator):
         return examples
 
     def take_base_form(self, target: Word) -> Word:
+        """
+        Take the base form of an English word.
+
+        :param target: source word
+
+        :return: base form of the word
+        """
         base_form = wordnet.morphy(target.content)
         return Word(content=base_form)
 
-    def _load_translator(self):
-        """Load installed Argos translator."""
-        languages = argostranslate.translate.get_installed_languages()
-        source = self._find_language(languages, "en")
-        target = self._find_language(languages, "ru")
-        if source is None or target is None:
-            raise TranslationPackageError(
-                "English to Russian package is not installed."
-            )
-        translator = source.get_translation(target)
-        if translator is None:
-            raise TranslationPackageError(
-                "English to Russian translator is unavailable."
-            )
-        return translator
-
     def _translate_text(self, phrase: str, count: int) -> list[str]:
-        """Translate text using Argos."""
-        hypotheses = self.get_hypotheses(phrase, count)
-        return list(map(lambda h: h.value, hypotheses))
+        """Translate text using the LibreTranslate API."""
+        if count < 1:
+            raise TranslationExecutionError(
+                "Translation count must be greater than zero."
+            )
 
-    def get_hypotheses(self, phrase: str, count: int) -> list[Hypothesis]:
+        payload = self._build_payload(phrase, count)
         try:
-            return self._translator.hypotheses(phrase, count)
-        except Exception as error:
+            response = self._request_translation(payload)
+        except (error.URLError, TimeoutError) as exception:
             raise TranslationExecutionError(
                 f"Failed to translate '{phrase}'."
-            ) from error
+            ) from exception
+
+        return self._extract_translations(response, phrase)
+
+    def _build_payload(self, phrase: str, count: int) -> bytes:
+        """Build a LibreTranslate request payload."""
+        payload = {
+            "q": phrase,
+            "source": "en",
+            "target": "ru",
+            "format": "text",
+            "alternatives": max(count - 1, 0),
+        }
+        if self._api_key:
+            payload["api_key"] = self._api_key
+        return json.dumps(payload).encode("utf-8")
+
+    def _request_translation(self, payload: bytes) -> dict:
+        """Send a translation request to LibreTranslate."""
+        endpoint = f"{self._url}/translate"
+        request_data = request.Request(
+            endpoint,
+            data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with request.urlopen(request_data, timeout=30) as response:
+                return json.loads(response.read().decode("utf-8"))
+        except error.HTTPError as exception:
+            raise TranslationExecutionError(
+                f"LibreTranslate returned HTTP {exception.code}."
+            ) from exception
+        except json.JSONDecodeError as exception:
+            raise TranslationExecutionError(
+                "LibreTranslate returned an invalid response."
+            ) from exception
 
     @staticmethod
-    def _find_language(
-            languages: list,
-            code: str,
-    ) -> Language:
-        """Find installed language."""
-        for language in languages:
-            if language.code == code:
-                return language
-        return None
+    def _extract_translations(
+        response: dict,
+        phrase: str,
+    ) -> list[str]:
+        """Extract translations from a LibreTranslate response."""
+        translated = response.get("translatedText")
+        if not isinstance(translated, str):
+            raise TranslationExecutionError(
+                f"LibreTranslate returned no translation for '{phrase}'."
+            )
+
+        alternatives = response.get("alternatives", [])
+        if not isinstance(alternatives, list):
+            alternatives = []
+        return [translated, *[
+            item for item in alternatives if isinstance(item, str)
+        ]]
 
     @staticmethod
     def _collect_related_words(
-            word: str,
+        word: str,
         antonyms: bool,
     ) -> list[Word]:
         """Collect synonyms or antonyms."""
