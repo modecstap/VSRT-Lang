@@ -1,7 +1,6 @@
 package session
 
 import (
-	"VSRT-Lang/internal"
 	"VSRT-Lang/internal/http/handlers"
 	"encoding/json"
 	"net/http"
@@ -53,7 +52,7 @@ func (h *Handler) SaveRecord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stored.SaveRecord(req.Phrase, req.Context, internal.MockTranslator{})
+	stored.SaveRecord(req.Phrase, req.Context, h.translator)
 	if err := h.repo.Save(&stored); err != nil {
 		handlers.WriteError(w, http.StatusInternalServerError, "record_save_failed", err.Error())
 		return

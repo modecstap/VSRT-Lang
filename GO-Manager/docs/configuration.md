@@ -10,4 +10,4 @@ DB_PORT         database port               Yes
 DB_NAME         database name               Yes
 DB_USER         database user               Yes
 DB_PASS         database password           Yes
-
+TRANSLATOR_HOST host of translator          Yes

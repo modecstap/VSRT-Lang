@@ -1,15 +1,18 @@
 package router
 
 import (
-	"VSRT-Lang/internal"
 	"VSRT-Lang/internal/auth"
 	"VSRT-Lang/internal/database/postgres/refresh_token_repository"
 	"VSRT-Lang/internal/database/postgres/session_repository"
 	"VSRT-Lang/internal/database/postgres/user_repository"
+	"VSRT-Lang/internal/net_translator"
 	"VSRT-Lang/internal/session"
 	"database/sql"
 	"errors"
+	"fmt"
+	"net/http"
 	"os"
+	"time"
 )
 
 type ServerDependens struct {
@@ -36,7 +39,19 @@ func DependensFromEnv(db *sql.DB) (*ServerDependens, error) {
 	tokenRepo := refresh_token_repository.New(db)
 	sessionRepo := session_repository.New(db)
 
-	translator := internal.MockTranslator{}
+	translatorHost, ok := os.LookupEnv("TRANSLATOR_HOST")
+	if !ok {
+		return nil, errors.New("environment variable SECRET_KEY not found")
+	}
+	translator := net_translator.Translator{
+		Client: http.Client{
+			Transport:     	nil,
+			CheckRedirect: 	nil,
+			Jar:           	nil,
+			Timeout:		5 * time.Second,
+		},
+		Backend: fmt.Sprintf("http://%s/api/translator", translatorHost),
+	}
 	jwtService := auth.NewJWTService(secret)
 	authService := auth.NewService(
 		userRepo,
