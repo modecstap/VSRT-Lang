@@ -52,7 +52,7 @@ func (h *Handler) SaveRecord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stored.SaveRecord(req.Phrase, req.Context, h.translator)
+	stored.SaveRecord(req.Context, req.Phrase, h.translator)
 	if err := h.repo.Save(&stored); err != nil {
 		handlers.WriteError(w, http.StatusInternalServerError, "record_save_failed", err.Error())
 		return
