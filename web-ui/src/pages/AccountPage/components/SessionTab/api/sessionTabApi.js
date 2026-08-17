@@ -44,7 +44,7 @@ const mapRecordToWord = (record, index = 0) => {
   return {
     id: record?.id || `${normalizeWord(phrase) || 'word'}-${index}`,
     word: phrase,
-    translation: translations[0] || '—',
+    translation: translations || '—',
     synonyms,
     antonyms,
     meaning: baseForm || 'No meaning provided yet.',

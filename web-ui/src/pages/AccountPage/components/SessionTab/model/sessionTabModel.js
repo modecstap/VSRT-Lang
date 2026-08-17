@@ -10,7 +10,7 @@ export function buildWordDetails(entry) {
   return {
     id: entry.id,
     word: entry.word,
-    translation: entry.translation || '—',
+    translation: entry.translation.join("\t|\t") || '—',
     synonyms: entry.synonyms || [],
     antonyms: entry.antonyms || [],
     meaning: entry.meaning || 'No meaning provided yet.',
