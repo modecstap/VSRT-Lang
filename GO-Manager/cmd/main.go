@@ -10,6 +10,8 @@ import (
 	user_handler "VSRT-Lang/internal/http/handlers/user"
 	"VSRT-Lang/internal/http/middleware"
 	"database/sql"
+	"fmt"
+	"log/slog"
 	"net/http"
 
 	_ "github.com/lib/pq"
@@ -28,16 +30,19 @@ func main() {
 }
 
 func setupDb() *sql.DB {
+	fmt.Println("Load DB Config")
 	dbConfig, err := postgres.LoadDBConfig()
 	if err != nil {
 		panic(err)
 	}
 
+	fmt.Println("Try connect")
 	db, err := sql.Open("postgres", dbConfig.ConnString())
 	if err != nil {
 		panic(err)
 	}
 
+	fmt.Println("Run migration")
 	err = migrations.Run(db)
 	if err != nil {
 		panic(err)
@@ -46,6 +51,7 @@ func setupDb() *sql.DB {
 }
 
 func startServer(deps *router.ServerDependens) {
+	fmt.Println("Setup handler")
 	handlers := myHttp.Handlers{
 		Auth:           auth_handler.NewAuth(deps.AuthService),
 		Session:        session_handler.NewHandler(deps.SessionRepo, deps.Translator),
@@ -72,6 +78,8 @@ func startServer(deps *router.ServerDependens) {
 	})
 
 	mux := myHttp.NewServeMux(handlers)
+	logger := slog.Default()
 
-	http.ListenAndServe(deps.Host, cors(mux))
+	fmt.Println("Start server")
+	http.ListenAndServe(deps.Host, cors(middleware.RequestLogger(logger)(mux)))
 }
