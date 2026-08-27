@@ -58,14 +58,14 @@ services:
       - pgdata:/var/lib/postgresql/data
 
   libretranslate:
-    image: libretranslate/libretranslate:latest
+    image: libretranslate/libretranslate:v1.9.6
     container_name: libretranslate
     restart: unless-stopped
     ports:
       - "5000:5000"
     environment:
       - LT_LOAD_ONLY=en,ru
-      - LT_UPDATE_MODELS=true
+      - LT_UPDATE_MODELS=false
 
 volumes:
   pgdata:
