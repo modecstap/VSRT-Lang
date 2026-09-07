@@ -1,7 +1,7 @@
 import pytest
 
 from translator.models.word import Word
-from translator.translator import Translator
+from translator.translator import Translator, TranslationExecutionError
 
 
 @pytest.fixture(scope="session")
@@ -51,3 +51,11 @@ def test_synonyms(translator: Translator, target: Word):
     assert isinstance(synonyms, list)
     for synonym in synonyms:
         assert isinstance(synonym, Word)
+
+def test_fail_connection_when_initialize():
+    with pytest.raises(TranslationExecutionError):
+        Translator(
+            "http://wrongaddress",
+            ""
+        )
+
