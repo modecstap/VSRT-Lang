@@ -9,3 +9,4 @@ GO-Manager/.vscode
 GO-Manager/.idea
 .env
 __pycache__/
+.vscode/launch.json
