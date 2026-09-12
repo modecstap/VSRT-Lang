@@ -84,14 +84,6 @@ func TestSessionSaveAndGetRecords(t *testing.T) {
 		t.Fatalf("expected returned record phrase hello, got %q", record.Phrase)
 	}
 
-	if len(session.Records) != 1 {
-		t.Fatalf("expected session to have 1 record, got %d", len(session.Records))
-	}
-
-	if !reflect.DeepEqual(session.Records[0], record) {
-		t.Fatalf("expected saved record to match returned record, got saved=%+v returned=%+v", session.Records[0], record)
-	}
-
 	gotRecords := session.GetRecords()
 	if len(gotRecords) != 1 {
 		t.Fatalf("expected GetRecords to return 1 record, got %d", len(gotRecords))

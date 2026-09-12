@@ -6,7 +6,7 @@ type Session struct {
 	ID      int64
 	User    user.UserId
 	Name    string
-	Records []Record
+	Records map[string]Record
 }
 
 type Interphase interface {
@@ -22,20 +22,27 @@ func NewSession(
 	return &Session{
 		User: user,
 		Name: name,
-		Records: make([]Record, 0),
+		Records: make(map[string]Record),
 	}
 }
 
 func (s *Session) SaveRecord(context string, window string, translator Translator) (record Record) {
-	record = *NewRecord(
-		translator,
-		window,
-		context,
-	)
-	s.Records = append(s.Records, record)
+	record, ok := s.Records[window]
+	if !ok {
+		record = *NewRecord(
+			translator,
+			window,
+			context,
+		)
+	}
+	s.Records[window] = record
 	return record
 }
 
 func (s *Session) GetRecords() []Record {
-	return s.Records
+	records := make([]Record, 0, len(s.Records))
+	for _, record := range s.Records {
+		records = append(records, record)
+	}
+	return records
 }

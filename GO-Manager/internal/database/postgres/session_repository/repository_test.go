@@ -29,7 +29,8 @@ func SaveInsertsSessionAndRecords(t *testing.T) {
 
 	userID := user.UserId("user-1")
 	sess := &session.Session{User: userID, Name: "demo"}
-	sess.Records = []session.Record{{
+	sess.Records = make(map[string]session.Record)
+	sess.Records["hello"] = session.Record{
 		Phrase:       "hello",
 		BaseForm:     "hello",
 		Translations: []string{"hola"},
@@ -39,7 +40,7 @@ func SaveInsertsSessionAndRecords(t *testing.T) {
 			Phrase:      "context",
 			Translation: "contexto",
 		}},
-	}}
+	}
 
 	mock.ExpectBegin()
 	mock.ExpectQuery(regexp.QuoteMeta(`
@@ -76,7 +77,7 @@ func SaveInsertsSessionAndRecords(t *testing.T) {
         )
         VALUES($1,$2,$3,$4,$5,$6,$7)
     `)).
-		WithArgs(int64(42), sess.Records[0].Phrase, sess.Records[0].BaseForm, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WithArgs(int64(42), sess.Records["hello"].Phrase, sess.Records["hello"].BaseForm, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
