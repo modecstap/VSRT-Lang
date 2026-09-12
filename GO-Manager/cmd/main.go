@@ -10,9 +10,11 @@ import (
 	user_handler "VSRT-Lang/internal/http/handlers/user"
 	"VSRT-Lang/internal/http/middleware"
 	"database/sql"
-	"os"
+	"fmt"
 	"log/slog"
 	"net/http"
+	"os"
+	"time"
 
 	_ "github.com/lib/pq"
 )
@@ -20,7 +22,7 @@ import (
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	slog.SetDefault(logger)
-	
+
 	db := setupDb()
 
 	deps, err := router.DependensFromEnv(db)
@@ -40,20 +42,29 @@ func setupDb() *sql.DB {
 		panic(err)
 	}
 
-	slog.Info("Connect to DB")
-	db, err := sql.Open("postgres", dbConfig.ConnString())
-	if err != nil {
-		slog.Error("Failed to connect to DB", "error", err)
-		panic(err)
+	var db *sql.DB
+
+	for true {
+		time.Sleep(1 * time.Minute)
+
+		fmt.Println("Trying to connect to DB...")
+		slog.Info("Connect to DB")
+		db, err := sql.Open("postgres", dbConfig.ConnString())
+		if err != nil {
+			slog.Error("Failed to connect to DB", "error", err)
+			continue
+		}
+
+		slog.Info("Run migration")
+		err = migrations.Run(db)
+		if err != nil {
+			slog.Error("Failed to run migration", "error", err)
+			continue
+		}
 	}
 
-	slog.Info("Run migration")
-	err = migrations.Run(db)
-	if err != nil {
-		slog.Error("Failed to run migration", "error", err)
-		panic(err)
-	}
 	return db
+
 }
 
 func startServer(deps *router.ServerDependens) {
@@ -87,7 +98,7 @@ func startServer(deps *router.ServerDependens) {
 
 	slog.Info("Start server")
 	http.ListenAndServe(
-		deps.Host, 
+		deps.Host,
 		cors(middleware.RequestLogger(slog.Default())(mux)),
 	)
 }
