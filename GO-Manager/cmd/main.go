@@ -10,7 +10,7 @@ import (
 	user_handler "VSRT-Lang/internal/http/handlers/user"
 	"VSRT-Lang/internal/http/middleware"
 	"database/sql"
-	"fmt"
+	"os"
 	"log/slog"
 	"net/http"
 
@@ -18,11 +18,14 @@ import (
 )
 
 func main() {
-
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	slog.SetDefault(logger)
+	
 	db := setupDb()
 
 	deps, err := router.DependensFromEnv(db)
 	if err != nil {
+		slog.Error("Failed to load dependencies from environment", "error", err)
 		panic(err)
 	}
 
@@ -30,28 +33,31 @@ func main() {
 }
 
 func setupDb() *sql.DB {
-	fmt.Println("Load DB Config")
+	slog.Info("Load DB Config")
 	dbConfig, err := postgres.LoadDBConfig()
 	if err != nil {
+		slog.Error("Failed to load DB config", "error", err)
 		panic(err)
 	}
 
-	fmt.Println("Try connect")
+	slog.Info("Connect to DB")
 	db, err := sql.Open("postgres", dbConfig.ConnString())
 	if err != nil {
+		slog.Error("Failed to connect to DB", "error", err)
 		panic(err)
 	}
 
-	fmt.Println("Run migration")
+	slog.Info("Run migration")
 	err = migrations.Run(db)
 	if err != nil {
+		slog.Error("Failed to run migration", "error", err)
 		panic(err)
 	}
 	return db
 }
 
 func startServer(deps *router.ServerDependens) {
-	fmt.Println("Setup handler")
+	slog.Info("Setup handler")
 	handlers := myHttp.Handlers{
 		Auth:           auth_handler.NewAuth(deps.AuthService),
 		Session:        session_handler.NewHandler(deps.SessionRepo, deps.Translator),
@@ -78,8 +84,10 @@ func startServer(deps *router.ServerDependens) {
 	})
 
 	mux := myHttp.NewServeMux(handlers)
-	logger := slog.Default()
 
-	fmt.Println("Start server")
-	http.ListenAndServe(deps.Host, cors(middleware.RequestLogger(logger)(mux)))
+	slog.Info("Start server")
+	http.ListenAndServe(
+		deps.Host, 
+		cors(middleware.RequestLogger(slog.Default())(mux)),
+	)
 }
