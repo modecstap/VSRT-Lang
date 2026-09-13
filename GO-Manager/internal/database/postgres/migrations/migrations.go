@@ -71,7 +71,56 @@ ALTER TABLE sessions
 ALTER COLUMN id DROP IDENTITY;
 `,
 	},
+	{
+		Version: 3,
+		Name:    "add_count_column_to_records",
+		Up: `
+ALTER TABLE records
+ADD COLUMN count INTEGER NOT NULL;
+`,
+		Down: `
+ALTER TABLE records
+DROP COLUMN count;
+`,
+	},
+	{
+		Version: 4,
+		Name:    "make_records_unique_for_session_and_phrase",
+		Up: `
+WITH duplicates AS (
+    SELECT
+        MIN(id) AS keep_id,
+        session_id,
+        phrase,
+        SUM(count) AS total_count
+    FROM records
+    GROUP BY session_id, phrase
+    HAVING COUNT(*) > 1
+)
+UPDATE records r
+SET count = d.total_count
+FROM duplicates d
+WHERE r.id = d.keep_id;
+
+DELETE FROM records r
+WHERE EXISTS (
+    SELECT 1
+    FROM records r2
+    WHERE r2.session_id = r.session_id
+      AND r2.phrase = r.phrase
+      AND r2.id < r.id
+);
+
+ALTER TABLE records
+ADD CONSTRAINT unique_session_phrase UNIQUE (session_id, phrase);
+`,
+		Down: `
+ALTER TABLE records
+DROP CONSTRAINT unique_session_phrase;
+`,
+	},
 }
+
 
 const schemaMigrationsTable = `
 CREATE TABLE IF NOT EXISTS schema_migrations (

@@ -47,7 +47,7 @@ func (r *Repository) applyRecords(s *session.Session) (session.Session, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var rec session.Record
+		var rec *session.Record
 
 		var (
 			contextsJSON []byte
@@ -60,6 +60,7 @@ func (r *Repository) applyRecords(s *session.Session) (session.Session, error) {
 			pq.Array(&rec.Translations),
 			pq.Array(&rec.Synonyms),
 			pq.Array(&rec.Antonyms),
+			&rec.Count,
 			&contextsJSON,
 		)
 		if err != nil {

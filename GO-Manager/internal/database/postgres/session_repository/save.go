@@ -51,9 +51,10 @@ func (r *Repository) updateRecords(s *session.Session, tx *sql.Tx) error {
             translations,
             synonyms,
             antonyms,
-            contexts
+            contexts,
+			count,
         )
-        VALUES($1,$2,$3,$4,$5,$6,$7)
+        VALUES($1,$2,$3,$4,$5,$6,$7,$8)
     `)
 
 	if err != nil {
@@ -81,6 +82,7 @@ func (r *Repository) updateRecords(s *session.Session, tx *sql.Tx) error {
 			pq.Array(rec.Translations),
 			pq.Array(rec.Synonyms),
 			pq.Array(rec.Antonyms),
+			rec.Count,
 			ctxJSON,
 		)
 

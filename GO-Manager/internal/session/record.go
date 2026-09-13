@@ -1,8 +1,8 @@
 package session
 
 type Context struct {
-	Phrase       string `json:"phrase"`
-	Translation  string `json:"translation"`
+	Phrase      string `json:"phrase"`
+	Translation string `json:"translation"`
 }
 
 type Record struct {
@@ -12,6 +12,7 @@ type Record struct {
 	Antonyms     []string  `json:"antonyms"`
 	BaseForm     string    `json:"base_form"`
 	Contexts     []Context `json:"contexts"`
+	Count        int64
 }
 
 func NewRecord(
@@ -36,5 +37,6 @@ func NewRecord(
 		Synonyms:     translator.TakeSynonyms(phrase),
 		Antonyms:     translator.TakeAntonyms(phrase),
 		Contexts:     contexts,
+		Count:        1,
 	}
 }
