@@ -5,11 +5,12 @@ import (
 	"testing"
 
 	"VSRT-Lang/internal/session"
+	"VSRT-Lang/internal/translators/stub"
 	"VSRT-Lang/internal/user"
 )
 
 func TestNewRecord(t *testing.T) {
-	translator := stubTranslator{}
+	translator := stub.Translator{}
 	record := session.NewRecord(translator, "hello", "world")
 
 	if record.Phrase != "hello" {
@@ -67,7 +68,7 @@ func TestNewRecord(t *testing.T) {
 }
 
 func TestSessionSaveAndGetRecords(t *testing.T) {
-	translator := stubTranslator{}
+	translator := stub.Translator{}
 	session := session.NewSession(user.UserId("user-123"), "test-session", translator)
 
 	record := session.SaveRecord("world", "hello", translator)
@@ -87,7 +88,7 @@ func TestSessionSaveAndGetRecords(t *testing.T) {
 }
 
 func TestCountWhenSaveOneRecord(t *testing.T) {
-	translator := stubTranslator{}
+	translator := stub.Translator{}
 	session := session.NewSession(user.UserId("user-123"), "test-session", translator)
 	_ = session.SaveRecord("world", "hello", translator)
 	
@@ -98,7 +99,7 @@ func TestCountWhenSaveOneRecord(t *testing.T) {
 }
 
 func TestSessionSaveRecordWithExistingPhrase(t *testing.T) {
-	translator := stubTranslator{}
+	translator := stub.Translator{}
 	session := session.NewSession(user.UserId("user-123"), "test-session", translator)
 	_ = session.SaveRecord("world", "hello", translator)
 	_ = session.SaveRecord("world", "hello", translator)

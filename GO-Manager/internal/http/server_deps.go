@@ -7,9 +7,11 @@ import (
 	"VSRT-Lang/internal/database/postgres/user_repository"
 	"VSRT-Lang/internal/net_translator"
 	"VSRT-Lang/internal/session"
+	"VSRT-Lang/internal/translators/stub"
 	"database/sql"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"time"
@@ -25,6 +27,13 @@ type ServerDependens struct {
 }
 
 func DependensFromEnv(db *sql.DB) (*ServerDependens, error) {
+	mode, ok := os.LookupEnv("MODE")
+	if !ok {
+		slog.Info("environment variable MODE not found")
+		mode = "prod"
+	}
+	slog.Info(fmt.Sprintf("Started in %s mode", mode))
+
 	host, ok := os.LookupEnv("MANAGER_HOST")
 	if !ok {
 		return nil, errors.New("environment variable MANAGER_HOST not found")
@@ -39,19 +48,11 @@ func DependensFromEnv(db *sql.DB) (*ServerDependens, error) {
 	tokenRepo := refresh_token_repository.New(db)
 	sessionRepo := session_repository.New(db)
 
-	translatorHost, ok := os.LookupEnv("TRANSLATOR_HOST")
-	if !ok {
-		return nil, errors.New("environment variable TRANSLATOR_HOST not found")
+	translator, err := setupTranslator(mode)
+	if err != nil {
+		return nil, err
 	}
-	translator := net_translator.Translator{
-		Client: http.Client{
-			Transport:     	nil,
-			CheckRedirect: 	nil,
-			Jar:           	nil,
-			Timeout:		5 * time.Second,
-		},
-		Backend: fmt.Sprintf("http://%s/api/translator", translatorHost),
-	}
+
 	jwtService := auth.NewJWTService(secret)
 	authService := auth.NewService(
 		userRepo,
@@ -67,4 +68,25 @@ func DependensFromEnv(db *sql.DB) (*ServerDependens, error) {
 		Translator:  translator,
 		Host:        host,
 	}, nil
+}
+
+func setupTranslator(mode string) (session.Translator, error) {
+	if mode == "debug" {
+		return stub.Translator{}, nil
+	}
+
+	translatorHost, ok := os.LookupEnv("TRANSLATOR_HOST")
+	if !ok {
+		return net_translator.Translator{}, errors.New("environment variable TRANSLATOR_HOST not found")
+	}
+	translator := net_translator.Translator{
+		Client: http.Client{
+			Transport:     nil,
+			CheckRedirect: nil,
+			Jar:           nil,
+			Timeout:       5 * time.Second,
+		},
+		Backend: fmt.Sprintf("http://%s/api/translator", translatorHost),
+	}
+	return translator, nil
 }

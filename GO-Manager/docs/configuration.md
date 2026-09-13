@@ -1,7 +1,7 @@
 
 # ENV Variable
 
-NAME            DESCRIPTION                 MANDATORY 
+NAME            DESCRIPTION                 MANDATORY   VALUES
 ___
 SECRET_KEY      key to generate JWT Token   Yes
 MANAGER_HOST    host of current app         Yes
@@ -11,3 +11,4 @@ DB_NAME         database name               Yes
 DB_USER         database user               Yes
 DB_PASS         database password           Yes
 TRANSLATOR_HOST host of translator          Yes
+MODE                                        NO          prod, debug

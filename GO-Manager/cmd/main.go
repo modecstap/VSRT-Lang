@@ -100,7 +100,7 @@ func startServer(deps *router.ServerDependens) {
 
 	mux := myHttp.NewServeMux(handlers)
 
-	slog.Info("Start server")
+	slog.Info(fmt.Sprintf("Start server at %s", deps.Host))
 	http.ListenAndServe(
 		deps.Host,
 		cors(middleware.RequestLogger(slog.Default())(mux)),
