@@ -76,7 +76,7 @@ ALTER COLUMN id DROP IDENTITY;
 		Name:    "add_count_column_to_records",
 		Up: `
 ALTER TABLE records
-ADD COLUMN count INTEGER NOT NULL;
+ADD COLUMN count INTEGER NOT NULL DEFAULT 1;
 `,
 		Down: `
 ALTER TABLE records
@@ -120,7 +120,6 @@ DROP CONSTRAINT unique_session_phrase;
 `,
 	},
 }
-
 
 const schemaMigrationsTable = `
 CREATE TABLE IF NOT EXISTS schema_migrations (
