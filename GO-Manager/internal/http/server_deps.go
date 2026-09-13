@@ -41,7 +41,7 @@ func DependensFromEnv(db *sql.DB) (*ServerDependens, error) {
 
 	translatorHost, ok := os.LookupEnv("TRANSLATOR_HOST")
 	if !ok {
-		return nil, errors.New("environment variable SECRET_KEY not found")
+		return nil, errors.New("environment variable TRANSLATOR_HOST not found")
 	}
 	translator := net_translator.Translator{
 		Client: http.Client{
