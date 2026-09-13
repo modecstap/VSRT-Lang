@@ -19,6 +19,8 @@ import (
 	_ "github.com/lib/pq"
 )
 
+const SLEEP_TIME = 1 * time.Minute
+
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	slog.SetDefault(logger)
@@ -45,13 +47,12 @@ func setupDb() *sql.DB {
 	var db *sql.DB
 
 	for true {
-		time.Sleep(1 * time.Minute)
-
 		fmt.Println("Trying to connect to DB...")
 		slog.Info("Connect to DB")
 		db, err := sql.Open("postgres", dbConfig.ConnString())
 		if err != nil {
 			slog.Error("Failed to connect to DB", "error", err)
+			time.Sleep(SLEEP_TIME)
 			continue
 		}
 
@@ -59,8 +60,11 @@ func setupDb() *sql.DB {
 		err = migrations.Run(db)
 		if err != nil {
 			slog.Error("Failed to run migration", "error", err)
+			time.Sleep(SLEEP_TIME)
 			continue
 		}
+		
+		break
 	}
 
 	return db
