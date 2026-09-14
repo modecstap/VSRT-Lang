@@ -26,7 +26,7 @@ func (r *Repository) FindByUser(userId user.UserId) ([]session.Session, error) {
 	defer rows.Close()
 
 	for rows.Next(){
-		var s session.Session
+		s := session.NewSession(userId, "")
 
 		err = rows.Scan(
 			&s.ID,
@@ -41,12 +41,12 @@ func (r *Repository) FindByUser(userId user.UserId) ([]session.Session, error) {
 			return nil, err
 		}
 
-		s, err = r.applyRecords(&s)
+		s, err = r.applyRecords(s)
 		if err != nil {
 			return nil, err
 		}
 
-		sessions = append(sessions, s)
+		sessions = append(sessions, *s)
 	}
 
 	if rows.Err() != nil {

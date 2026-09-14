@@ -7,7 +7,7 @@ import (
 )
 
 func (r *Repository) Take(sessionID int) (session.Session, error) {
-	var s session.Session
+	s := session.NewSession("", "")
 
 	err := r.db.QueryRow(`
 		SELECT
@@ -24,15 +24,15 @@ func (r *Repository) Take(sessionID int) (session.Session, error) {
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return s, err
+			return *s, err
 		}
-		return s, err
+		return *s, err
 	}
 
-	s, err = r.applyRecords(&s)
+	s, err = r.applyRecords(s)
 	if err != nil {
-		return s, err
+		return *s, err
 	}
 
-	return s, nil
+	return *s, nil
 }

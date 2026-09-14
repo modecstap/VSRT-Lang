@@ -28,7 +28,7 @@ func fromDBContexts(src []dbContext) []session.Context {
 	return dst
 }
 
-func (r *Repository) applyRecords(s *session.Session) (session.Session, error) {
+func (r *Repository) applyRecords(s *session.Session) (*session.Session, error) {
 	rows, err := r.db.Query(`
 		SELECT
 			phrase,
@@ -36,18 +36,19 @@ func (r *Repository) applyRecords(s *session.Session) (session.Session, error) {
 			translations,
 			synonyms,
 			antonyms,
-			contexts
+			contexts,
+			count
 		FROM records
 		WHERE session_id = $1
 		ORDER BY id
 	`, s.ID)
 	if err != nil {
-		return *s, err
+		return s, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		var rec *session.Record
+		var rec session.Record
 
 		var (
 			contextsJSON []byte
@@ -60,26 +61,26 @@ func (r *Repository) applyRecords(s *session.Session) (session.Session, error) {
 			pq.Array(&rec.Translations),
 			pq.Array(&rec.Synonyms),
 			pq.Array(&rec.Antonyms),
-			&rec.Count,
 			&contextsJSON,
+			&rec.Count,
 		)
 		if err != nil {
-			return *s, err
+			return s, err
 		}
 
 		if len(contextsJSON) != 0 {
 			if err := json.Unmarshal(contextsJSON, &dbContexts); err != nil {
-				return *s, err
+				return s, err
 			}
 			rec.Contexts = fromDBContexts(dbContexts)
 		}
 
-		s.Records[rec.Phrase] = rec
+		s.Records[rec.Phrase] = &rec
 	}
 
 	if err := rows.Err(); err != nil {
-		return *s, err
+		return s, err
 	}
 
-	return *s, nil
+	return s, nil
 }
