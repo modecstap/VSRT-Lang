@@ -10,3 +10,4 @@ GO-Manager/.idea
 .env
 __pycache__/
 .vscode/launch.json
+GO-Manager/cmd/__debug_bin.exe
