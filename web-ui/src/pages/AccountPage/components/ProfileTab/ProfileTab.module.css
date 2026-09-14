@@ -102,7 +102,7 @@
 }
 
 .table thead {
-    background: var(--lonetrail-orange-glow);
+    background: var(--bg-contrast);
 }
 
 .table th {

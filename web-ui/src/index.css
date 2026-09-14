@@ -30,33 +30,30 @@ body {
 
   --text-color: var(--lonetrail-grey);
   --text-contrast: var(--lonetrail-white);
-  --text-accent: var(--lonetrail-olive);
+  --text-accent: var(--lonetrail-orange);
+  --text-muted: var(--lonetrail-light-grey);
+
+  --bg-color: var(--lonetrail-orange-glow);
+  --bg-contrast: var(--lonetrail-grey);
+  --bg-higlight: var(--lonetrail-yellow);
+  --bg-select: var(--lonetrail-orange);
+
+  --button-color: var(--lonetrail-orange);
+  --button-contrast: var(--lonetrail-white);
 
   --header-font: "Lonetrail Bold";
   --text-font: "Lonetrail Regular";
 
-  --accent-color: var(--lonetrail-light-blue);
-
-  --lonetrail-tricolor-vert: linear-gradient(
-    to left,
-    var(--lonetrail-red) 33%,
-    var(--lonetrail-yellow) 33%,
-    var(--lonetrail-yellow) 66%,
-    var(--lonetrail-olive) 66%
-  );
-  --lonetrail-tricolor-horiz: linear-gradient(
-    to bottom,
-    var(--lonetrail-red) 33%,
-    var(--lonetrail-yellow) 33%,
-    var(--lonetrail-yellow) 66%,
-    var(--lonetrail-olive) 66%
-  );
-
-  --bg-color: var(--lonetrail-orange-glow);
-  --bg-higlight: var(--lonetrail-yellow);
-  --bg-select: var(--lonetrail-orange);
-
-  --button-color: var(--lonetrail-olive);
+  --lonetrail-tricolor-vert: linear-gradient(to left,
+      var(--lonetrail-red) 33%,
+      var(--lonetrail-yellow) 33%,
+      var(--lonetrail-yellow) 66%,
+      var(--lonetrail-olive) 66%);
+  --lonetrail-tricolor-horiz: linear-gradient(to bottom,
+      var(--lonetrail-red) 33%,
+      var(--lonetrail-yellow) 33%,
+      var(--lonetrail-yellow) 66%,
+      var(--lonetrail-olive) 66%);
 
   --spacing-1: 0.25rem;
   --spacing-2: 0.5rem;
@@ -70,4 +67,3 @@ body {
   --transition-fast: 180ms ease;
   --transition-base: 240ms ease;
 }
-

@@ -35,7 +35,7 @@
 
 .listCard {
   grid-area: list;
-  background: var(--lonetrail-grey);
+  background: var(--bg-contrast);
   padding: var(--spacing-4);
 }
 
@@ -51,12 +51,12 @@
 .contextField {
   color: var(--text-contrast);
   grid-area: context;
-  background: var(--lonetrail-grey);
+  background: var(--bg-contrast);
 }
 
 .wordField {
   color: var(--text-contrast);
-  background: var(--lonetrail-grey);
+  background: var(--bg-contrast);
   grid-area: word;
 }
 
@@ -79,69 +79,72 @@
 
 .wordItem:hover,
 .wordItemActive {
-  background: var(--bg-select);
+  background: var(--bg-contrast);
+  color: var(--text-accent);
 }
 
 .value {
   margin: 0;
   padding: var(--spacing-4);
-  background: var(--lonetrail-grey);
+  background: var(--bg-contrast);
   color: var(--text-contrast);
 }
 
 .form {
-    grid-area: form;
-    display: grid;
-    grid-template-columns: 6fr 2fr 1fr;
-    color: var(--text-contrast);
+  grid-area: form;
+  display: grid;
+  grid-template-columns: 6fr 2fr 1fr;
+  color: var(--text-contrast);
 }
 
 .button {
-    position: relative;
-    color: var(--text-contrast);
-    background: var(--text-accent);
-    border: none;
-    width: 100%;
-    height: 100%;
-    font-size: 1.25rem;
-    cursor: pointer;
+  position: relative;
+  color: var(--text-contrast);
+  background: var(--text-accent);
+  border: none;
+  width: 100%;
+  height: 100%;
+  font-size: 1.25rem;
+  cursor: pointer;
 }
 
 .button::before {
-    content: "";
-    position: absolute;
-    inset: 0;
+  content: "";
+  position: absolute;
+  inset: 0;
 
-    background: var(--text-contrast);
+  background: var(--text-contrast);
 
-    mask: url(./media/rings.svg) no-repeat center;
-    -webkit-mask: url(./media/rings.svg) no-repeat center;
-    opacity: 0.5;
+  mask: url(./media/rings.svg) no-repeat center;
+  -webkit-mask: url(./media/rings.svg) no-repeat center;
+  opacity: 0.5;
 
-    transform: scale(0);
-    transition: var(--transition-base);
+  transform: scale(0);
+  transition: var(--transition-base);
 }
 
 .button:hover::before {
-    transform: scale(0.9);
+  transform: scale(0.9);
 }
 
 .button:active::before {
-    animation: pulse var(--transition-base);
+  animation: pulse var(--transition-base);
 }
 
 @keyframes pulse {
-    0% {
-        transform: scale(0.9);
-    }
-    50% {
-        transform: scale(0.95);
-    }
-    100% {
-        transform: scale(0.9);
-    }
+  0% {
+    transform: scale(0.9);
+  }
+
+  50% {
+    transform: scale(0.95);
+  }
+
+  100% {
+    transform: scale(0.9);
+  }
 }
 
-.input{
-    resize: none;
+.input {
+  resize: none;
 }
