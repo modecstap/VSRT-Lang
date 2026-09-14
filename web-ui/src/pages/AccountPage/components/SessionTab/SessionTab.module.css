@@ -99,7 +99,6 @@
 
 .button {
   position: relative;
-  color: var(--text-contrast);
   background: var(--text-accent);
   border: none;
   width: 100%;

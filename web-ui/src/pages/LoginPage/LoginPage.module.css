@@ -4,9 +4,7 @@
   display: grid;
   place-items: center;
   padding: var(--spacing-8) var(--spacing-4);
-  
   background: var(--bg-color);
-
 }
 
 .panel {
@@ -23,4 +21,3 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
-

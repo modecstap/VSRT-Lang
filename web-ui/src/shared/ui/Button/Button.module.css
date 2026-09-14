@@ -4,12 +4,11 @@
   font-weight: 700;
   cursor: pointer;
   padding: var(--spacing-3) var(--spacing-4);
-  background: none;
+  background: var(--button-color);
   color: var(--text-color);
   transition: background var(--transition-fast), color var(--transition-fast);
 }
 
 .button:hover {
-
   color: var(--text-contrast);
 }

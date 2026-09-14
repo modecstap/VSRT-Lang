@@ -12,16 +12,14 @@ function LoginPage() {
 
   return (
     <main className={styles.page}>
-      <div>
-        <section className={styles.panel}>
-          <h1 className={styles.title}>{isRegistering ? 'REGISTER' : 'LOGIN'}</h1>
-          {isRegistering ? (
-            <RegisterForm onSwitchToLogin={handleSwitchToLogin} />
-          ) : (
-            <LoginForm onSwitchToRegister={() => setIsRegistering(true)} />
-          )}
-        </section>
-      </div>
+      <section className={styles.panel}>
+        <h1 className={styles.title}>{isRegistering ? 'REGISTER' : 'LOGIN'}</h1>
+        {isRegistering ? (
+          <RegisterForm onSwitchToLogin={handleSwitchToLogin} />
+        ) : (
+          <LoginForm onSwitchToRegister={() => setIsRegistering(true)} />
+        )}
+      </section>
     </main>
   );
 }
