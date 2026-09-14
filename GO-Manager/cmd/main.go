@@ -43,9 +43,6 @@ func setupDb() *sql.DB {
 		slog.Error("Failed to load DB config", "error", err)
 		panic(err)
 	}
-
-	var db *sql.DB
-
 	for true {
 		fmt.Println("Trying to connect to DB...")
 		slog.Info("Connect to DB")
@@ -63,12 +60,10 @@ func setupDb() *sql.DB {
 			time.Sleep(SLEEP_TIME)
 			continue
 		}
-		
-		break
+
+		return db
 	}
-
-	return db
-
+	return nil
 }
 
 func startServer(deps *router.ServerDependens) {
