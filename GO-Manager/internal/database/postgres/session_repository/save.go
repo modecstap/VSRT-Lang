@@ -52,7 +52,7 @@ func (r *Repository) updateRecords(s *session.Session, tx *sql.Tx) error {
             synonyms,
             antonyms,
             contexts,
-			count,
+			count
         )
         VALUES($1,$2,$3,$4,$5,$6,$7,$8)
     `)
