@@ -42,7 +42,7 @@ func (h *Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sess := domain.NewSession(userID, req.Name, h.translator)
+	sess := domain.NewSession(userID, req.Name)
 
 	if err := h.repo.Save(sess); err != nil {
 		handlers.WriteError(w, http.StatusInternalServerError, "session_save_failed", err.Error())

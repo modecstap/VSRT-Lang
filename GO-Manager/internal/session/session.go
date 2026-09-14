@@ -17,7 +17,6 @@ type Interphase interface {
 func NewSession(
 	user user.UserId,
 	name string,
-	translator Translator,
 ) *Session {
 	return &Session{
 		User: user,

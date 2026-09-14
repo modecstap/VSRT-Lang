@@ -69,7 +69,7 @@ func TestNewRecord(t *testing.T) {
 
 func TestSessionSaveAndGetRecords(t *testing.T) {
 	translator := stub.Translator{}
-	session := session.NewSession(user.UserId("user-123"), "test-session", translator)
+	session := session.NewSession(user.UserId("user-123"), "test-session")
 
 	record := session.SaveRecord("world", "hello", translator)
 
@@ -89,7 +89,7 @@ func TestSessionSaveAndGetRecords(t *testing.T) {
 
 func TestCountWhenSaveOneRecord(t *testing.T) {
 	translator := stub.Translator{}
-	session := session.NewSession(user.UserId("user-123"), "test-session", translator)
+	session := session.NewSession(user.UserId("user-123"), "test-session")
 	_ = session.SaveRecord("world", "hello", translator)
 	
 	records := session.GetRecords()
@@ -100,7 +100,7 @@ func TestCountWhenSaveOneRecord(t *testing.T) {
 
 func TestSessionSaveRecordWithExistingPhrase(t *testing.T) {
 	translator := stub.Translator{}
-	session := session.NewSession(user.UserId("user-123"), "test-session", translator)
+	session := session.NewSession(user.UserId("user-123"), "test-session")
 	_ = session.SaveRecord("world", "hello", translator)
 	_ = session.SaveRecord("world", "hello", translator)
 
