@@ -82,8 +82,8 @@ func (r *Repository) updateRecords(s *session.Session, tx *sql.Tx) error {
 			pq.Array(rec.Translations),
 			pq.Array(rec.Synonyms),
 			pq.Array(rec.Antonyms),
-			rec.Count,
 			ctxJSON,
+			rec.Count,
 		)
 
 		if err != nil {
