@@ -37,6 +37,7 @@ body {
   --bg-contrast: var(--lonetrail-grey);
   --bg-higlight: var(--lonetrail-yellow);
   --bg-select: var(--lonetrail-orange);
+  --bg-grid-color: color-mix(in srgb, var(--lonetrail-grey), transparent 90%);
 
   --button-color: var(--lonetrail-orange);
   --button-contrast: var(--lonetrail-white);

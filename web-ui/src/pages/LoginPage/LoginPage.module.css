@@ -5,6 +5,12 @@
   place-items: center;
   padding: var(--spacing-8) var(--spacing-4);
   background: var(--bg-color);
+  background-image:
+    linear-gradient(to right, var(--bg-grid-color) 1px, transparent 1px),
+    linear-gradient(to top, var(--bg-grid-color) 1px, transparent 1px),
+    linear-gradient(45deg, transparent 57px, var(--bg-grid-color) 57px, transparent 58px),
+    linear-gradient(-45deg, transparent 57px, var(--bg-grid-color) 57px, transparent 58px);
+  background-size: 80px 80px;
 }
 
 .panel {
