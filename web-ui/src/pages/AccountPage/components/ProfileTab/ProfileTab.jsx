@@ -18,6 +18,7 @@ function ProfileTab() {
         sessionName,
         handleSessionNameChange,
         handleCreateSession,
+        handleSelectSession,
     } = useProfileTab();
 
     return (
@@ -34,6 +35,7 @@ function ProfileTab() {
                 creating={creating}
                 handleSessionNameChange={handleSessionNameChange}
                 handleCreateSession={handleCreateSession}
+                handleSelectSession={handleSelectSession}
             />
         </div>
     );

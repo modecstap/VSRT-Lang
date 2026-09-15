@@ -10,6 +10,7 @@ function SessionList({
     creating,
     handleSessionNameChange,
     handleCreateSession,
+    handleSelectSession,
 }) {
     return (
         <section className={styles.card}>
@@ -62,7 +63,18 @@ function SessionList({
 
                     <tbody>
                         {sessions.map((session) => (
-                            <tr key={session.id}>
+                            <tr
+                                key={session.id}
+                                onClick={() => handleSelectSession(session)}
+                                onKeyDown={(event) => {
+                                    if (event.key === 'Enter' || event.key === ' ') {
+                                        event.preventDefault();
+                                        handleSelectSession(session);
+                                    }
+                                }}
+                                role="button"
+                                tabIndex={0}
+                            >
                                 <td>{session.date}</td>
                                 <td>{session.name}</td>
                                 <td>{session.saved}</td>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchUserSessions } from '../api/profileTabApi';
+import { SESSION_STORAGE_KEY } from '../api/profileTabApi';
 import { createSession } from '../../SessionTab/api/sessionTabApi';
 import { buildSessionsViewModel } from '../model/profileTabModel';
 
@@ -61,6 +62,11 @@ function useProfileTab() {
     setSessionName(event.target.value);
   };
 
+  const handleSelectSession = (session) => {
+    localStorage.setItem(SESSION_STORAGE_KEY, String(session.id));
+    navigate('/account/session');
+  };
+
   return {
     sessions,
     loading,
@@ -69,6 +75,7 @@ function useProfileTab() {
     sessionName,
     handleSessionNameChange,
     handleCreateSession,
+    handleSelectSession,
   };
 }
 
