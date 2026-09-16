@@ -11,7 +11,7 @@ import (
 func TestCreateSession(t *testing.T) {
 	repo := memory.NewSessionRepository()
 	trans := stub.Translator{}
-	service := session.NewService(repo,trans)
+	service := session.NewService(repo, trans)
 
 	userID := user.UserId("test-user")
 	sessionName := "test-session"
@@ -50,5 +50,43 @@ func TestGetSessions(t *testing.T) {
 	}
 	if sessions[0].Name != "test-session" {
 		t.Fatalf("expected session name to be %q, but got %q", "test-session", sessions[0].Name)
+	}
+}
+
+func TestAddRecord(t *testing.T) {
+	repo := memory.NewSessionRepository()
+	trans := stub.Translator{}
+	service := session.NewService(repo, trans)
+	userId := user.UserId("test-user")
+	sessionName := "test-session"
+	sessionId, err := service.NewSession(userId, sessionName)
+	if err != nil {
+		t.Fatalf("expected to get sessions, but got error: %v", err)
+	}
+
+	command := session.AddRecordCommand{
+		UserId:    userId,
+		SessionId: sessionId,
+		Phrase:    "test",
+		Context:   "test context",
+	}
+	record, err := service.AddRecord(command)
+
+	sessions, err := service.GetSessions(userId)
+	if err != nil {
+		t.Fatalf("expected to get sessions, but got error: %v", err)
+	}
+
+	s := sessions[0]
+	
+	sRecord, ok := s.Records["test"]
+	if !ok {
+		t.Fatalf("record must be in saved session")
+	}
+	if sRecord.Phrase != record.Phrase {
+		t.Fatalf(
+			"expected equality record in session and responce record, but got %q and %q",
+			sRecord.Phrase, record.Phrase,
+		)
 	}
 }

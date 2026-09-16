@@ -1,6 +1,9 @@
 package session
 
-import "VSRT-Lang/internal/user"
+import (
+	"VSRT-Lang/internal/user"
+	"errors"
+)
 
 type Service struct {
 	repo       Repository
@@ -29,4 +32,28 @@ func (s *Service) GetSessions(userId user.UserId) ([]Session, error) {
 		return nil, err
 	}
 	return sessions, nil
+}
+
+type AddRecordCommand struct {
+	UserId		user.UserId
+	SessionId	int64
+	Phrase		string
+	Context		string
+}
+
+func (s *Service) AddRecord (c AddRecordCommand) (Record, error){
+	sessions, err := s.repo.TakeByUser(c.UserId)
+	if err != nil {
+		return Record{}, err
+	}
+
+	for _, session := range sessions{
+		if session.ID == c.SessionId {
+			record := session.SaveRecord(c.Context, c.Phrase, s.translator)
+			s.repo.Save(&session)
+			return record, nil
+		} 
+	}
+
+	return Record{}, errors.New("session not found")
 }
