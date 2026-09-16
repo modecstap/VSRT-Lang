@@ -5,7 +5,9 @@ import (
 	sessionhandler "VSRT-Lang/internal/http/handlers/session"
 	"VSRT-Lang/internal/http/handlers/user"
 	"VSRT-Lang/internal/http/middleware"
+	_ "VSRT-Lang/docs"
 	"net/http"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 type Handlers struct {
@@ -40,7 +42,9 @@ func NewServeMux(h Handlers) *http.ServeMux {
 		mux.Handle("GET /users/", protected(http.HandlerFunc(h.User.GetUserSessions)))
 	}
 
-	RegisterSwagger(mux)
+	mux.Handle("/swagger/", httpSwagger.Handler(
+		httpSwagger.URL("/swagger/doc.json"),
+	))
 
 	return mux
 }

@@ -13,21 +13,21 @@ type createRecordRequest struct {
 	Context string `json:"context"`
 }
 
+// SaveRecord godoc
+// @Summary      Save record to session
+// @Description  Save a new record into the specified session
+// @Tags         session
+// @Accept       json
+// @Produce      json
+// @Param        id    path      int                 true  "Session ID"
+// @Param        body  body      createRecordRequest true  "Record data"
+// @Success      201   {object}  map[string]any
+// @Failure      400   {string}  string  "invalid request"
+// @Failure      404   {string}  string  "not found"
+// @Failure      500   {string}  string  "internal error"
+// @Security    BearerAuth
+// @Router       /sessions/{id}/records [post]
 func (h *Handler) SaveRecord(w http.ResponseWriter, r *http.Request) {
-	// SaveRecord godoc
-	// @Summary      Save record to session
-	// @Description  Save a new record into the specified session
-	// @Tags         session
-	// @Accept       json
-	// @Produce      json
-	// @Param        id    path      int                 true  "Session ID"
-	// @Param        body  body      createRecordRequest true  "Record data"
-	// @Success      201   {object}  map[string]any
-	// @Failure      400   {string}  string  "invalid request"
-	// @Failure      404   {string}  string  "not found"
-	// @Failure      500   {string}  string  "internal error"
-	// @Router       /sessions/{id}/records [post]
-
 	parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/"), "/")
 	if len(parts) < 3 || parts[0] != "sessions" || parts[2] != "records" {
 		handlers.WriteError(w, http.StatusNotFound, "not_found", "route not found")

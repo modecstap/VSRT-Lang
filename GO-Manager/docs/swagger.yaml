@@ -1,0 +1,317 @@
+definitions:
+  VSRT-Lang_internal_session.Context:
+    properties:
+      phrase:
+        type: string
+      translation:
+        type: string
+    type: object
+  VSRT-Lang_internal_session.Record:
+    properties:
+      antonyms:
+        items:
+          type: string
+        type: array
+      base_form:
+        type: string
+      contexts:
+        items:
+          $ref: '#/definitions/VSRT-Lang_internal_session.Context'
+        type: array
+      count:
+        format: int64
+        type: integer
+      phrase:
+        type: string
+      synonyms:
+        items:
+          type: string
+        type: array
+      translations:
+        items:
+          type: string
+        type: array
+    type: object
+  VSRT-Lang_internal_session.Session:
+    properties:
+      id:
+        format: int64
+        type: integer
+      name:
+        type: string
+      records:
+        additionalProperties:
+          $ref: '#/definitions/VSRT-Lang_internal_session.Record'
+        type: object
+      user:
+        type: string
+    type: object
+  internal_http_handlers_auth.LoginRequest:
+    properties:
+      login:
+        type: string
+      password:
+        type: string
+    type: object
+  internal_http_handlers_auth.RegisterRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  internal_http_handlers_session.createRecordRequest:
+    properties:
+      context:
+        type: string
+      phrase:
+        type: string
+    type: object
+  internal_http_handlers_session.createSessionRequest:
+    properties:
+      name:
+        type: string
+    type: object
+  internal_http_handlers_session.recordsResponse:
+    properties:
+      records:
+        items:
+          $ref: '#/definitions/VSRT-Lang_internal_session.Record'
+        type: array
+    type: object
+  internal_http_handlers_session.sessionResponse:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: My API documentation
+  title: My API
+  version: "1.0"
+paths:
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and return access and refresh tokens
+      parameters:
+      - description: Login credentials
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_http_handlers_auth.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: invalid request
+          schema:
+            type: string
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+      summary: Login user
+      tags:
+      - auth
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account
+      parameters:
+      - description: Registration data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_http_handlers_auth.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: invalid request or validation error
+          schema:
+            type: string
+      summary: Register user
+      tags:
+      - auth
+  /sessions:
+    post:
+      consumes:
+      - application/json
+      description: Create a new session for the authenticated user
+      parameters:
+      - description: Session data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_http_handlers_session.createSessionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_http_handlers_session.sessionResponse'
+        "400":
+          description: invalid request
+          schema:
+            type: string
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Create session
+      tags:
+      - session
+  /sessions/{id}:
+    delete:
+      description: Deletes a session by its ID.
+      parameters:
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Invalid session ID
+          schema:
+            type: string
+        "404":
+          description: Session not found
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Delete session
+      tags:
+      - session
+  /sessions/{id}/records:
+    get:
+      description: Retrieve records for the specified session
+      parameters:
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_http_handlers_session.recordsResponse'
+        "400":
+          description: invalid request
+          schema:
+            type: string
+        "404":
+          description: not found
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Get session records
+      tags:
+      - session
+    post:
+      consumes:
+      - application/json
+      description: Save a new record into the specified session
+      parameters:
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Record data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_http_handlers_session.createRecordRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: invalid request
+          schema:
+            type: string
+        "404":
+          description: not found
+          schema:
+            type: string
+        "500":
+          description: internal error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Save record to session
+      tags:
+      - session
+  /users/{user_id}/sessions:
+    get:
+      description: Retrieve all sessions for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/VSRT-Lang_internal_session.Session'
+            type: array
+        "404":
+          description: not found
+          schema:
+            type: string
+        "500":
+          description: internal server error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Get user sessions
+      tags:
+      - user
+securityDefinitions:
+  BearerAuth:
+    description: 'JWT authorization. Example: Bearer eyJhbGciOiJIUzI1NiIs...'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

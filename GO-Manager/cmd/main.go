@@ -21,6 +21,14 @@ import (
 
 const SLEEP_TIME = 1 * time.Minute
 
+// @title My API
+// @version 1.0
+// @description My API documentation
+//
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description JWT authorization. Example: Bearer eyJhbGciOiJIUzI1NiIs...
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	slog.SetDefault(logger)
@@ -101,3 +109,5 @@ func startServer(deps *router.ServerDependens) {
 		cors(middleware.RequestLogger(slog.Default())(mux)),
 	)
 }
+
+

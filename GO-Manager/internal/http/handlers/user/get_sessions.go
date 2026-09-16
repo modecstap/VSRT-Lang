@@ -3,22 +3,23 @@ package user
 import (
 	"VSRT-Lang/internal/http/handlers"
 	"VSRT-Lang/internal/http/middleware"
+	_ "VSRT-Lang/internal/session"
 	"encoding/json"
 	"net/http"
 	"strings"
 )
 
+// GetUserSessions godoc
+// @Summary      Get user sessions
+// @Description  Retrieve all sessions for the authenticated user
+// @Tags         user
+// @Produce      json
+// @Success      200      {array}   session.Session
+// @Failure      404      {string}  string  "not found"
+// @Failure      500      {string}  string  "internal server error"
+// @Security    BearerAuth
+// @Router       /users/{user_id}/sessions [get]
 func (h *Handler) GetUserSessions(w http.ResponseWriter, r *http.Request) {
-	// GetUserSessions godoc
-	// @Summary      Get user sessions
-	// @Description  Retrieve all sessions for the specified user
-	// @Tags         session
-	// @Produce      json
-	// @Success      200      {array}   Session
-	// @Failure      400      {string}  string  "invalid request"
-	// @Failure      404      {string}  string  "not found"
-	// @Router       /users/{user_id}/sessions [get]
-
 	parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/"), "/")
 	if len(parts) < 2 || parts[0] != "users" || parts[1] != "sessions" {
 		handlers.WriteError(w, http.StatusNotFound, "not_found", "route not found")

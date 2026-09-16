@@ -17,19 +17,20 @@ type createSessionRequest struct {
 	Name string `json:"name"`
 }
 
+// CreateSession godoc
+//
+// @Summary     Create session
+// @Description Create a new session for the authenticated user
+// @Tags        session
+// @Accept      json
+// @Produce     json
+// @Param       body body createSessionRequest true "Session data"
+// @Success     201 {object} sessionResponse
+// @Failure     400 {string} string "invalid request"
+// @Failure     401 {string} string "unauthorized"
+// @Security    BearerAuth
+// @Router      /sessions [post]
 func (h *Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
-	// CreateSession godoc
-	// @Summary      Create session
-	// @Description  Create a new session for the authenticated user
-	// @Tags         session
-	// @Accept       json
-	// @Produce      json
-	// @Param        body  body      createSessionRequest  true  "Session data"
-	// @Success      201   {object}  sessionResponse
-	// @Failure      400   {string}  string  "invalid request"
-	// @Failure      401   {string}  string  "unauthorized"
-	// @Router       /sessions [post]
-
 	var req createSessionRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		handlers.WriteError(w, http.StatusBadRequest, "invalid_request", "invalid request")
