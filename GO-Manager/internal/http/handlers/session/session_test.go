@@ -12,6 +12,7 @@ import (
 	"VSRT-Lang/internal/auth"
 	"VSRT-Lang/internal/http/middleware"
 	domain "VSRT-Lang/internal/session"
+	"VSRT-Lang/internal/user"
 )
 
 type stubRepository struct {
@@ -32,6 +33,26 @@ func (r *stubRepository) Take(sessionID int) (domain.Session, error) {
 		return domain.Session{}, errors.New("session not found")
 	}
 	return *s, nil
+}
+func (r *stubRepository) FindByUser(userID user.UserId) ([]domain.Session, error) {
+	var sessions []domain.Session
+	for _, session := range r.sessions {
+		if session.User == userID {
+			sessions = append(sessions, *session)
+		}
+	}
+	return sessions, nil
+}
+
+func (r *stubRepository) Delete(sessionID int) error {
+	if r.sessions == nil {
+		return errors.New("session not found")
+	}
+	if _, ok := r.sessions[sessionID]; !ok {
+		return errors.New("session not found")
+	}
+	delete(r.sessions, sessionID)
+	return nil
 }
 
 func TestCreateSession(t *testing.T) {
