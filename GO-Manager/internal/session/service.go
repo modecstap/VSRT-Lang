@@ -6,6 +6,7 @@ import (
 )
 
 var ErrUnauthorized = errors.New("unauthorized")
+var ErrSessionNotFound = errors.New("session not found")
 
 type Service struct {
 	repo       Repository
@@ -57,7 +58,7 @@ func (s *Service) AddRecord(c AddRecordCommand) (Record, error) {
 		}
 	}
 
-	return Record{}, errors.New("session not found")
+	return Record{}, ErrSessionNotFound
 }
 
 func (s *Service) Delete(userId user.UserId, sessionId int64) error {

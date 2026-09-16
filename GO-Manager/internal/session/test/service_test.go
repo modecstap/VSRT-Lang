@@ -98,6 +98,38 @@ func TestAddRecord(t *testing.T) {
 	}
 }
 
+func TestAddRecordByanotherUser(t *testing.T) {
+	service, _ := setupService()
+	userId, sessionId, err := createSession(service)
+	if err != nil {
+		t.Fatalf("expected to get sessions, but got error: %v", err)
+	}
+
+	command := session.AddRecordCommand{
+		UserId:    "Another User",
+		SessionId: sessionId,
+		Phrase:    "test",
+		Context:   "test context",
+	}
+
+	_, err = service.AddRecord(command)
+
+	if !errors.Is(err, session.ErrSessionNotFound) {
+		t.Fatalf(
+			"must be error «session not found» but got %v", err,
+		)
+	}
+
+	sessions, err := service.GetSessions(userId)
+	if err != nil {
+		t.Fatalf("expected to get sessions, but got error: %v", err)
+	}
+	s := sessions[0]
+	if len(s.Records) != 0 {
+		t.Fatalf("record count be 0 but got %d", len(s.Records))
+	}
+}
+
 func TestDeleteSession(t *testing.T) {
 	service, _ := setupService()
 	userId, sessionId, err := createSession(service)
