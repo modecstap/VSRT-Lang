@@ -5,13 +5,26 @@ import (
 	"VSRT-Lang/internal/session"
 	"VSRT-Lang/internal/translators/stub"
 	"VSRT-Lang/internal/user"
+	"errors"
 	"testing"
 )
 
-func TestCreateSession(t *testing.T) {
+func setupService() (*session.Service, *memory.SessionRepository) {
 	repo := memory.NewSessionRepository()
 	trans := stub.Translator{}
 	service := session.NewService(repo, trans)
+	return service, repo
+}
+
+func createSession(service *session.Service) (user.UserId, int64, error) {
+	userId := user.UserId("test-user")
+	sessionName := "test-session"
+	sessionId, err := service.NewSession(userId, sessionName)
+	return userId, sessionId, err
+}
+
+func TestCreateSession(t *testing.T) {
+	service, repo := setupService()
 
 	userID := user.UserId("test-user")
 	sessionName := "test-session"
@@ -34,11 +47,11 @@ func TestCreateSession(t *testing.T) {
 }
 
 func TestGetSessions(t *testing.T) {
-	repo := memory.NewSessionRepository()
-	trans := stub.Translator{}
-	service := session.NewService(repo, trans)
-
-	service.NewSession(user.UserId("test-user"), "test-session")
+	service, _ := setupService()
+	_, _, err := createSession(service)
+	if err != nil {
+		t.Fatalf("expected to get sessions, but got error: %v", err)
+	}
 
 	sessions, err := service.GetSessions(user.UserId("test-user"))
 	if err != nil {
@@ -54,12 +67,8 @@ func TestGetSessions(t *testing.T) {
 }
 
 func TestAddRecord(t *testing.T) {
-	repo := memory.NewSessionRepository()
-	trans := stub.Translator{}
-	service := session.NewService(repo, trans)
-	userId := user.UserId("test-user")
-	sessionName := "test-session"
-	sessionId, err := service.NewSession(userId, sessionName)
+	service, _ := setupService()
+	userId, sessionId, err := createSession(service)
 	if err != nil {
 		t.Fatalf("expected to get sessions, but got error: %v", err)
 	}
@@ -76,9 +85,7 @@ func TestAddRecord(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected to get sessions, but got error: %v", err)
 	}
-
 	s := sessions[0]
-	
 	sRecord, ok := s.Records["test"]
 	if !ok {
 		t.Fatalf("record must be in saved session")
@@ -87,6 +94,45 @@ func TestAddRecord(t *testing.T) {
 		t.Fatalf(
 			"expected equality record in session and responce record, but got %q and %q",
 			sRecord.Phrase, record.Phrase,
+		)
+	}
+}
+
+func TestDeleteSession(t *testing.T) {
+	service, _ := setupService()
+	userId, sessionId, err := createSession(service)
+	if err != nil {
+		t.Fatalf("expected to get sessions, but got error: %v", err)
+	}
+
+	err = service.Delete(userId, sessionId)
+
+	sessions, err := service.GetSessions(userId)
+	if len(sessions) != 0 {
+		t.Fatalf(
+			"count session must be 0 but got %d", len(sessions),
+		)
+	}
+}
+
+func TestDeleteAnotherUserSession(t *testing.T) {
+	service, _ := setupService()
+	userId, sessionId, err := createSession(service)
+	if err != nil {
+		t.Fatalf("expected to get sessions, but got error: %v", err)
+	}
+
+	err = service.Delete("WrongUser", sessionId)
+	if !errors.Is(err, session.ErrUnauthorized) {
+		t.Fatalf(
+			"must be error «unauthorized» but got %v", err,
+		)
+	}
+
+	sessions, err := service.GetSessions(userId)
+	if len(sessions) != 1 {
+		t.Fatalf(
+			"count session must be 1 but got %d", len(sessions),
 		)
 	}
 }

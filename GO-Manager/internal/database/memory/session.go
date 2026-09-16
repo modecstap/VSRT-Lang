@@ -66,10 +66,10 @@ func (r *SessionRepository) TakeByUser(userID user.UserId) ([]session.Session, e
 	return result, nil
 }
 
-func (r *SessionRepository) Delete(sessionID int) error {
+func (r *SessionRepository) Delete(sessionID int64) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	delete(r.sessions, int64(sessionID))
+	delete(r.sessions, sessionID)
 	return nil
 }
 

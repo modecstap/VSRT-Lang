@@ -5,6 +5,8 @@ import (
 	"errors"
 )
 
+var ErrUnauthorized = errors.New("unauthorized")
+
 type Service struct {
 	repo       Repository
 	translator Translator
@@ -35,25 +37,40 @@ func (s *Service) GetSessions(userId user.UserId) ([]Session, error) {
 }
 
 type AddRecordCommand struct {
-	UserId		user.UserId
-	SessionId	int64
-	Phrase		string
-	Context		string
+	UserId    user.UserId
+	SessionId int64
+	Phrase    string
+	Context   string
 }
 
-func (s *Service) AddRecord (c AddRecordCommand) (Record, error){
+func (s *Service) AddRecord(c AddRecordCommand) (Record, error) {
 	sessions, err := s.repo.TakeByUser(c.UserId)
 	if err != nil {
 		return Record{}, err
 	}
 
-	for _, session := range sessions{
+	for _, session := range sessions {
 		if session.ID == c.SessionId {
 			record := session.SaveRecord(c.Context, c.Phrase, s.translator)
 			s.repo.Save(&session)
 			return record, nil
-		} 
+		}
 	}
 
 	return Record{}, errors.New("session not found")
+}
+
+func (s *Service) Delete(userId user.UserId, sessionId int64) error {
+	sessions, err := s.repo.TakeByUser(userId)
+	if err != nil {
+		return err
+	}
+
+	for _, session := range sessions {
+		if session.ID == sessionId {
+			return s.repo.Delete(sessionId)
+		}
+	}
+
+	return ErrUnauthorized
 }
