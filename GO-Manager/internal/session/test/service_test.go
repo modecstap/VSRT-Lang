@@ -33,3 +33,22 @@ func TestCreateSession(t *testing.T) {
 	}
 }
 
+func TestGetSessions(t *testing.T) {
+	repo := memory.NewSessionRepository()
+	trans := stub.Translator{}
+	service := session.NewService(repo, trans)
+
+	service.NewSession(user.UserId("test-user"), "test-session")
+
+	sessions, err := service.GetSessions(user.UserId("test-user"))
+	if err != nil {
+		t.Fatalf("expected to get sessions, but got error: %v", err)
+	}
+
+	if len(sessions) != 1 {
+		t.Fatalf("expected to get 1 session, but got %d", len(sessions))
+	}
+	if sessions[0].Name != "test-session" {
+		t.Fatalf("expected session name to be %q, but got %q", "test-session", sessions[0].Name)
+	}
+}

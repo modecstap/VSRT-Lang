@@ -22,3 +22,11 @@ func (s *Service) NewSession(userId user.UserId, name string) (int64, error) {
 	}
 	return id, nil
 }
+
+func (s *Service) GetSessions(userId user.UserId) ([]Session, error) {
+	sessions, err := s.repo.TakeByUser(userId)
+	if err != nil {
+		return nil, err
+	}
+	return sessions, nil
+}

@@ -47,7 +47,7 @@ func (r *SessionRepository) Take(sessionID int64) (session.Session, error) {
 	return *cloneSession(s), nil
 }
 
-func (r *SessionRepository) FindByUser(userID user.UserId) ([]session.Session, error) {
+func (r *SessionRepository) TakeByUser(userID user.UserId) ([]session.Session, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
