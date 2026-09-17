@@ -37,6 +37,21 @@ func (s *Service) GetSessions(userId user.UserId) ([]Session, error) {
 	return sessions, nil
 }
 
+func (s *Service) GetSession(userId user.UserId, sessionId int64) (Session, error) {
+	sessions, err := s.repo.TakeByUser(userId)
+	if err != nil {
+		return Session{}, err
+	}
+
+	for _, session := range sessions {
+		if session.ID == sessionId {
+			return session, nil
+		}
+	}
+
+	return Session{}, ErrSessionNotFound
+}
+
 func (s *Service) DeleteSession(userId user.UserId, sessionId int64) error {
 	sessions, err := s.repo.TakeByUser(userId)
 	if err != nil {
@@ -68,7 +83,9 @@ func (s *Service) AddRecord(c AddRecordCommand) (Record, error) {
 	for _, session := range sessions {
 		if session.ID == c.SessionId {
 			record := session.SaveRecord(c.Context, c.Phrase, s.translator)
-			s.repo.Save(&session)
+			if _, err := s.repo.Save(&session); err != nil {
+				return Record{}, err
+			}
 			return record, nil
 		}
 	}

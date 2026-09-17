@@ -68,6 +68,42 @@ func TestGetSessions(t *testing.T) {
 	}
 }
 
+func TestGetSession(t *testing.T) {
+	service, _ := setupService()
+	userID, sessionID, err := createSession(service)
+	if err != nil {
+		t.Fatalf("expected session to be created, but got error: %v", err)
+	}
+
+	got, err := service.GetSession(userID, sessionID)
+	if err != nil {
+		t.Fatalf("expected to get session, but got error: %v", err)
+	}
+
+	if got.ID != sessionID {
+		t.Fatalf("expected session ID to be %d, but got %d", sessionID, got.ID)
+	}
+	if got.Name != "test-session" {
+		t.Fatalf("expected session name to be %q, but got %q", "test-session", got.Name)
+	}
+	if got.User != userID {
+		t.Fatalf("expected session user to be %q, but got %q", userID, got.User)
+	}
+}
+
+func TestGetSessionByAnotherUser(t *testing.T) {
+	service, _ := setupService()
+	_, sessionID, err := createSession(service)
+	if err != nil {
+		t.Fatalf("expected session to be created, but got error: %v", err)
+	}
+
+	_, err = service.GetSession(ANOTHER_USER, sessionID)
+	if !errors.Is(err, session.ErrSessionNotFound) {
+		t.Fatalf("expected error %q, but got %v", session.ErrSessionNotFound, err)
+	}
+}
+
 func TestAddRecord(t *testing.T) {
 	service, _ := setupService()
 	userId, sessionId, err := createSession(service)
