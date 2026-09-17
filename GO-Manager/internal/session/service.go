@@ -13,23 +13,6 @@ type Service struct {
 	translator Translator
 }
 
-func (s *Service) DeleteRecord(userId user.UserId, sessionId int64, phrase string) error {
-	sessions, err := s.repo.TakeByUser(userId)
-	if err != nil {
-		return err
-	}
-
-	for _, session := range sessions {
-		if session.ID == sessionId {
-			delete(session.Records, phrase)
-			_, err = s.repo.Save(&session)
-			return err
-		}
-	}
-
-	return ErrUnauthorized
-}
-
 func NewService(repo Repository, translator Translator) *Service {
 	return &Service{
 		repo:       repo,
@@ -52,6 +35,21 @@ func (s *Service) GetSessions(userId user.UserId) ([]Session, error) {
 		return nil, err
 	}
 	return sessions, nil
+}
+
+func (s *Service) DeleteSession(userId user.UserId, sessionId int64) error {
+	sessions, err := s.repo.TakeByUser(userId)
+	if err != nil {
+		return err
+	}
+
+	for _, session := range sessions {
+		if session.ID == sessionId {
+			return s.repo.Delete(sessionId)
+		}
+	}
+
+	return ErrUnauthorized
 }
 
 type AddRecordCommand struct {
@@ -78,7 +76,7 @@ func (s *Service) AddRecord(c AddRecordCommand) (Record, error) {
 	return Record{}, ErrSessionNotFound
 }
 
-func (s *Service) Delete(userId user.UserId, sessionId int64) error {
+func (s *Service) DeleteRecord(userId user.UserId, sessionId int64, phrase string) error {
 	sessions, err := s.repo.TakeByUser(userId)
 	if err != nil {
 		return err
@@ -86,7 +84,9 @@ func (s *Service) Delete(userId user.UserId, sessionId int64) error {
 
 	for _, session := range sessions {
 		if session.ID == sessionId {
-			return s.repo.Delete(sessionId)
+			delete(session.Records, phrase)
+			_, err = s.repo.Save(&session)
+			return err
 		}
 	}
 

@@ -139,7 +139,7 @@ func TestDeleteSession(t *testing.T) {
 		t.Fatalf("expected to get sessions, but got error: %v", err)
 	}
 
-	err = service.Delete(userId, sessionId)
+	err = service.DeleteSession(userId, sessionId)
 
 	sessions, err := service.GetSessions(userId)
 	if len(sessions) != 0 {
@@ -156,7 +156,7 @@ func TestDeleteAnotherUserSession(t *testing.T) {
 		t.Fatalf("expected to get sessions, but got error: %v", err)
 	}
 
-	err = service.Delete(ANOTHER_USER, sessionId)
+	err = service.DeleteSession(ANOTHER_USER, sessionId)
 	if !errors.Is(err, session.ErrUnauthorized) {
 		t.Fatalf(
 			"must be error «unauthorized» but got %v", err,
@@ -205,7 +205,7 @@ func TestDeleteRecordByAnotherUser(t *testing.T) {
 		Phrase:    "test",
 		Context:   "test context",
 	})
-	
+
 	err = service.DeleteRecord(ANOTHER_USER, sessionId, "test")
 
 	sessions, err := service.GetSessions(userId)
