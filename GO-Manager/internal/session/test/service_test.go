@@ -9,6 +9,8 @@ import (
 	"testing"
 )
 
+const ANOTHER_USER = user.UserId("Another User")
+
 func setupService() (*session.Service, *memory.SessionRepository) {
 	repo := memory.NewSessionRepository()
 	trans := stub.Translator{}
@@ -98,7 +100,7 @@ func TestAddRecord(t *testing.T) {
 	}
 }
 
-func TestAddRecordByanotherUser(t *testing.T) {
+func TestAddRecordByAnotherUser(t *testing.T) {
 	service, _ := setupService()
 	userId, sessionId, err := createSession(service)
 	if err != nil {
@@ -106,7 +108,7 @@ func TestAddRecordByanotherUser(t *testing.T) {
 	}
 
 	command := session.AddRecordCommand{
-		UserId:    "Another User",
+		UserId:    ANOTHER_USER,
 		SessionId: sessionId,
 		Phrase:    "test",
 		Context:   "test context",
@@ -154,7 +156,7 @@ func TestDeleteAnotherUserSession(t *testing.T) {
 		t.Fatalf("expected to get sessions, but got error: %v", err)
 	}
 
-	err = service.Delete("WrongUser", sessionId)
+	err = service.Delete(ANOTHER_USER, sessionId)
 	if !errors.Is(err, session.ErrUnauthorized) {
 		t.Fatalf(
 			"must be error «unauthorized» but got %v", err,
@@ -166,5 +168,52 @@ func TestDeleteAnotherUserSession(t *testing.T) {
 		t.Fatalf(
 			"count session must be 1 but got %d", len(sessions),
 		)
+	}
+}
+
+func TestDeleteRecord(t *testing.T) {
+	service, _ := setupService()
+	userId, sessionId, err := createSession(service)
+	service.AddRecord(session.AddRecordCommand{
+		UserId:    userId,
+		SessionId: sessionId,
+		Phrase:    "test",
+		Context:   "test context",
+	})
+
+	err = service.DeleteRecord(userId, sessionId, "test")
+	if err != nil {
+		t.Fatalf("expected to delete Record, but got error: %v", err)
+	}
+
+	sessions, err := service.GetSessions(userId)
+	if err != nil {
+		t.Fatalf("expected to get sessions, but got error: %v", err)
+	}
+	_, ok := sessions[0].Records["test"]
+	if ok {
+		t.Fatal("record must be deleted but sill exist")
+	}
+}
+
+func TestDeleteRecordByAnotherUser(t *testing.T) {
+	service, _ := setupService()
+	userId, sessionId, err := createSession(service)
+	service.AddRecord(session.AddRecordCommand{
+		UserId:    userId,
+		SessionId: sessionId,
+		Phrase:    "test",
+		Context:   "test context",
+	})
+	
+	err = service.DeleteRecord(ANOTHER_USER, sessionId, "test")
+
+	sessions, err := service.GetSessions(userId)
+	if err != nil {
+		t.Fatalf("expected to get sessions, but got error: %v", err)
+	}
+	_, ok := sessions[0].Records["test"]
+	if !ok {
+		t.Fatal("record must exist")
 	}
 }

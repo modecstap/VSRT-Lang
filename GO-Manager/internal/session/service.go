@@ -13,6 +13,23 @@ type Service struct {
 	translator Translator
 }
 
+func (s *Service) DeleteRecord(userId user.UserId, sessionId int64, phrase string) error {
+	sessions, err := s.repo.TakeByUser(userId)
+	if err != nil {
+		return err
+	}
+
+	for _, session := range sessions {
+		if session.ID == sessionId {
+			delete(session.Records, phrase)
+			_, err = s.repo.Save(&session)
+			return err
+		}
+	}
+
+	return ErrUnauthorized
+}
+
 func NewService(repo Repository, translator Translator) *Service {
 	return &Service{
 		repo:       repo,
