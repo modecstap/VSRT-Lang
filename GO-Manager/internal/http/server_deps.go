@@ -18,12 +18,12 @@ import (
 )
 
 type ServerDependens struct {
-	UserRepo    *user_repository.Repository
-	SessionRepo *session_repository.Repository
-	AuthService *auth.Service
-	JwtService  *auth.JWTService
-	Translator  session.Translator
-	Host        string
+	UserRepo    	*user_repository.Repository
+	SessionRepo		*session_repository.Repository
+	SessionService	*session.Service
+	AuthService 	*auth.Service
+	JwtService  	*auth.JWTService
+	Host        	string
 }
 
 func DependensFromEnv(db *sql.DB) (*ServerDependens, error) {
@@ -39,20 +39,19 @@ func DependensFromEnv(db *sql.DB) (*ServerDependens, error) {
 		return nil, errors.New("environment variable MANAGER_HOST not found")
 	}
 
-	secret, ok := os.LookupEnv("SECRET_KEY")
-	if !ok {
-		return nil, errors.New("environment variable SECRET_KEY not found")
-	}
-
-	userRepo := user_repository.New(db)
-	tokenRepo := refresh_token_repository.New(db)
 	sessionRepo := session_repository.New(db)
-
 	translator, err := setupTranslator(mode)
 	if err != nil {
 		return nil, err
 	}
-
+	sessionService := session.NewService(sessionRepo, translator)
+	
+	userRepo := user_repository.New(db)
+	tokenRepo := refresh_token_repository.New(db)
+	secret, ok := os.LookupEnv("SECRET_KEY")
+	if !ok {
+		return nil, errors.New("environment variable SECRET_KEY not found")
+	}
 	jwtService := auth.NewJWTService(secret)
 	authService := auth.NewService(
 		userRepo,
@@ -61,12 +60,12 @@ func DependensFromEnv(db *sql.DB) (*ServerDependens, error) {
 	)
 
 	return &ServerDependens{
-		UserRepo:    userRepo,
-		SessionRepo: sessionRepo,
-		AuthService: authService,
-		JwtService:  jwtService,
-		Translator:  translator,
-		Host:        host,
+		UserRepo:    	userRepo,
+		SessionRepo: 	sessionRepo,
+		SessionService: sessionService,
+		AuthService: 	authService,
+		JwtService:  	jwtService,
+		Host:        	host,
 	}, nil
 }
 

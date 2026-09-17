@@ -8,10 +8,11 @@ import (
 	"github.com/lib/pq"
 )
 
-func (r *Repository) Save(s *session.Session) error {
+// Save implements [session.Repository].
+func (r *Repository) Save(session *session.Session) (id int64, err error) {
 	tx, err := r.db.Begin()
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	defer func() {
@@ -20,17 +21,20 @@ func (r *Repository) Save(s *session.Session) error {
 		}
 	}()
 
-	err = r.saveSession(s, tx)
+	err = r.saveSession(session, tx)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	err = r.updateRecords(s, tx)
+	err = r.updateRecords(session, tx)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	return tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return 0, err
+	}
+	return session.ID, nil
 }
 
 func (r *Repository) updateRecords(s *session.Session, tx *sql.Tx) error {

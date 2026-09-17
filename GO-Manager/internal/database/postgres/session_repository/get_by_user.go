@@ -7,6 +7,7 @@ import (
 	"errors"
 )
 
+// FindByUser implements [session.Repository].
 func (r *Repository) FindByUser(userId user.UserId) ([]session.Session, error) {
 	var sessions []session.Session
 
@@ -25,7 +26,7 @@ func (r *Repository) FindByUser(userId user.UserId) ([]session.Session, error) {
 
 	defer rows.Close()
 
-	for rows.Next(){
+	for rows.Next() {
 		s := session.NewSession(userId, "")
 
 		err = rows.Scan(
@@ -56,3 +57,6 @@ func (r *Repository) FindByUser(userId user.UserId) ([]session.Session, error) {
 	return sessions, nil
 }
 
+func (r *Repository) TakeByUser(userId user.UserId) ([]session.Session, error) {
+	return r.FindByUser(userId)
+}

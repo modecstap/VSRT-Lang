@@ -8,32 +8,33 @@ import (
 	"strings"
 	"testing"
 
-	"VSRT-Lang/internal"
 	"VSRT-Lang/internal/auth"
 	"VSRT-Lang/internal/http/middleware"
 	domain "VSRT-Lang/internal/session"
+	"VSRT-Lang/internal/translators/stub"
 	"VSRT-Lang/internal/user"
 )
 
 type stubRepository struct {
-	sessions map[int]*domain.Session
+	sessions map[int64]*domain.Session
 }
 
-func (r *stubRepository) Save(s *domain.Session) error {
+func (r *stubRepository) Save(s *domain.Session) (int64, error) {
 	if r.sessions == nil {
-		r.sessions = make(map[int]*domain.Session)
+		r.sessions = make(map[int64]*domain.Session)
 	}
-	r.sessions[int(s.ID)] = s
-	return nil
+	r.sessions[s.ID] = s
+	return s.ID, nil
 }
 
-func (r *stubRepository) Take(sessionID int) (domain.Session, error) {
+func (r *stubRepository) Take(sessionID int64) (domain.Session, error) {
 	s, ok := r.sessions[sessionID]
 	if !ok {
 		return domain.Session{}, errors.New("session not found")
 	}
 	return *s, nil
 }
+
 func (r *stubRepository) FindByUser(userID user.UserId) ([]domain.Session, error) {
 	var sessions []domain.Session
 	for _, session := range r.sessions {
@@ -44,7 +45,7 @@ func (r *stubRepository) FindByUser(userID user.UserId) ([]domain.Session, error
 	return sessions, nil
 }
 
-func (r *stubRepository) Delete(sessionID int) error {
+func (r *stubRepository) Delete(sessionID int64) error {
 	if r.sessions == nil {
 		return errors.New("session not found")
 	}
@@ -57,7 +58,7 @@ func (r *stubRepository) Delete(sessionID int) error {
 
 func TestCreateSession(t *testing.T) {
 	repo := &stubRepository{}
-	h := NewHandler(repo, internal.MockTranslator{})
+	h := NewHandler(domain.NewService(repo, stub.Translator{}))
 
 	jwt := auth.NewJWTService("StrongSecretString")
 	token, err := jwt.GenerateAccessToken("1", "demo", "demo@example.com")
@@ -83,7 +84,7 @@ func TestCreateSession(t *testing.T) {
 
 func TestSaveAndGetRecords(t *testing.T) {
 	repo := &stubRepository{}
-	h := NewHandler(repo, internal.MockTranslator{})
+	h := NewHandler(domain.NewService(repo, stub.Translator{}))
 
 	jwt := auth.NewJWTService("StrongSecretString")
 	token, err := jwt.GenerateAccessToken("1", "demo", "demo@example.com")

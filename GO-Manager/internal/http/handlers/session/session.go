@@ -5,18 +5,17 @@ import (
 	"VSRT-Lang/internal/user"
 )
 
-type Repository interface {
-	Save(session *domain.Session) error
-	Take(sessionID int) (domain.Session, error)
-	FindByUser(userID user.UserId) ([]domain.Session, error)
-	Delete(sessionID int) error
+type Service interface {
+	NewSession(user.UserId, string) (int64, error)
+	GetSession(user.UserId, int64) (domain.Session, error)
+	DeleteSession(user.UserId, int64) error
+	AddRecord(domain.AddRecordCommand) (domain.Record, error)
 }
 
 type Handler struct {
-	repo       Repository
-	translator domain.Translator
+	service Service
 }
 
-func NewHandler(repo Repository, translator domain.Translator) *Handler {
-	return &Handler{repo: repo, translator: translator}
+func NewHandler(service Service) *Handler {
+	return &Handler{service: service}
 }

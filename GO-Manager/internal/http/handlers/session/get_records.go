@@ -2,6 +2,7 @@ package session
 
 import (
 	"VSRT-Lang/internal/http/handlers"
+	"VSRT-Lang/internal/http/middleware"
 	domain "VSRT-Lang/internal/session"
 	"encoding/json"
 	"net/http"
@@ -37,7 +38,13 @@ func (h *Handler) GetRecords(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stored, err := h.repo.Take(sessionID)
+	userID, _, ok := middleware.UserFromContext(r.Context())
+	if !ok {
+		handlers.WriteError(w, http.StatusUnauthorized, "unauthorized", "missing user context")
+		return
+	}
+
+	stored, err := h.service.GetSession(userID, int64(sessionID))
 	if err != nil {
 		handlers.WriteError(w, http.StatusNotFound, "session_not_found", err.Error())
 		return

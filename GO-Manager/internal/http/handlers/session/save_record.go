@@ -2,6 +2,8 @@ package session
 
 import (
 	"VSRT-Lang/internal/http/handlers"
+	"VSRT-Lang/internal/http/middleware"
+	domain "VSRT-Lang/internal/session"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -46,14 +48,23 @@ func (h *Handler) SaveRecord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stored, err := h.repo.Take(sessionID)
-	if err != nil {
-		handlers.WriteError(w, http.StatusNotFound, "session_not_found", err.Error())
+	userID, _, ok := middleware.UserFromContext(r.Context())
+	if !ok {
+		handlers.WriteError(w, http.StatusUnauthorized, "unauthorized", "missing user context")
 		return
 	}
 
-	stored.SaveRecord(req.Context, req.Phrase, h.translator)
-	if err := h.repo.Save(&stored); err != nil {
+	_, err = h.service.AddRecord(domain.AddRecordCommand{
+		UserId:    userID,
+		SessionId: int64(sessionID),
+		Phrase:    req.Phrase,
+		Context:   req.Context,
+	})
+	if err != nil {
+		if err == domain.ErrSessionNotFound {
+			handlers.WriteError(w, http.StatusNotFound, "session_not_found", err.Error())
+			return
+		}
 		handlers.WriteError(w, http.StatusInternalServerError, "record_save_failed", err.Error())
 		return
 	}

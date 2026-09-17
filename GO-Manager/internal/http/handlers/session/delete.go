@@ -1,10 +1,10 @@
 package session
 
 import (
+	"VSRT-Lang/internal/http/handlers"
 	"VSRT-Lang/internal/http/middleware"
-	"VSRT-Lang/internal/user"
+	domain "VSRT-Lang/internal/session"
 	"net/http"
-	"slices"
 	"strconv"
 	"strings"
 )
@@ -38,31 +38,15 @@ func (h *Handler) DeleteSession(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
-	sessionsId, err := h.takeSessionsIdByUser(userID)
+	err = h.service.DeleteSession(userID, int64(sessionID))
 	if err != nil {
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-	}
-
-	if !slices.Contains(sessionsId, sessionID) {
-		http.Error(w, "session not found", http.StatusNotFound)
+		if err == domain.ErrUnauthorized {
+			handlers.WriteError(w, http.StatusNotFound, "session_not_found", err.Error())
+			return
+		}
+		handlers.WriteError(w, http.StatusInternalServerError, "session_delete_failed", err.Error())
 		return
 	}
 
-	err = h.repo.Delete(sessionID)
-	if err != nil {
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-		return
-	}
-}
-
-func (h *Handler) takeSessionsIdByUser(userID user.UserId) ([]int, error) {
-	sessions, err := h.repo.FindByUser(userID)
-	if err != nil {
-		return nil, err
-	}
-	sessionsId := make([]int, len(sessions))
-	for i, session := range sessions {
-		sessionsId[i] = int(session.ID)
-	}
-	return sessionsId, nil
+	w.WriteHeader(http.StatusNoContent)
 }

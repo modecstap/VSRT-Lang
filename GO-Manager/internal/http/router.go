@@ -1,19 +1,20 @@
 package router
 
 import (
+	_ "VSRT-Lang/docs"
 	"VSRT-Lang/internal/http/handlers/auth"
 	sessionhandler "VSRT-Lang/internal/http/handlers/session"
 	"VSRT-Lang/internal/http/handlers/user"
 	"VSRT-Lang/internal/http/middleware"
-	_ "VSRT-Lang/docs"
 	"net/http"
+
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 type Handlers struct {
-	Auth *auth.Handler
-	Session *sessionhandler.Handler
-	User *user.Handler
+	Auth           *auth.Handler
+	Session        *sessionhandler.Handler
+	User           *user.Handler
 	AuthMiddleware middleware.Middleware
 }
 
@@ -30,6 +31,7 @@ func NewServeMux(h Handlers) *http.ServeMux {
 		}
 
 		mux.Handle("POST /sessions", protected(http.HandlerFunc(h.Session.CreateSession)))
+		mux.Handle("DELETE /sessions/", protected(http.HandlerFunc(h.Session.DeleteSession)))
 		mux.Handle("POST /sessions/", protected(http.HandlerFunc(h.Session.SaveRecord)))
 		mux.Handle("GET /sessions/", protected(http.HandlerFunc(h.Session.GetRecords)))
 	}

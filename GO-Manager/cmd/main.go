@@ -78,7 +78,7 @@ func startServer(deps *router.ServerDependens) {
 	slog.Info("Setup handler")
 	handlers := myHttp.Handlers{
 		Auth:           auth_handler.NewAuth(deps.AuthService),
-		Session:        session_handler.NewHandler(deps.SessionRepo, deps.Translator),
+		Session:        session_handler.NewHandler(deps.SessionService),
 		User:           user_handler.NewHandler(deps.UserRepo, deps.SessionRepo),
 		AuthMiddleware: middleware.Auth(deps.JwtService),
 	}
@@ -109,5 +109,3 @@ func startServer(deps *router.ServerDependens) {
 		cors(middleware.RequestLogger(slog.Default())(mux)),
 	)
 }
-
-

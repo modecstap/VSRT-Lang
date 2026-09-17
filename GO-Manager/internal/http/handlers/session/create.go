@@ -3,7 +3,6 @@ package session
 import (
 	"VSRT-Lang/internal/http/handlers"
 	"VSRT-Lang/internal/http/middleware"
-	domain "VSRT-Lang/internal/session"
 	"encoding/json"
 	"net/http"
 )
@@ -43,14 +42,13 @@ func (h *Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sess := domain.NewSession(userID, req.Name)
-
-	if err := h.repo.Save(sess); err != nil {
+	id, err := h.service.NewSession(userID, req.Name)
+	if err != nil {
 		handlers.WriteError(w, http.StatusInternalServerError, "session_save_failed", err.Error())
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	_ = json.NewEncoder(w).Encode(sessionResponse{ID: sess.ID, Name: sess.Name})
+	_ = json.NewEncoder(w).Encode(sessionResponse{ID: id, Name: req.Name})
 }

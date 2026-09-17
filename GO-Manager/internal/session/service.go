@@ -30,7 +30,7 @@ func (s *Service) NewSession(userId user.UserId, name string) (int64, error) {
 }
 
 func (s *Service) GetSessions(userId user.UserId) ([]Session, error) {
-	sessions, err := s.repo.TakeByUser(userId)
+	sessions, err := s.repo.FindByUser(userId)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +38,7 @@ func (s *Service) GetSessions(userId user.UserId) ([]Session, error) {
 }
 
 func (s *Service) GetSession(userId user.UserId, sessionId int64) (Session, error) {
-	sessions, err := s.repo.TakeByUser(userId)
+	sessions, err := s.repo.FindByUser(userId)
 	if err != nil {
 		return Session{}, err
 	}
@@ -53,7 +53,7 @@ func (s *Service) GetSession(userId user.UserId, sessionId int64) (Session, erro
 }
 
 func (s *Service) DeleteSession(userId user.UserId, sessionId int64) error {
-	sessions, err := s.repo.TakeByUser(userId)
+	sessions, err := s.repo.FindByUser(userId)
 	if err != nil {
 		return err
 	}
@@ -75,7 +75,7 @@ type AddRecordCommand struct {
 }
 
 func (s *Service) AddRecord(c AddRecordCommand) (Record, error) {
-	sessions, err := s.repo.TakeByUser(c.UserId)
+	sessions, err := s.repo.FindByUser(c.UserId)
 	if err != nil {
 		return Record{}, err
 	}
@@ -94,7 +94,7 @@ func (s *Service) AddRecord(c AddRecordCommand) (Record, error) {
 }
 
 func (s *Service) DeleteRecord(userId user.UserId, sessionId int64, phrase string) error {
-	sessions, err := s.repo.TakeByUser(userId)
+	sessions, err := s.repo.FindByUser(userId)
 	if err != nil {
 		return err
 	}

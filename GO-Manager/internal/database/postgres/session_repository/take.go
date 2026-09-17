@@ -6,7 +6,9 @@ import (
 	"errors"
 )
 
-func (r *Repository) Take(sessionID int) (session.Session, error) {
+
+// Take implements [session.Repository].
+func (r *Repository) Take(sessionId int64) (session.Session, error) {
 	s := session.NewSession("", "")
 
 	err := r.db.QueryRow(`
@@ -16,7 +18,7 @@ func (r *Repository) Take(sessionID int) (session.Session, error) {
 			name
 		FROM sessions
 		WHERE id = $1
-	`, sessionID).Scan(
+	`, sessionId).Scan(
 		&s.ID,
 		&s.User,
 		&s.Name,
