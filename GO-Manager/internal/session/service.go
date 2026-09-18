@@ -38,33 +38,24 @@ func (s *Service) GetSessions(userId user.UserId) ([]Session, error) {
 }
 
 func (s *Service) GetSession(userId user.UserId, sessionId int64) (Session, error) {
-	sessions, err := s.repo.FindByUser(userId)
+	session, err := s.findSession(userId, sessionId)
 	if err != nil {
 		return Session{}, err
 	}
 
-	for _, session := range sessions {
-		if session.ID == sessionId {
-			return session, nil
-		}
-	}
-
-	return Session{}, ErrSessionNotFound
+	return *session, nil
 }
 
 func (s *Service) DeleteSession(userId user.UserId, sessionId int64) error {
-	sessions, err := s.repo.FindByUser(userId)
+	session, err := s.findSession(userId, sessionId)
 	if err != nil {
+		if errors.Is(err, ErrSessionNotFound) {
+			return ErrUnauthorized
+		}
 		return err
 	}
 
-	for _, session := range sessions {
-		if session.ID == sessionId {
-			return s.repo.Delete(sessionId)
-		}
-	}
-
-	return ErrUnauthorized
+	return s.repo.Delete(session.ID)
 }
 
 type AddRecordCommand struct {
@@ -75,40 +66,48 @@ type AddRecordCommand struct {
 }
 
 func (s *Service) AddRecord(c AddRecordCommand) (Record, error) {
-	sessions, err := s.repo.FindByUser(c.UserId)
+	session, err := s.findSession(c.UserId, c.SessionId)
 	if err != nil {
 		return Record{}, err
 	}
 
-	for _, session := range sessions {
-		if session.ID == c.SessionId {
-			record, err := session.SaveRecord(c.Context, c.Phrase, s.translator)
-			if err != nil {
-				return Record{}, err
-			}
-			if _, err := s.repo.Save(&session); err != nil {
-				return Record{}, err
-			}
-			return record, nil
-		}
+	record, err := session.SaveRecord(c.Context, c.Phrase, s.translator)
+	if err != nil {
+		return Record{}, err
 	}
 
-	return Record{}, ErrSessionNotFound
+	if _, err := s.repo.Save(session); err != nil {
+		return Record{}, err
+	}
+
+	return record, nil
 }
 
 func (s *Service) DeleteRecord(userId user.UserId, sessionId int64, phrase string) error {
-	sessions, err := s.repo.FindByUser(userId)
+	session, err := s.findSession(userId, sessionId)
 	if err != nil {
+		if errors.Is(err, ErrSessionNotFound) {
+			return ErrUnauthorized
+		}
 		return err
 	}
 
-	for _, session := range sessions {
-		if session.ID == sessionId {
-			delete(session.Records, phrase)
-			_, err = s.repo.Save(&session)
-			return err
+	delete(session.Records, phrase)
+	_, err = s.repo.Save(session)
+	return err
+}
+
+func (s *Service) findSession(userID user.UserId, sessionID int64) (*Session, error) {
+	sessions, err := s.repo.FindByUser(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range sessions {
+		if sessions[i].ID == sessionID {
+			return &sessions[i], nil
 		}
 	}
 
-	return ErrUnauthorized
+	return nil, ErrSessionNotFound
 }
