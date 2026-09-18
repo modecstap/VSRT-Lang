@@ -18,7 +18,7 @@ import (
 // @Failure      404      {string}  string  "not found"
 // @Failure      500      {string}  string  "internal server error"
 // @Security    BearerAuth
-// @Router       /users/{user_id}/sessions [get]
+// @Router       /users/sessions [get]
 func (h *Handler) GetUserSessions(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/"), "/")
 	if len(parts) < 2 || parts[0] != "users" || parts[1] != "sessions" {

@@ -12,7 +12,7 @@ type Record struct {
 	Antonyms     []string  `json:"antonyms"`
 	BaseForm     string    `json:"base_form"`
 	Contexts     []Context `json:"contexts"`
-	Count        int64
+	Count        int64     `json:"count"`
 }
 
 func NewRecord(

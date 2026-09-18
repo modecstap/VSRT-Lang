@@ -19,7 +19,6 @@ definitions:
           $ref: '#/definitions/VSRT-Lang_internal_session.Context'
         type: array
       count:
-        format: int64
         type: integer
       phrase:
         type: string
@@ -283,7 +282,7 @@ paths:
       summary: Save record to session
       tags:
       - session
-  /users/{user_id}/sessions:
+  /users/sessions:
     get:
       description: Retrieve all sessions for the authenticated user
       produces:

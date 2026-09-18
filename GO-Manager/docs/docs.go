@@ -309,7 +309,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/users/{user_id}/sessions": {
+        "/users/sessions": {
             "get": {
                 "security": [
                     {
@@ -381,8 +381,7 @@ const docTemplate = `{
                     }
                 },
                 "count": {
-                    "type": "integer",
-                    "format": "int64"
+                    "type": "integer"
                 },
                 "phrase": {
                     "type": "string"
