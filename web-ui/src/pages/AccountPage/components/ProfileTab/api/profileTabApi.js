@@ -12,3 +12,10 @@ export async function fetchUserSessions() {
 
   return response.data || [];
 }
+
+export async function deleteSession(sessionId) {
+  await axios.delete(
+    `${API_BASE_URL}/sessions/${sessionId}`,
+    getAuthHeaders()
+  );
+}

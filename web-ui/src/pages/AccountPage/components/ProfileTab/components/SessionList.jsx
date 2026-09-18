@@ -8,9 +8,11 @@ function SessionList({
     sessions,
     sessionName,
     creating,
+    deletingSessionId,
     handleSessionNameChange,
     handleCreateSession,
     handleSelectSession,
+    handleDeleteSession,
 }) {
     return (
         <section className={styles.card}>
@@ -58,6 +60,7 @@ function SessionList({
                             <th>DATE</th>
                             <th>NAME</th>
                             <th>SAVED COUNT</th>
+                            <th></th>
                         </tr>
                     </thead>
 
@@ -78,6 +81,19 @@ function SessionList({
                                 <td>{session.date}</td>
                                 <td>{session.name}</td>
                                 <td>{session.saved}</td>
+                                <td>
+                                    <Button
+                                        type="button"
+                                        className={styles.deleteButton}
+                                        onClick={(event) => {
+                                            event.stopPropagation();
+                                            handleDeleteSession(session);
+                                        }}
+                                        disabled={deletingSessionId === session.id}
+                                    >
+                                        {deletingSessionId === session.id ? '0' : 'X'}
+                                    </Button>
+                                </td>
                             </tr>
                         ))}
                     </tbody>

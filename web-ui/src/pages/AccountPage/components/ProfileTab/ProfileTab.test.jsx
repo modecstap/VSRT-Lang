@@ -14,6 +14,7 @@ describe('ProfileTab', () => {
     localStorage.clear();
     axios.get.mockReset();
     axios.post.mockReset();
+    axios.delete.mockReset();
     mockNavigate.mockClear();
   });
 
@@ -63,5 +64,30 @@ describe('ProfileTab', () => {
       expect.anything()
     );
     expect(localStorage.getItem('session_tab_session_id')).toBe('99');
+  });
+
+  it('deletes a session without selecting its row', async () => {
+    axios.get.mockResolvedValueOnce({
+      data: [
+        { ID: 7, CreatedAt: '2024-01-01', Name: 'Server session', Records: [] },
+        { ID: 8, CreatedAt: '2024-01-02', Name: 'Another session', Records: [] },
+      ],
+    });
+    axios.delete.mockResolvedValueOnce({});
+
+    render(<ProfileTab />);
+
+    expect(await screen.findByText('Server session')).toBeInTheDocument();
+    await screen.getAllByRole('button', { name: /delete/i })[0].click();
+
+    await waitFor(() => {
+      expect(axios.delete).toHaveBeenCalledWith(
+        expect.stringContaining('/sessions/7'),
+        expect.anything()
+      );
+    });
+    expect(screen.queryByText('Server session')).not.toBeInTheDocument();
+    expect(screen.getByText('Another session')).toBeInTheDocument();
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 });

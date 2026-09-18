@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchUserSessions } from '../api/profileTabApi';
+import { deleteSession, fetchUserSessions } from '../api/profileTabApi';
 import { SESSION_STORAGE_KEY } from '../api/profileTabApi';
 import { createSession } from '../../SessionTab/api/sessionTabApi';
 import { buildSessionsViewModel } from '../model/profileTabModel';
@@ -11,6 +11,7 @@ function useProfileTab() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [creating, setCreating] = useState(false);
+  const [deletingSessionId, setDeletingSessionId] = useState(null);
   const [sessionName, setSessionName] = useState('');
 
   useEffect(() => {
@@ -67,15 +68,37 @@ function useProfileTab() {
     navigate('/account/session');
   };
 
+  const handleDeleteSession = async (session) => {
+    setDeletingSessionId(session.id);
+    setError('');
+
+    try {
+      await deleteSession(session.id);
+      setSessions((currentSessions) =>
+        currentSessions.filter((item) => item.id !== session.id)
+      );
+
+      if (localStorage.getItem(SESSION_STORAGE_KEY) === String(session.id)) {
+        localStorage.removeItem(SESSION_STORAGE_KEY);
+      }
+    } catch (err) {
+      setError('Unable to delete session');
+    } finally {
+      setDeletingSessionId(null);
+    }
+  };
+
   return {
     sessions,
     loading,
     error,
     creating,
+    deletingSessionId,
     sessionName,
     handleSessionNameChange,
     handleCreateSession,
     handleSelectSession,
+    handleDeleteSession,
   };
 }
 

@@ -15,10 +15,12 @@ function ProfileTab() {
         loading,
         error,
         creating,
+        deletingSessionId,
         sessionName,
         handleSessionNameChange,
         handleCreateSession,
         handleSelectSession,
+        handleDeleteSession,
     } = useProfileTab();
 
     return (
@@ -33,9 +35,11 @@ function ProfileTab() {
                 sessions={sessions}
                 sessionName={sessionName}
                 creating={creating}
+                deletingSessionId={deletingSessionId}
                 handleSessionNameChange={handleSessionNameChange}
                 handleCreateSession={handleCreateSession}
                 handleSelectSession={handleSelectSession}
+                handleDeleteSession={handleDeleteSession}
             />
         </div>
     );

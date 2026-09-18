@@ -33,6 +33,10 @@
     padding: var(--spacing-3) var(--spacing-5);
 }
 
+.deleteButton {
+    width: fit-content;
+}
+
 .table {
     width: 100%;
     border-collapse: collapse;
@@ -55,6 +59,11 @@
     padding: var(--spacing-4);
     color: var(--text-color);
     font-family: var(--text-font);
+}
+
+.table th:last-child,
+.table td:last-child {
+    text-align: right;
 }
 
 .table tbody tr:hover {
