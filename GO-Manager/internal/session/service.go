@@ -82,7 +82,10 @@ func (s *Service) AddRecord(c AddRecordCommand) (Record, error) {
 
 	for _, session := range sessions {
 		if session.ID == c.SessionId {
-			record := session.SaveRecord(c.Context, c.Phrase, s.translator)
+			record, err := session.SaveRecord(c.Context, c.Phrase, s.translator)
+			if err != nil {
+				return Record{}, err
+			}
 			if _, err := s.repo.Save(&session); err != nil {
 				return Record{}, err
 			}

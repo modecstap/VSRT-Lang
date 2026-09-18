@@ -19,22 +19,26 @@ func NewSession(
 	name string,
 ) *Session {
 	return &Session{
-		User: user,
-		Name: name,
+		User:    user,
+		Name:    name,
 		Records: make(map[string]*Record),
 	}
 }
 
-func (s *Session) SaveRecord(context string, window string, translator Translator) (record Record) {
+func (s *Session) SaveRecord(context string, window string, translator Translator) (Record, error) {
 	recordPtr, ok := s.Records[window]
 	if !ok {
-		s.Records[window] = NewRecord( translator, window, context)
-		return *s.Records[window]
+		newRecord, err := NewRecord(translator, window, context)
+		if err != nil {
+			return Record{}, err
+		}
+		s.Records[window] = newRecord
+		return *s.Records[window], nil
 	}
 
 	recordPtr.Count++
 
-	return *recordPtr
+	return *recordPtr, nil
 }
 
 func (s *Session) GetRecords() []Record {

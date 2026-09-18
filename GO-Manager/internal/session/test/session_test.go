@@ -11,16 +11,19 @@ import (
 
 func TestNewRecord(t *testing.T) {
 	translator := stub.Translator{}
-	record := session.NewRecord(translator, "hello", "world")
-
-	if record.Phrase != "hello" {
-		t.Fatalf("expected phrase hello, got %q", record.Phrase)
+	record, err := session.NewRecord(translator, "hello", "world")
+	if err != nil {
+		t.Fatalf("NewRecord returned unexpected error: %v", err)
 	}
 
-	if !reflect.DeepEqual(record.Translations, translator.TranslateBulk([]string{"hello"})[0]) {
+	translations, err := translator.TranslateBulk([]string{"hello", "world"})
+	if err != nil {
+		t.Fatalf("translator.TranslateBulk returned unexpected error: %v", err)
+	}
+	if !reflect.DeepEqual(record.Translations, translations[0]) {
 		t.Fatalf(
 			"expected translations %v, got %v",
-			translator.TranslateBulk([]string{"hello"}), record.Translations,
+			translations[0], record.Translations,
 		)
 	}
 
@@ -31,24 +34,36 @@ func TestNewRecord(t *testing.T) {
 		)
 	}
 
-	if !reflect.DeepEqual(record.Synonyms, translator.TakeSynonyms("hello")) {
+	synonyms, err := translator.TakeSynonyms("hello")
+	if err != nil {
+		t.Fatalf("translator.TakeSynonyms returned unexpected error: %v", err)
+	}
+	if !reflect.DeepEqual(record.Synonyms, synonyms) {
 		t.Fatalf(
 			"expected synonyms %v, got %v",
-			translator.TakeSynonyms("hello"), record.Synonyms,
+			synonyms, record.Synonyms,
 		)
 	}
 
-	if !reflect.DeepEqual(record.Antonyms, translator.TakeAntonyms("hello")) {
+	antonyms, err := translator.TakeAntonyms("hello")
+	if err != nil {
+		t.Fatalf("translator.TakeAntonyms returned unexpected error: %v", err)
+	}
+	if !reflect.DeepEqual(record.Antonyms, antonyms) {
 		t.Fatalf(
 			"expected antonyms %v, got %v",
-			translator.TakeAntonyms("hello"), record.Antonyms,
+			antonyms, record.Antonyms,
 		)
 	}
 
-	if len(record.Contexts) != len(translator.TakeContexts("hello"))+1 {
+	contexts, err := translator.TakeContexts("hello")
+	if err != nil {
+		t.Fatalf("translator.TakeContexts returned unexpected error: %v", err)
+	}
+	if len(record.Contexts) != len(contexts)+1 {
 		t.Fatalf(
 			"expected %d contexts, got %d",
-			len(translator.TakeContexts("hello"))+1, len(record.Contexts),
+			len(contexts)+1, len(record.Contexts),
 		)
 	}
 
@@ -56,7 +71,7 @@ func TestNewRecord(t *testing.T) {
 		t.Fatalf("expected first context phrase 'world', got %q", record.Contexts[0].Phrase)
 	}
 
-	for i, context := range translator.TakeContexts("hello") {
+	for i, context := range contexts {
 		if record.Contexts[i+1].Phrase != context.Phrase ||
 			record.Contexts[i+1].Translation != context.Translation {
 			t.Fatalf(
@@ -71,7 +86,10 @@ func TestSessionSaveAndGetRecords(t *testing.T) {
 	translator := stub.Translator{}
 	session := session.NewSession(user.UserId("user-123"), "test-session")
 
-	record := session.SaveRecord("world", "hello", translator)
+	record, err := session.SaveRecord("world", "hello", translator)
+	if err != nil {
+		t.Fatalf("SaveRecord returned unexpected error: %v", err)
+	}
 
 	if record.Phrase != "hello" {
 		t.Fatalf("expected returned record phrase hello, got %q", record.Phrase)
@@ -90,8 +108,11 @@ func TestSessionSaveAndGetRecords(t *testing.T) {
 func TestCountWhenSaveOneRecord(t *testing.T) {
 	translator := stub.Translator{}
 	session := session.NewSession(user.UserId("user-123"), "test-session")
-	_ = session.SaveRecord("world", "hello", translator)
-	
+	_, err := session.SaveRecord("world", "hello", translator)
+	if err != nil {
+		t.Fatalf("SaveRecord returned unexpected error: %v", err)
+	}
+
 	records := session.GetRecords()
 	if records[0].Count != 1 {
 		t.Fatalf("expected record count to be 1, got %d", records[0].Count)
@@ -101,8 +122,14 @@ func TestCountWhenSaveOneRecord(t *testing.T) {
 func TestSessionSaveRecordWithExistingPhrase(t *testing.T) {
 	translator := stub.Translator{}
 	session := session.NewSession(user.UserId("user-123"), "test-session")
-	_ = session.SaveRecord("world", "hello", translator)
-	_ = session.SaveRecord("world", "hello", translator)
+	_, err := session.SaveRecord("world", "hello", translator)
+	if err != nil {
+		t.Fatalf("SaveRecord returned unexpected error: %v", err)
+	}
+	_, err = session.SaveRecord("world", "hello", translator)
+	if err != nil {
+		t.Fatalf("SaveRecord returned unexpected error on second save: %v", err)
+	}
 
 	records := session.GetRecords()
 

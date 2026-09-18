@@ -1,10 +1,10 @@
 package session
 
 type Translator interface {
-	Translate(phrase string) (translations []string)
-	TranslateBulk(phrases []string) (translations [][]string)
-	TakeContexts(phrase string) (contexts []Context)
-	TakeSynonyms(word string) (synonyms []string)
-	TakeAntonyms(word string) (antonyms []string)
-	TakeBaseForm(word string) (baseForm string)
+	Translate(phrase string) ([]string, error)
+	TranslateBulk(phrases []string) ([][]string, error)
+	TakeContexts(phrase string) ([]Context, error)
+	TakeSynonyms(word string) ([]string, error)
+	TakeAntonyms(word string) ([]string, error)
+	TakeBaseForm(word string) (string, error)
 }
