@@ -63,9 +63,12 @@ services:
     restart: unless-stopped
     ports:
       - "5000:5000"
+    volumes:
+      - libretranslate_models:/home/libretranslate/.local
     environment:
       - LT_LOAD_ONLY=en,ru
       - LT_UPDATE_MODELS=ture
 
 volumes:
   pgdata:
+  libretranslate_models:
