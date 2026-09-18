@@ -2,15 +2,11 @@ package net_translator
 
 import (
 	"VSRT-Lang/internal/session"
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 )
-
-type contextRequest struct {
-	Content string `json:"content"`
-}
 
 type contextResponse struct {
 	Original     string   `json:"original"`
@@ -18,23 +14,14 @@ type contextResponse struct {
 }
 
 func (n Translator) TakeContexts(phrase string) ([]session.Context, error) {
-	body, err := json.Marshal(contextRequest{
-		Content: phrase,
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	request, err := http.NewRequest(
-		http.MethodPost,
-		n.Backend+"/context",
-		bytes.NewBuffer(body),
+		http.MethodGet,
+		n.Backend+"/context?target="+url.QueryEscape(phrase),
+		nil,
 	)
 	if err != nil {
 		return nil, err
 	}
-
-	request.Header.Set("Content-Type", "application/json")
 
 	resp, err := n.Client.Do(request)
 	if err != nil {
