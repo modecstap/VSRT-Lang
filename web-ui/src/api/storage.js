@@ -31,7 +31,7 @@ function migrateLegacyAuth() {
   const accessToken = window.localStorage.getItem(LEGACY_ACCESS_TOKEN_KEY);
   const refreshToken = window.localStorage.getItem(LEGACY_REFRESH_TOKEN_KEY);
 
-  if (!accessToken && refreshToken == null) {
+  if (!accessToken && !refreshToken) {
     return null;
   }
 
