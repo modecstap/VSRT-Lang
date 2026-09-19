@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { fetchWordEntry, loadSavedWords, saveWordEntry } from '../api/sessionTabApi';
+import { loadSavedWords, saveWordEntry } from '../api/sessionTabApi';
 import { buildWordDetails, normalizeWord } from '../model/sessionTabModel';
 
 const initialForm = {
@@ -9,7 +9,6 @@ const initialForm = {
 
 function useSessionTab() {
   const [words, setWords] = useState([]);
-  const [details, setDetails] = useState(null);
   const [selectedWord, setSelectedWord] = useState(null);
   const [form, setForm] = useState(initialForm);
 
@@ -23,13 +22,11 @@ function useSessionTab() {
         if (!ignore) {
           const nextWords = savedWords || [];
           setWords(nextWords);
-          setDetails(buildWordDetails(nextWords[0] || null));
           setSelectedWord(nextWords[0] || null);
         }
       } catch (error) {
         if (!ignore) {
           setWords([]);
-          setDetails(null);
           setSelectedWord(null);
         }
       }
@@ -42,23 +39,12 @@ function useSessionTab() {
     };
   }, []);
 
-  const handleWordChange = async (event) => {
+  const handleWordChange = (event) => {
     const nextWord = event.target.value;
     setForm((current) => ({ ...current, word: nextWord }));
 
-    if (!nextWord.trim()) {
-      setDetails(null);
-      return;
-    }
-
-    try {
-      const entry = await fetchWordEntry(nextWord, words);
-      setDetails(buildWordDetails(entry));
-      setSelectedWord(entry);
-    } catch (error) {
-      setDetails(null);
-      setSelectedWord(null);
-    }
+    const entry = words.find((item) => normalizeWord(item.word) === normalizeWord(nextWord));
+    setSelectedWord(entry || null);
   };
 
   const handleContextChange = (event) => {
@@ -86,18 +72,16 @@ function useSessionTab() {
     );
 
     setSelectedWord(nextEntry || null);
-    setDetails(buildWordDetails(nextEntry || null));
     setForm(initialForm);
   };
 
   const handleSelectWord = (word) => {
     setSelectedWord(word);
-    setDetails(buildWordDetails(word));
     setForm({ word: word.word, context: '' });
   };
 
   return {
-    details,
+    details: buildWordDetails(selectedWord),
     form,
     handleContextChange,
     handleSelectWord,
