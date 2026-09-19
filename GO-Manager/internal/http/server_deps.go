@@ -18,12 +18,12 @@ import (
 )
 
 type ServerDependens struct {
-	UserRepo    	*user_repository.Repository
-	SessionRepo		*session_repository.Repository
-	SessionService	*session.Service
-	AuthService 	*auth.Service
-	JwtService  	*auth.JWTService
-	Host        	string
+	UserRepo       *user_repository.Repository
+	SessionRepo    *session_repository.Repository
+	SessionService *session.Service
+	AuthService    *auth.Service
+	JwtService     *auth.JWTService
+	Host           string
 }
 
 func DependensFromEnv(db *sql.DB) (*ServerDependens, error) {
@@ -45,7 +45,7 @@ func DependensFromEnv(db *sql.DB) (*ServerDependens, error) {
 		return nil, err
 	}
 	sessionService := session.NewService(sessionRepo, translator)
-	
+
 	userRepo := user_repository.New(db)
 	tokenRepo := refresh_token_repository.New(db)
 	secret, ok := os.LookupEnv("SECRET_KEY")
@@ -60,12 +60,12 @@ func DependensFromEnv(db *sql.DB) (*ServerDependens, error) {
 	)
 
 	return &ServerDependens{
-		UserRepo:    	userRepo,
-		SessionRepo: 	sessionRepo,
+		UserRepo:       userRepo,
+		SessionRepo:    sessionRepo,
 		SessionService: sessionService,
-		AuthService: 	authService,
-		JwtService:  	jwtService,
-		Host:        	host,
+		AuthService:    authService,
+		JwtService:     jwtService,
+		Host:           host,
 	}, nil
 }
 

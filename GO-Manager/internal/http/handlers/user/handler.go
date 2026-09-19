@@ -15,11 +15,11 @@ type Handler struct {
 }
 
 func NewHandler(
-	userRepo domain.Repository, 
+	userRepo domain.Repository,
 	sessionRepo SessionRepository,
-	) *Handler {
+) *Handler {
 	return &Handler{
-		userRepo: userRepo,
-		sessionRepo: sessionRepo ,
+		userRepo:    userRepo,
+		sessionRepo: sessionRepo,
 	}
 }

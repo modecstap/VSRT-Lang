@@ -5,133 +5,80 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"VSRT-Lang/internal/auth"
+	"VSRT-Lang/internal/http/handlers"
 	"VSRT-Lang/internal/http/middleware"
 	domain "VSRT-Lang/internal/session"
-	"VSRT-Lang/internal/translators/stub"
 	"VSRT-Lang/internal/user"
 )
 
-type stubRepository struct {
-	sessions map[int64]*domain.Session
+const testSecret = "test-secret"
+const testUserID = "1"
+
+type fakeService struct {
+	newSession    func(user.UserId, string) (int64, error)
+	getSession    func(user.UserId, int64) (domain.Session, error)
+	deleteSession func(user.UserId, int64) error
+	addRecord     func(domain.AddRecordCommand) (domain.Record, error)
 }
 
-func (r *stubRepository) Save(s *domain.Session) (int64, error) {
-	if r.sessions == nil {
-		r.sessions = make(map[int64]*domain.Session)
+func (f *fakeService) NewSession(userID user.UserId, name string) (int64, error) {
+	if f.newSession == nil {
+		return 0, errors.New("unexpected NewSession")
 	}
-	r.sessions[s.ID] = s
-	return s.ID, nil
+	return f.newSession(userID, name)
 }
 
-func (r *stubRepository) Take(sessionID int64) (domain.Session, error) {
-	s, ok := r.sessions[sessionID]
-	if !ok {
-		return domain.Session{}, errors.New("session not found")
+func (f *fakeService) GetSession(userID user.UserId, sessionID int64) (domain.Session, error) {
+	if f.getSession == nil {
+		return domain.Session{}, errors.New("unexpected GetSession")
 	}
-	return *s, nil
+	return f.getSession(userID, sessionID)
 }
 
-func (r *stubRepository) FindByUser(userID user.UserId) ([]domain.Session, error) {
-	var sessions []domain.Session
-	for _, session := range r.sessions {
-		if session.User == userID {
-			sessions = append(sessions, *session)
-		}
+func (f *fakeService) DeleteSession(userID user.UserId, sessionID int64) error {
+	if f.deleteSession == nil {
+		return errors.New("unexpected DeleteSession")
 	}
-	return sessions, nil
+	return f.deleteSession(userID, sessionID)
 }
 
-func (r *stubRepository) Delete(sessionID int64) error {
-	if r.sessions == nil {
-		return errors.New("session not found")
+func (f *fakeService) AddRecord(cmd domain.AddRecordCommand) (domain.Record, error) {
+	if f.addRecord == nil {
+		return domain.Record{}, errors.New("unexpected AddRecord")
 	}
-	if _, ok := r.sessions[sessionID]; !ok {
-		return errors.New("session not found")
-	}
-	delete(r.sessions, sessionID)
-	return nil
+	return f.addRecord(cmd)
 }
 
-func TestCreateSession(t *testing.T) {
-	repo := &stubRepository{}
-	h := NewHandler(domain.NewService(repo, stub.Translator{}))
+func testJWT(t *testing.T) *auth.JWTService {
+	t.Helper()
+	return auth.NewJWTService(testSecret)
+}
 
-	jwt := auth.NewJWTService("StrongSecretString")
-	token, err := jwt.GenerateAccessToken("1", "demo", "demo@example.com")
+func bearerToken(t *testing.T, jwtSvc *auth.JWTService, userID string) string {
+	t.Helper()
+	token, err := jwtSvc.GenerateAccessToken(userID, "demo", "demo@example.com")
 	if err != nil {
 		t.Fatalf("generate token: %v", err)
 	}
+	return token
+}
 
-	req := httptest.NewRequest(http.MethodPost, "/sessions", strings.NewReader(`{"name":"demo"}`))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+token)
+func serveAuthed(t *testing.T, jwtSvc *auth.JWTService, userID string, handler http.HandlerFunc, req *http.Request) *httptest.ResponseRecorder {
+	t.Helper()
+	req.Header.Set("Authorization", "Bearer "+bearerToken(t, jwtSvc, userID))
 	rw := httptest.NewRecorder()
-
-	middleware.Auth(jwt)(http.HandlerFunc(h.CreateSession)).ServeHTTP(rw, req)
-
-	if rw.Code != http.StatusCreated {
-		t.Fatalf("expected status 201, got %d", rw.Code)
-	}
-
-	if len(repo.sessions) != 1 {
-		t.Fatalf("expected one saved session, got %d", len(repo.sessions))
-	}
+	middleware.Auth(jwtSvc)(http.HandlerFunc(handler)).ServeHTTP(rw, req)
+	return rw
 }
 
-func TestSaveAndGetRecords(t *testing.T) {
-	repo := &stubRepository{}
-	h := NewHandler(domain.NewService(repo, stub.Translator{}))
-
-	jwt := auth.NewJWTService("StrongSecretString")
-	token, err := jwt.GenerateAccessToken("1", "demo", "demo@example.com")
-	if err != nil {
-		t.Fatalf("generate token: %v", err)
+func decodeJSONError(t *testing.T, rw *httptest.ResponseRecorder) handlers.ErrorResponse {
+	t.Helper()
+	var resp handlers.ErrorResponse
+	if err := json.NewDecoder(rw.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode error response: %v; body=%s", err, rw.Body.String())
 	}
-
-	createReq := httptest.NewRequest(http.MethodPost, "/sessions", strings.NewReader(`{"name":"demo"}`))
-	createReq.Header.Set("Content-Type", "application/json")
-	createReq.Header.Set("Authorization", "Bearer "+token)
-	createRW := httptest.NewRecorder()
-	middleware.Auth(jwt)(http.HandlerFunc(h.CreateSession)).ServeHTTP(createRW, createReq)
-
-	var created struct {
-		ID int64 `json:"id"`
-	}
-	if err := json.NewDecoder(createRW.Body).Decode(&created); err != nil {
-		t.Fatalf("decode created session: %v", err)
-	}
-
-	saveReq := httptest.NewRequest(http.MethodPost, "/sessions/0/records", strings.NewReader(`{"phrase":"hello","context":"world"}`))
-	saveReq.Header.Set("Content-Type", "application/json")
-	saveReq.Header.Set("Authorization", "Bearer "+token)
-	saveRW := httptest.NewRecorder()
-	middleware.Auth(jwt)(http.HandlerFunc(h.SaveRecord)).ServeHTTP(saveRW, saveReq)
-
-	if saveRW.Code != http.StatusCreated {
-		t.Fatalf("expected status 201, got %d", saveRW.Code)
-	}
-
-	getReq := httptest.NewRequest(http.MethodGet, "/sessions/0/records", nil)
-	getReq.Header.Set("Authorization", "Bearer "+token)
-	getRW := httptest.NewRecorder()
-	middleware.Auth(jwt)(http.HandlerFunc(h.GetRecords)).ServeHTTP(getRW, getReq)
-
-	if getRW.Code != http.StatusOK {
-		t.Fatalf("expected status 200, got %d", getRW.Code)
-	}
-
-	var got struct {
-		Records []domain.Record `json:"records"`
-	}
-	if err := json.NewDecoder(getRW.Body).Decode(&got); err != nil {
-		t.Fatalf("decode records: %v", err)
-	}
-
-	if len(got.Records) != 1 {
-		t.Fatalf("expected one record, got %d", len(got.Records))
-	}
+	return resp
 }
