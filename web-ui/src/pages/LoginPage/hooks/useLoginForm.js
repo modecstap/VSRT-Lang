@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { saveAuthTokens } from '../../../api/auth';
+import { prefetchAccount } from '../../../routes/prefetch';
 import { login } from '../api/login';
-import {
-  createInitialLoginForm,
-} from '../model/loginFormModel';
+import { createInitialLoginForm } from '../model/loginFormModel';
 
 export function useLoginForm() {
-  const [form, setForm] = useState(createInitialLoginForm());
+  const navigate = useNavigate();
+  const [form, setForm] = useState(createInitialLoginForm);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -41,9 +42,9 @@ export function useLoginForm() {
 
       if (data?.AccessToken) {
         saveAuthTokens(data);
+        prefetchAccount();
+        navigate('/account');
       }
-
-      window.location.assign('/account');
     } catch (submitError) {
       setError(submitError.response?.data?.error?.message || submitError.message || 'Unable to sign in');
     } finally {

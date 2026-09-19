@@ -6,13 +6,17 @@ import styles from './SessionTab.module.css';
 function SessionTab() {
     const {
         details,
+        error,
         form,
         handleContextChange,
         handleSelectWord,
         handleWordChange,
         handleWrite,
+        isWriting,
+        loading,
         selectedWord,
         words,
+        writeError,
     } = useSessionTab();
 
     return (
@@ -20,16 +24,22 @@ function SessionTab() {
             <div className={styles.layout}>
                 <div className={`${styles.panel} ${styles.listCard}`}>
                     <div className={styles.list}>
-                        {words.map((word) => (
-                            <Button
-                                key={word.id}
-                                className={`${styles.wordItem} ${selectedWord?.word === word.word ? styles.wordItemActive : ''}`}
-                                type="button"
-                                onClick={() => handleSelectWord(word)}
-                            >
-                                <span>- {word.word}</span>
-                            </Button>
-                        ))}
+                        {loading ? (
+                            <p className={styles.status}>Loading words...</p>
+                        ) : error ? (
+                            <p className={styles.status}>{error}</p>
+                        ) : (
+                            words.map((word) => (
+                                <Button
+                                    key={word.id}
+                                    className={`${styles.wordItem} ${selectedWord?.word === word.word ? styles.wordItemActive : ''}`}
+                                    type="button"
+                                    onClick={() => handleSelectWord(word)}
+                                >
+                                    <span>- {word.word}</span>
+                                </Button>
+                            ))
+                        )}
                     </div>
                 </div>
                 <div className={`${styles.panel} ${styles.wordCard}`}>
@@ -80,9 +90,11 @@ function SessionTab() {
                     />
                 </div>
                 <div className={`${styles.panel} ${styles.submitButton}`}>
-                    <Button type="button" className={styles.button} onClick={handleWrite}>WRITE</Button>
+                    <Button type="button" className={styles.button} onClick={handleWrite} disabled={isWriting}>
+                        {writeError ? writeError : isWriting ? '...' : 'WRITE'}
+                    </Button>
                 </div>
-            </div>           
+            </div>
         </div>
     );
 }

@@ -10,6 +10,10 @@ function LoginPage() {
     setIsRegistering(false);
   };
 
+  const handleSwitchToRegister = () => {
+    setIsRegistering(true);
+  };
+
   return (
     <main className={styles.page}>
       <section className={styles.panel}>
@@ -17,7 +21,7 @@ function LoginPage() {
         {isRegistering ? (
           <RegisterForm onSwitchToLogin={handleSwitchToLogin} />
         ) : (
-          <LoginForm onSwitchToRegister={() => setIsRegistering(true)} />
+          <LoginForm onSwitchToRegister={handleSwitchToRegister} />
         )}
       </section>
     </main>

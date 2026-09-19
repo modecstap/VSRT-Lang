@@ -9,9 +9,14 @@ function Input({
   value,
   onChange,
   autoComplete,
+  className,
   multiline = false,
   rows = 3,
 }) {
+  const inputClassName = [styles.input, multiline ? styles.textarea : null, className]
+    .filter(Boolean)
+    .join(' ');
+
   return (
     <label className={styles.field} htmlFor={id}>
       {label ? <span className={styles.label}>{label}</span> : null}
@@ -20,7 +25,7 @@ function Input({
           id={id}
           name={name}
           rows={rows}
-          className={`${styles.input} ${styles.textarea}`}
+          className={inputClassName}
           placeholder={placeholder}
           value={value}
           onChange={onChange}
@@ -31,7 +36,7 @@ function Input({
           id={id}
           name={name}
           type={type}
-          className={styles.input}
+          className={inputClassName}
           placeholder={placeholder}
           value={value}
           onChange={onChange}

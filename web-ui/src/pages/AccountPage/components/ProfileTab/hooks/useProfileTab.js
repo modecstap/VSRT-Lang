@@ -1,59 +1,43 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { deleteSession, fetchUserSessions } from '../api/profileTabApi';
-import { SESSION_STORAGE_KEY } from '../api/profileTabApi';
-import { createSession } from '../../SessionTab/api/sessionTabApi';
+import useSWR, { useSWRConfig } from 'swr';
+import {
+  createSession,
+  deleteSession,
+  fetchUserSessions,
+  setActiveSessionId,
+  SESSIONS_SWR_KEY,
+  sessionRecordsKey,
+} from '../api/profileTabApi';
 import { buildSessionsViewModel } from '../model/profileTabModel';
 
 function useProfileTab() {
   const navigate = useNavigate();
-  const [sessions, setSessions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const { mutate } = useSWRConfig();
+  const {
+    data: sessions = [],
+    error: loadError,
+    isLoading,
+  } = useSWR(SESSIONS_SWR_KEY, async () => {
+    const response = await fetchUserSessions();
+    return buildSessionsViewModel(response);
+  });
   const [creating, setCreating] = useState(false);
   const [deletingSessionId, setDeletingSessionId] = useState(null);
   const [sessionName, setSessionName] = useState('');
-
-  useEffect(() => {
-    let ignore = false;
-
-    const loadSessions = async () => {
-      try {
-        const response = await fetchUserSessions();
-
-        if (!ignore) {
-          setSessions(buildSessionsViewModel(response));
-          setError('');
-        }
-      } catch (err) {
-        if (!ignore) {
-          setSessions([]);
-          setError('Unable to load sessions');
-        }
-      } finally {
-        if (!ignore) {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadSessions();
-
-    return () => {
-      ignore = true;
-    };
-  }, []);
+  const [actionError, setActionError] = useState('');
 
   const handleCreateSession = async () => {
     setCreating(true);
-    setError('');
+    setActionError('');
 
     try {
       const name = sessionName.trim() || 'Session';
       await createSession(name);
+      await mutate(SESSIONS_SWR_KEY);
       navigate('/account/session');
     } catch (err) {
-      setError('Unable to create new session');
+      setActionError('Unable to create new session');
     } finally {
       setCreating(false);
     }
@@ -64,25 +48,24 @@ function useProfileTab() {
   };
 
   const handleSelectSession = (session) => {
-    localStorage.setItem(SESSION_STORAGE_KEY, String(session.id));
+    setActiveSessionId(session.id);
     navigate('/account/session');
   };
 
   const handleDeleteSession = async (session) => {
     setDeletingSessionId(session.id);
-    setError('');
+    setActionError('');
 
     try {
       await deleteSession(session.id);
-      setSessions((currentSessions) =>
-        currentSessions.filter((item) => item.id !== session.id)
+      await mutate(
+        SESSIONS_SWR_KEY,
+        (currentSessions = []) => currentSessions.filter((item) => item.id !== session.id),
+        { revalidate: false }
       );
-
-      if (localStorage.getItem(SESSION_STORAGE_KEY) === String(session.id)) {
-        localStorage.removeItem(SESSION_STORAGE_KEY);
-      }
+      await mutate(sessionRecordsKey(session.id), undefined, { revalidate: false });
     } catch (err) {
-      setError('Unable to delete session');
+      setActionError('Unable to delete session');
     } finally {
       setDeletingSessionId(null);
     }
@@ -90,8 +73,8 @@ function useProfileTab() {
 
   return {
     sessions,
-    loading,
-    error,
+    loading: isLoading,
+    error: actionError || (loadError ? 'Unable to load sessions' : ''),
     creating,
     deletingSessionId,
     sessionName,

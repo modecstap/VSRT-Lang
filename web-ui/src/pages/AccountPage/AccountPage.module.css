@@ -40,6 +40,14 @@
     transition: background var(--transition-fast), color var(--transition-fast);
 }
 
+button.link {
+    background: none;
+    border: 0;
+    cursor: pointer;
+    text-align: left;
+    font-size: inherit;
+}
+
 .link:hover {
     color: var(--text-color);
 }

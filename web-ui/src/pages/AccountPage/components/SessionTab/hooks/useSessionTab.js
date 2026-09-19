@@ -1,50 +1,45 @@
-import { useEffect, useState } from 'react';
-import { loadSavedWords, saveWordEntry } from '../api/sessionTabApi';
-import { buildWordDetails, normalizeWord } from '../model/sessionTabModel';
+import { useState } from 'react';
+import useSWR from 'swr';
+import { getActiveSessionId } from '../../../../../api/sessions';
+import { loadSavedWords, saveWordEntry, sessionRecordsKey } from '../api/sessionTabApi';
+import {
+  buildWordDetails,
+  buildWordMap,
+  mapRecordToWord,
+  mergeSavedWord,
+  normalizeWord,
+} from '../model/sessionTabModel';
 
-const initialForm = {
+const createInitialForm = () => ({
   word: '',
   context: '',
-};
+});
 
 function useSessionTab() {
-  const [words, setWords] = useState([]);
+  const sessionId = getActiveSessionId();
+  const {
+    data: words = [],
+    error,
+    isLoading,
+    mutate,
+  } = useSWR(sessionRecordsKey(sessionId), async () => {
+    const records = await loadSavedWords();
+    return records.map((record, index) => mapRecordToWord(record, index));
+  });
+  const [form, setForm] = useState(createInitialForm);
   const [selectedWord, setSelectedWord] = useState(null);
-  const [form, setForm] = useState(initialForm);
+  const [isWriting, setIsWriting] = useState(false);
+  const [writeError, setWriteError] = useState('');
 
-  useEffect(() => {
-    let ignore = false;
-
-    const loadData = async () => {
-      try {
-        const savedWords = await loadSavedWords();
-
-        if (!ignore) {
-          const nextWords = savedWords || [];
-          setWords(nextWords);
-          setSelectedWord(nextWords[0] || null);
-        }
-      } catch (error) {
-        if (!ignore) {
-          setWords([]);
-          setSelectedWord(null);
-        }
-      }
-    };
-
-    loadData();
-
-    return () => {
-      ignore = true;
-    };
-  }, []);
+  const wordsByNormalized = buildWordMap(words);
+  const activeWord = selectedWord
+    || (form.word ? wordsByNormalized.get(normalizeWord(form.word)) : words[0])
+    || null;
 
   const handleWordChange = (event) => {
     const nextWord = event.target.value;
     setForm((current) => ({ ...current, word: nextWord }));
-
-    const entry = words.find((item) => normalizeWord(item.word) === normalizeWord(nextWord));
-    setSelectedWord(entry || null);
+    setSelectedWord(wordsByNormalized.get(normalizeWord(nextWord)) || null);
   };
 
   const handleContextChange = (event) => {
@@ -61,18 +56,31 @@ function useSessionTab() {
       return;
     }
 
-    const savedWords = await saveWordEntry({
-      word,
-      context,
-    });
+    setIsWriting(true);
+    setWriteError('');
 
-    setWords(savedWords);
-    const nextEntry = savedWords.find(
-      (entry) => normalizeWord(entry.word) === normalizeWord(word)
-    );
+    try {
+      const savedRecord = await saveWordEntry({
+        word,
+        context,
+      });
+      const savedWord = mapRecordToWord(savedRecord, words.length);
 
-    setSelectedWord(nextEntry || null);
-    setForm(initialForm);
+      const nextWords = await mutate(
+        (currentWords = []) => mergeSavedWord(currentWords, savedWord),
+        { revalidate: false }
+      );
+
+      mutate();
+
+      const nextEntry = buildWordMap(nextWords || []).get(normalizeWord(word)) || savedWord;
+      setSelectedWord(nextEntry);
+      setForm(createInitialForm());
+    } catch (submitError) {
+      setWriteError('Unable to save word');
+    } finally {
+      setIsWriting(false);
+    }
   };
 
   const handleSelectWord = (word) => {
@@ -81,14 +89,18 @@ function useSessionTab() {
   };
 
   return {
-    details: buildWordDetails(selectedWord),
+    details: buildWordDetails(activeWord),
+    error: error ? 'Unable to load words' : '',
     form,
     handleContextChange,
     handleSelectWord,
     handleWordChange,
     handleWrite,
-    selectedWord,
+    isWriting,
+    loading: isLoading,
+    selectedWord: activeWord,
     words,
+    writeError,
   };
 }
 

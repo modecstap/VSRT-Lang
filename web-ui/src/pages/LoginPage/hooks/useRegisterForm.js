@@ -1,14 +1,10 @@
 import { useState } from 'react';
 import { registerUser } from '../api/register';
+import { createInitialRegisterForm } from '../model/registerFormModel';
 
-const createInitialRegisterForm = () => ({
-  username: '',
-  email: '',
-  password: '',
-});
 
 export function useRegisterForm({ onSuccess } = {}) {
-  const [form, setForm] = useState(createInitialRegisterForm());
+  const [form, setForm] = useState(createInitialRegisterForm);
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -32,7 +28,7 @@ export function useRegisterForm({ onSuccess } = {}) {
       setForm(createInitialRegisterForm());
       onSuccess?.();
     } catch (error) {
-      setMessage(error.message || 'Registration failed');
+      setMessage(error.response?.data?.error?.message || error.message || 'Registration failed');
     } finally {
       setIsSubmitting(false);
     }

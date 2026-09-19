@@ -1,6 +1,4 @@
-import axios from 'axios';
-
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+import { apiClient } from '../../../api/client';
 
 export const login = async (credentials) => {
   const payload = {
@@ -8,7 +6,7 @@ export const login = async (credentials) => {
     password: credentials.password,
   };
 
-  const response = await axios.post(`${API_BASE_URL}/login`, payload);
+  const response = await apiClient.post('/login', payload);
 
   return response.data;
 };

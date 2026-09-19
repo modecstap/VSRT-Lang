@@ -66,6 +66,11 @@
     text-align: right;
 }
 
+.table tbody tr {
+    content-visibility: auto;
+    contain-intrinsic-size: 3.5rem;
+}
+
 .table tbody tr:hover {
     box-shadow: inset 5px 0 0 var(--lonetrail-red);
 }

@@ -75,6 +75,8 @@
   cursor: pointer;
   text-align: left;
   padding: 0;
+  content-visibility: auto;
+  contain-intrinsic-size: 2.5rem;
 }
 
 .wordItem:hover,
@@ -142,6 +144,11 @@
   100% {
     transform: scale(0.9);
   }
+}
+
+.status {
+  margin: 0;
+  color: var(--text-contrast);
 }
 
 .input {
