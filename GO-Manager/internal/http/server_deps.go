@@ -12,9 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"net/http"
 	"os"
-	"time"
 )
 
 type ServerDependens struct {
@@ -78,14 +76,5 @@ func setupTranslator(mode string) (session.Translator, error) {
 	if !ok {
 		return net_translator.Translator{}, errors.New("environment variable TRANSLATOR_HOST not found")
 	}
-	translator := net_translator.Translator{
-		Client: http.Client{
-			Transport:     nil,
-			CheckRedirect: nil,
-			Jar:           nil,
-			Timeout:       5 * time.Second,
-		},
-		Backend: fmt.Sprintf("http://%s/api/translator", translatorHost),
-	}
-	return translator, nil
+	return *net_translator.NewTranslator(translatorHost), nil
 }

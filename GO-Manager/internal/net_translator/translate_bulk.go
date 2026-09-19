@@ -13,7 +13,26 @@ type translateBulkItem struct {
 }
 
 func (n Translator) TranslateBulk(phrases []string) ([][]string, error) {
-	body, err := json.Marshal(phrases)
+	if len(phrases) == 0 {
+		return [][]string{}, nil
+	}
+
+	pending := make([]int, 0, len(phrases))
+	toTranslate := make([]string, 0, len(phrases))
+	translations := make([][]string, len(phrases))
+	for i, phrase := range phrases {
+		if phrase == "" {
+			translations[i] = []string{}
+			continue
+		}
+		pending = append(pending, i)
+		toTranslate = append(toTranslate, phrase)
+	}
+	if len(toTranslate) == 0 {
+		return translations, nil
+	}
+
+	body, err := json.Marshal(toTranslate)
 	if err != nil {
 		return nil, err
 	}
@@ -44,9 +63,12 @@ func (n Translator) TranslateBulk(phrases []string) ([][]string, error) {
 		return nil, err
 	}
 
-	translations := make([][]string, 0, len(response))
-	for _, item := range response {
-		translations = append(translations, item.Translations)
+	if len(response) != len(toTranslate) {
+		return nil, fmt.Errorf("translate-bulk returned %d items, expected %d", len(response), len(toTranslate))
+	}
+
+	for i, item := range response {
+		translations[pending[i]] = item.Translations
 	}
 
 	return translations, nil

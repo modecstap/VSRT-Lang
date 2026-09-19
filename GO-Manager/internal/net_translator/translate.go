@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 )
 
 type translateRequest struct {
@@ -17,19 +18,26 @@ type translateResponse struct {
 }
 
 func (n Translator) Translate(phrase string) ([]string, error) {
+	if phrase == "" {
+		return []string{}, nil
+	}
+
 	body, err := json.Marshal(translateRequest{Phrase: phrase})
 	if err != nil {
 		return nil, err
 	}
 
+	endpoint := n.Backend + "/translate?phrase=" + url.QueryEscape(phrase)
 	request, err := http.NewRequest(
 		http.MethodPost,
-		n.Backend+"/translate",
+		endpoint,
 		bytes.NewBuffer(body),
 	)
 	if err != nil {
 		return nil, err
 	}
+
+	request.Header.Set("Content-Type", "application/json")
 
 	resp, err := n.Client.Do(request)
 	if err != nil {
