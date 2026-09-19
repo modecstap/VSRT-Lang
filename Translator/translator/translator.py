@@ -1,5 +1,6 @@
-from urllib import error, request
+from urllib import error
 import json
+import requests
 
 from nltk.corpus import wordnet
 
@@ -130,20 +131,24 @@ class Translator(ITranslator):
     def _request_translation(self, payload: bytes) -> dict:
         """Send a translation request to LibreTranslate."""
         endpoint = f"{self._url}/translate"
-        request_data = request.Request(
-            endpoint,
-            data=payload,
-            headers={"Content-Type": "application/json"},
-            method="POST",
-        )
+
         try:
-            with request.urlopen(request_data, timeout=30) as response:
-                return json.loads(response.read().decode("utf-8"))
-        except error.HTTPError as exception:
+            response = requests.post(
+                endpoint,
+                data=payload,
+                headers={"Content-Type": "application/json"},
+                timeout=30,
+                proxies={"http": None, "https": None, },
+            )
+            response.raise_for_status()
+            return response.json()
+
+        except requests.HTTPError as exception:
             raise TranslationExecutionError(
-                f"LibreTranslate returned HTTP {exception.code}."
+                f"LibreTranslate returned HTTP {exception.response.status_code}."
             ) from exception
-        except json.JSONDecodeError as exception:
+
+        except requests.JSONDecodeError as exception:
             raise TranslationExecutionError(
                 "LibreTranslate returned an invalid response."
             ) from exception
