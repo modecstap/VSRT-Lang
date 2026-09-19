@@ -2,8 +2,9 @@ package session
 
 import "fmt"
 
+
 type Context struct {
-	Phrase      string `json:"phrase"`
+	Phrase     string `json:"phrase"`
 	Translation string `json:"translation"`
 }
 
@@ -17,57 +18,137 @@ type Record struct {
 	Count        int64     `json:"count"`
 }
 
-func NewRecord(
-	translator Translator,
-	phrase string,
-	mainContext string,
-) (*Record, error) {
-	toTranslate := []string{phrase, mainContext}
-	translations, err := translator.TranslateBulk(toTranslate)
-	if err != nil {
+type NewRecordCommand struct {
+	Translator  Translator
+	Phrase      string
+	MainContext string
+}
+
+func NewRecord(cmd NewRecordCommand) (*Record, error) {
+	if err := validateCommand(cmd); err != nil {
 		return nil, err
 	}
-	if len(translations) < 2 {
-		return nil, fmt.Errorf("translator returned %d translation groups for %d phrases", len(translations), len(toTranslate))
-	}
 
-	phraseTranslations := translations[0]
-	contextTranslations := translations[1]
-	if len(contextTranslations) == 0 {
-		return nil, fmt.Errorf("translator returned no translation for context %q", mainContext)
-	}
-
-	contexts, err := translator.TakeContexts(phrase)
+	translations, err := translateRecord(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	baseForm, err := translator.TakeBaseForm(phrase)
+	recordData, err := collectRecordData(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	synonyms, err := translator.TakeSynonyms(phrase)
-	if err != nil {
-		return nil, err
+	return buildRecord(cmd, translations, recordData), nil
+}
+
+type recordTranslations struct {
+	Phrase  []string
+	Context string
+}
+
+type recordData struct {
+	Contexts  []Context
+	BaseForm  string
+	Synonyms  []string
+	Antonyms  []string
+}
+
+func validateCommand(cmd NewRecordCommand) error {
+	if cmd.Translator == nil {
+		return fmt.Errorf("translator is required")
 	}
 
-	antonyms, err := translator.TakeAntonyms(phrase)
-	if err != nil {
-		return nil, err
+	if cmd.Phrase == "" {
+		return fmt.Errorf("phrase is required")
 	}
 
-	result := &Record{
-		Phrase:       phrase,
-		Translations: phraseTranslations,
-		BaseForm:     baseForm,
-		Synonyms:     synonyms,
-		Antonyms:     antonyms,
+	if cmd.MainContext == "" {
+		return fmt.Errorf("main context is required")
+	}
+
+	return nil
+}
+
+func translateRecord(
+	cmd NewRecordCommand,
+) (recordTranslations, error) {
+	phrases := []string{cmd.Phrase, cmd.MainContext}
+
+	translations, err := cmd.Translator.TranslateBulk(phrases)
+	if err != nil {
+		return recordTranslations{}, err
+	}
+
+	if len(translations) < len(phrases) {
+		return recordTranslations{}, fmt.Errorf(
+			"translator returned %d translation groups for %d phrases",
+			len(translations),
+			len(phrases),
+		)
+	}
+
+	if len(translations[1]) == 0 {
+		return recordTranslations{}, fmt.Errorf(
+			"translator returned no translation for context %q",
+			cmd.MainContext,
+		)
+	}
+
+	return recordTranslations{
+		Phrase:  translations[0],
+		Context: translations[1][0],
+	}, nil
+}
+
+func collectRecordData(cmd NewRecordCommand) (recordData, error) {
+	contexts, err := cmd.Translator.TakeContexts(cmd.Phrase)
+	if err != nil {
+		return recordData{}, err
+	}
+
+	baseForm, err := cmd.Translator.TakeBaseForm(cmd.Phrase)
+	if err != nil {
+		return recordData{}, err
+	}
+
+	synonyms, err := cmd.Translator.TakeSynonyms(cmd.Phrase)
+	if err != nil {
+		return recordData{}, err
+	}
+
+	antonyms, err := cmd.Translator.TakeAntonyms(cmd.Phrase)
+	if err != nil {
+		return recordData{}, err
+	}
+
+	return recordData{
+		Contexts: contexts,
+		BaseForm: baseForm,
+		Synonyms: synonyms,
+		Antonyms: antonyms,
+	}, nil
+}
+
+func buildRecord(
+	cmd NewRecordCommand,
+	translations recordTranslations,
+	data recordData,
+) *Record {
+	contexts := make([]Context, 0, len(data.Contexts)+1)
+	contexts = append(contexts, Context{
+		Phrase:     cmd.MainContext,
+		Translation: translations.Context,
+	})
+	contexts = append(contexts, data.Contexts...)
+
+	return &Record{
+		Phrase:       cmd.Phrase,
+		Translations: translations.Phrase,
+		Synonyms:     data.Synonyms,
+		Antonyms:     data.Antonyms,
+		BaseForm:     data.BaseForm,
+		Contexts:     contexts,
 		Count:        1,
 	}
-
-	result.Contexts = append(result.Contexts, Context{Phrase: mainContext, Translation: contextTranslations[0]})
-	result.Contexts = append(result.Contexts, contexts...)
-
-	return result, nil
 }

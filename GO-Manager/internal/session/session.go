@@ -28,7 +28,13 @@ func NewSession(
 func (s *Session) SaveRecord(context string, window string, translator Translator) (Record, error) {
 	recordPtr, ok := s.Records[window]
 	if !ok {
-		newRecord, err := NewRecord(translator, window, context)
+		newRecord, err := NewRecord(
+			NewRecordCommand{
+				Translator:  translator,
+				Phrase:      window,
+				MainContext: context,
+			},
+		)
 		if err != nil {
 			return Record{}, err
 		}

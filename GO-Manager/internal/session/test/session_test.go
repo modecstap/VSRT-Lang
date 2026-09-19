@@ -11,7 +11,13 @@ import (
 
 func TestNewRecord(t *testing.T) {
 	translator := stub.Translator{}
-	record, err := session.NewRecord(translator, "hello", "world")
+	record, err := session.NewRecord(
+		session.NewRecordCommand{
+			Translator:  translator,
+			Phrase:      "hello",
+			MainContext: "world",
+		},
+	)
 	if err != nil {
 		t.Fatalf("NewRecord returned unexpected error: %v", err)
 	}
