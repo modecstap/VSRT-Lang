@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { registerUser } from '../api/register';
 
 const createInitialRegisterForm = () => ({
   username: '',
@@ -26,15 +27,7 @@ export function useRegisterForm({ onSuccess } = {}) {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('http://localhost:8080/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-
-      if (!response.ok) {
-        throw new Error('Registration failed');
-      }
+      await registerUser(form);
 
       setForm(createInitialRegisterForm());
       onSuccess?.();
