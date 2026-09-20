@@ -63,17 +63,16 @@ func validateCommand(cmd NewRecordCommand) error {
 		return fmt.Errorf("phrase is required")
 	}
 
-	if cmd.MainContext == "" {
-		return fmt.Errorf("main context is required")
-	}
-
 	return nil
 }
 
 func translateRecord(
 	cmd NewRecordCommand,
 ) (recordTranslations, error) {
-	phrases := []string{cmd.Phrase, cmd.MainContext}
+	phrases := []string{cmd.Phrase}
+	if cmd.MainContext != "" {
+		phrases = append(phrases, cmd.MainContext)
+	}
 
 	translations, err := cmd.Translator.TranslateBulk(phrases)
 	if err != nil {
@@ -88,6 +87,14 @@ func translateRecord(
 		)
 	}
 
+	result := recordTranslations{
+		Phrase: translations[0],
+	}
+
+	if cmd.MainContext == "" {
+		return result, nil
+	}
+
 	if len(translations[1]) == 0 {
 		return recordTranslations{}, fmt.Errorf(
 			"translator returned no translation for context %q",
@@ -95,10 +102,8 @@ func translateRecord(
 		)
 	}
 
-	return recordTranslations{
-		Phrase:  translations[0],
-		Context: translations[1][0],
-	}, nil
+	result.Context = translations[1][0]
+	return result, nil
 }
 
 func collectRecordData(cmd NewRecordCommand) (recordData, error) {
@@ -136,10 +141,12 @@ func buildRecord(
 	data recordData,
 ) *Record {
 	contexts := make([]Context, 0, len(data.Contexts)+1)
-	contexts = append(contexts, Context{
-		Phrase:     cmd.MainContext,
-		Translation: translations.Context,
-	})
+	if cmd.MainContext != "" {
+		contexts = append(contexts, Context{
+			Phrase:      cmd.MainContext,
+			Translation: translations.Context,
+		})
+	}
 	contexts = append(contexts, data.Contexts...)
 
 	return &Record{

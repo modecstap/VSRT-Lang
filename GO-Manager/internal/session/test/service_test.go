@@ -253,3 +253,51 @@ func TestDeleteRecordByAnotherUser(t *testing.T) {
 		t.Fatal("record must exist")
 	}
 }
+
+func TestAddRecordWhithEmptyContext(t *testing.T) {
+	service, _ := setupService()
+	userId, sessionId, err := createSession(service)
+	newRecord := session.AddRecordCommand{
+		UserId:    userId,
+		SessionId: sessionId,
+		Phrase:    "test",
+		Context:   "",
+	}
+
+	record, err := service.AddRecord(newRecord)
+	if err != nil {
+		t.Fatalf("expected to add record, but got error: %v", err)
+	}
+	for _, c := range record.Contexts {
+		if c.Phrase == "" {
+			t.Fatalf("empty context must be not added")
+		}
+	}
+}
+
+func TestAddRecordWhithExistingContext(t *testing.T) {
+	service, _ := setupService()
+	userId, sessionId, err := createSession(service)
+	newRecord := session.AddRecordCommand{
+		UserId:    userId,
+		SessionId: sessionId,
+		Phrase:    "test",
+		Context:   "test context",
+	}
+
+	record, err := service.AddRecord(newRecord)
+	if err != nil {
+		t.Fatalf("expected to add record, but got error: %v", err)
+	}
+	firstContextCount := len(record.Contexts)
+
+	record, err = service.AddRecord(newRecord)
+	if err != nil {
+		t.Fatalf("expected to add record, but got error: %v", err)
+	}
+	secondContextCount := len(record.Contexts)
+
+	if firstContextCount != secondContextCount {
+		t.Fatalf("context count must be %d but got %d", firstContextCount, secondContextCount)
+	}
+}
