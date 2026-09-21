@@ -48,19 +48,6 @@
 
 .button {
     width: fit-content;
-    padding: 0;
-    text-align: left;
-    border: none;
-    cursor: pointer;
-    transition: color var(--transition-fast);
-    background: none;
-    color: var(--text-contrast);
-    font-family: var(--header-font);
-}
-
-.button:hover {
-    color: var(--text-accent);
-    background: none;
 }
 
 @media (max-width: 768px) {
