@@ -72,6 +72,7 @@
 .wordItem {
   border: 1px solid transparent;
   color: var(--text-contrast);
+  background: var(--bg-contrast);
   cursor: pointer;
   text-align: left;
   padding: 0;
