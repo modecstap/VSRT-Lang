@@ -1,6 +1,10 @@
 package session
 
-import "VSRT-Lang/internal/user"
+import (
+	"strings"
+
+	"VSRT-Lang/internal/user"
+)
 
 type Session struct {
 	ID      int64
@@ -25,26 +29,35 @@ func NewSession(
 	}
 }
 
-func (s *Session) SaveRecord(context string, window string, translator Translator) (Record, error) {
-	recordPtr, ok := s.Records[window]
-	if !ok {
-		newRecord, err := NewRecord(
-			NewRecordCommand{
-				Translator:  translator,
-				Phrase:      window,
-				MainContext: context,
-			},
-		)
-		if err != nil {
+func (s *Session) SaveRecord(context string, phrase string, translator Translator) (Record, error) {
+	key := recordKey(phrase)
+	if existing, ok := s.Records[key]; ok {
+		if err := existing.registerSave(context, translator); err != nil {
 			return Record{}, err
 		}
-		s.Records[window] = newRecord
-		return *s.Records[window], nil
+		return *existing, nil
 	}
 
-	recordPtr.Count++
+	newRecord, err := NewRecord(
+		NewRecordCommand{
+			Translator:  translator,
+			Phrase:      phrase,
+			MainContext: context,
+		},
+	)
+	if err != nil {
+		return Record{}, err
+	}
+	s.Records[key] = newRecord
+	return *newRecord, nil
+}
 
-	return *recordPtr, nil
+func (s *Session) DeleteRecord(phrase string) {
+	delete(s.Records, recordKey(phrase))
+}
+
+func recordKey(phrase string) string {
+	return strings.ToLower(strings.TrimSpace(phrase))
 }
 
 func (s *Session) GetRecords() []Record {

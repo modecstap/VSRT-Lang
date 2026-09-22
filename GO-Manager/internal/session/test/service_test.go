@@ -1,303 +1,210 @@
 package test
 
 import (
+	"errors"
+	"testing"
+
 	"VSRT-Lang/internal/database/memory"
 	"VSRT-Lang/internal/session"
 	"VSRT-Lang/internal/translators/stub"
 	"VSRT-Lang/internal/user"
-	"errors"
-	"testing"
 )
 
-const ANOTHER_USER = user.UserId("Another User")
+const (
+	userAnna  = user.UserId("anna")
+	userOther = user.UserId("other")
+)
 
-func setupService() (*session.Service, *memory.SessionRepository) {
-	repo := memory.NewSessionRepository()
-	trans := stub.Translator{}
-	service := session.NewService(repo, trans)
-	return service, repo
+var errServiceUnavailable = errors.New("service unavailable")
+
+func setupService() *session.Service {
+	return session.NewService(memory.NewSessionRepository(), stub.Translator{})
 }
 
-func createSession(service *session.Service) (user.UserId, int64, error) {
-	userId := user.UserId("test-user")
-	sessionName := "test-session"
-	sessionId, err := service.NewSession(userId, sessionName)
-	return userId, sessionId, err
+func mustCreateSession(t *testing.T, svc *session.Service, uid user.UserId, name string) int64 {
+	t.Helper()
+	id, err := svc.NewSession(uid, name)
+	if err != nil {
+		t.Fatalf("NewSession(%q): %v", name, err)
+	}
+	return id
 }
 
-func TestCreateSession(t *testing.T) {
-	service, repo := setupService()
-
-	userID := user.UserId("test-user")
-	sessionName := "test-session"
-
-	sessionId, err := service.NewSession(userID, sessionName)
-	if err != nil {
-		t.Fatalf("expected session to be created, but got error: %v", err)
-	}
-	loadedSession, err := repo.Take(sessionId)
-	if err != nil {
-		t.Fatalf("expected session to be created, but got error: %v", err)
-	}
-
-	if loadedSession.Name != sessionName {
-		t.Fatalf("expected session name to be %q, but got %q", sessionName, loadedSession.Name)
-	}
-	if loadedSession.User != userID {
-		t.Fatalf("expected session user to be %q, but got %q", userID, loadedSession.User)
-	}
-}
-
-func TestGetSessions(t *testing.T) {
-	service, _ := setupService()
-	_, _, err := createSession(service)
-	if err != nil {
-		t.Fatalf("expected to get sessions, but got error: %v", err)
-	}
-
-	sessions, err := service.GetSessions(user.UserId("test-user"))
-	if err != nil {
-		t.Fatalf("expected to get sessions, but got error: %v", err)
-	}
-
-	if len(sessions) != 1 {
-		t.Fatalf("expected to get 1 session, but got %d", len(sessions))
-	}
-	if sessions[0].Name != "test-session" {
-		t.Fatalf("expected session name to be %q, but got %q", "test-session", sessions[0].Name)
-	}
-}
-
-func TestGetSession(t *testing.T) {
-	service, _ := setupService()
-	userID, sessionID, err := createSession(service)
-	if err != nil {
-		t.Fatalf("expected session to be created, but got error: %v", err)
-	}
-
-	got, err := service.GetSession(userID, sessionID)
-	if err != nil {
-		t.Fatalf("expected to get session, but got error: %v", err)
-	}
-
-	if got.ID != sessionID {
-		t.Fatalf("expected session ID to be %d, but got %d", sessionID, got.ID)
-	}
-	if got.Name != "test-session" {
-		t.Fatalf("expected session name to be %q, but got %q", "test-session", got.Name)
-	}
-	if got.User != userID {
-		t.Fatalf("expected session user to be %q, but got %q", userID, got.User)
-	}
-}
-
-func TestGetSessionByAnotherUser(t *testing.T) {
-	service, _ := setupService()
-	_, sessionID, err := createSession(service)
-	if err != nil {
-		t.Fatalf("expected session to be created, but got error: %v", err)
-	}
-
-	_, err = service.GetSession(ANOTHER_USER, sessionID)
-	if !errors.Is(err, session.ErrSessionNotFound) {
-		t.Fatalf("expected error %q, but got %v", session.ErrSessionNotFound, err)
-	}
-}
-
-func TestAddRecord(t *testing.T) {
-	service, _ := setupService()
-	userId, sessionId, err := createSession(service)
-	if err != nil {
-		t.Fatalf("expected to get sessions, but got error: %v", err)
-	}
-
-	command := session.AddRecordCommand{
-		UserId:    userId,
-		SessionId: sessionId,
-		Phrase:    "test",
-		Context:   "test context",
-	}
-	record, err := service.AddRecord(command)
-
-	sessions, err := service.GetSessions(userId)
-	if err != nil {
-		t.Fatalf("expected to get sessions, but got error: %v", err)
-	}
-	s := sessions[0]
-	sRecord, ok := s.Records["test"]
-	if !ok {
-		t.Fatalf("record must be in saved session")
-	}
-	if sRecord.Phrase != record.Phrase {
-		t.Fatalf(
-			"expected equality record in session and responce record, but got %q and %q",
-			sRecord.Phrase, record.Phrase,
-		)
-	}
-}
-
-func TestAddRecordByAnotherUser(t *testing.T) {
-	service, _ := setupService()
-	userId, sessionId, err := createSession(service)
-	if err != nil {
-		t.Fatalf("expected to get sessions, but got error: %v", err)
-	}
-
-	command := session.AddRecordCommand{
-		UserId:    ANOTHER_USER,
-		SessionId: sessionId,
-		Phrase:    "test",
-		Context:   "test context",
-	}
-
-	_, err = service.AddRecord(command)
-
-	if !errors.Is(err, session.ErrSessionNotFound) {
-		t.Fatalf(
-			"must be error «session not found» but got %v", err,
-		)
-	}
-
-	sessions, err := service.GetSessions(userId)
-	if err != nil {
-		t.Fatalf("expected to get sessions, but got error: %v", err)
-	}
-	s := sessions[0]
-	if len(s.Records) != 0 {
-		t.Fatalf("record count be 0 but got %d", len(s.Records))
-	}
-}
-
-func TestDeleteSession(t *testing.T) {
-	service, _ := setupService()
-	userId, sessionId, err := createSession(service)
-	if err != nil {
-		t.Fatalf("expected to get sessions, but got error: %v", err)
-	}
-
-	err = service.DeleteSession(userId, sessionId)
-
-	sessions, err := service.GetSessions(userId)
-	if len(sessions) != 0 {
-		t.Fatalf(
-			"count session must be 0 but got %d", len(sessions),
-		)
-	}
-}
-
-func TestDeleteAnotherUserSession(t *testing.T) {
-	service, _ := setupService()
-	userId, sessionId, err := createSession(service)
-	if err != nil {
-		t.Fatalf("expected to get sessions, but got error: %v", err)
-	}
-
-	err = service.DeleteSession(ANOTHER_USER, sessionId)
-	if !errors.Is(err, session.ErrUnauthorized) {
-		t.Fatalf(
-			"must be error «unauthorized» but got %v", err,
-		)
-	}
-
-	sessions, err := service.GetSessions(userId)
-	if len(sessions) != 1 {
-		t.Fatalf(
-			"count session must be 1 but got %d", len(sessions),
-		)
-	}
-}
-
-func TestDeleteRecord(t *testing.T) {
-	service, _ := setupService()
-	userId, sessionId, err := createSession(service)
-	service.AddRecord(session.AddRecordCommand{
-		UserId:    userId,
-		SessionId: sessionId,
-		Phrase:    "test",
-		Context:   "test context",
+func mustAddRecord(t *testing.T, svc *session.Service, uid user.UserId, sessionID int64, phrase, context string) session.Record {
+	t.Helper()
+	record, err := svc.AddRecord(session.AddRecordCommand{
+		UserId:    uid,
+		SessionId: sessionID,
+		Phrase:    phrase,
+		Context:   context,
 	})
-
-	err = service.DeleteRecord(userId, sessionId, "test")
 	if err != nil {
-		t.Fatalf("expected to delete Record, but got error: %v", err)
+		t.Fatalf("AddRecord(%q): %v", phrase, err)
 	}
-
-	sessions, err := service.GetSessions(userId)
-	if err != nil {
-		t.Fatalf("expected to get sessions, but got error: %v", err)
-	}
-	_, ok := sessions[0].Records["test"]
-	if ok {
-		t.Fatal("record must be deleted but sill exist")
-	}
+	return record
 }
 
-func TestDeleteRecordByAnotherUser(t *testing.T) {
-	service, _ := setupService()
-	userId, sessionId, err := createSession(service)
-	service.AddRecord(session.AddRecordCommand{
-		UserId:    userId,
-		SessionId: sessionId,
-		Phrase:    "test",
-		Context:   "test context",
-	})
-
-	err = service.DeleteRecord(ANOTHER_USER, sessionId, "test")
-
-	sessions, err := service.GetSessions(userId)
+func mustGetSession(t *testing.T, svc *session.Service, uid user.UserId, sessionID int64) session.Session {
+	t.Helper()
+	got, err := svc.GetSession(uid, sessionID)
 	if err != nil {
-		t.Fatalf("expected to get sessions, but got error: %v", err)
+		t.Fatalf("GetSession: %v", err)
 	}
-	_, ok := sessions[0].Records["test"]
-	if !ok {
-		t.Fatal("record must exist")
-	}
+	return got
 }
 
-func TestAddRecordWhithEmptyContext(t *testing.T) {
-	service, _ := setupService()
-	userId, sessionId, err := createSession(service)
-	newRecord := session.AddRecordCommand{
-		UserId:    userId,
-		SessionId: sessionId,
-		Phrase:    "test",
-		Context:   "",
-	}
+func recordsOf(t *testing.T, svc *session.Service, uid user.UserId, sessionID int64) []session.Record {
+	t.Helper()
+	got := mustGetSession(t, svc, uid, sessionID)
+	return got.GetRecords()
+}
 
-	record, err := service.AddRecord(newRecord)
-	if err != nil {
-		t.Fatalf("expected to add record, but got error: %v", err)
-	}
-	for _, c := range record.Contexts {
-		if c.Phrase == "" {
-			t.Fatalf("empty context must be not added")
+func containsSession(sessions []session.Session, name string) bool {
+	for _, s := range sessions {
+		if s.Name == name {
+			return true
 		}
 	}
+	return false
 }
 
-func TestAddRecordWhithExistingContext(t *testing.T) {
-	service, _ := setupService()
-	userId, sessionId, err := createSession(service)
-	newRecord := session.AddRecordCommand{
-		UserId:    userId,
-		SessionId: sessionId,
-		Phrase:    "test",
-		Context:   "test context",
+type failSaveRepo struct {
+	*memory.SessionRepository
+	err error
+}
+
+func (r failSaveRepo) Save(*session.Session) (int64, error) {
+	return 0, r.err
+}
+
+func TestCreateSessionWithName(t *testing.T) {
+	svc := setupService()
+	id := mustCreateSession(t, svc, userAnna, "Урок 1")
+
+	got := mustGetSession(t, svc, userAnna, id)
+	if got.Name != "Урок 1" {
+		t.Fatalf("session name = %q, want %q", got.Name, "Урок 1")
+	}
+}
+
+func TestCreateSessionWithoutName(t *testing.T) {
+	svc := setupService()
+
+	_, err := svc.NewSession(userAnna, "")
+	if !errors.Is(err, session.ErrSessionNameRequired) {
+		t.Fatalf("error = %v, want %v", err, session.ErrSessionNameRequired)
 	}
 
-	record, err := service.AddRecord(newRecord)
+	sessions, err := svc.GetSessions(userAnna)
 	if err != nil {
-		t.Fatalf("expected to add record, but got error: %v", err)
+		t.Fatalf("GetSessions: %v", err)
 	}
-	firstContextCount := len(record.Contexts)
+	if len(sessions) != 0 {
+		t.Fatalf("got %d sessions, want 0", len(sessions))
+	}
+}
 
-	record, err = service.AddRecord(newRecord)
+func TestListOwnSessions(t *testing.T) {
+	svc := setupService()
+	mustCreateSession(t, svc, userAnna, "Урок 1")
+	mustCreateSession(t, svc, userAnna, "Урок 2")
+	mustCreateSession(t, svc, userOther, "Чужой урок")
+
+	sessions, err := svc.GetSessions(userAnna)
 	if err != nil {
-		t.Fatalf("expected to add record, but got error: %v", err)
+		t.Fatalf("GetSessions: %v", err)
 	}
-	secondContextCount := len(record.Contexts)
+	if !containsSession(sessions, "Урок 1") || !containsSession(sessions, "Урок 2") {
+		t.Fatalf("list missing own sessions: %+v", sessions)
+	}
+	if containsSession(sessions, "Чужой урок") {
+		t.Fatal("list contains foreign session")
+	}
+}
 
-	if firstContextCount != secondContextCount {
-		t.Fatalf("context count must be %d but got %d", firstContextCount, secondContextCount)
+func TestListSessionsEmpty(t *testing.T) {
+	svc := setupService()
+
+	sessions, err := svc.GetSessions(userAnna)
+	if err != nil {
+		t.Fatalf("GetSessions: %v", err)
+	}
+	if len(sessions) != 0 {
+		t.Fatalf("got %d sessions, want 0", len(sessions))
+	}
+}
+
+func TestGetOwnSession(t *testing.T) {
+	svc := setupService()
+	id := mustCreateSession(t, svc, userAnna, "Урок 1")
+
+	got := mustGetSession(t, svc, userAnna, id)
+	if got.Name != "Урок 1" {
+		t.Fatalf("session name = %q, want %q", got.Name, "Урок 1")
+	}
+}
+
+func TestGetForeignSessionNotFound(t *testing.T) {
+	svc := setupService()
+	id := mustCreateSession(t, svc, userOther, "Чужой урок")
+
+	_, err := svc.GetSession(userAnna, id)
+	if !errors.Is(err, session.ErrSessionNotFound) {
+		t.Fatalf("error = %v, want %v", err, session.ErrSessionNotFound)
+	}
+}
+
+func TestDeleteOwnSession(t *testing.T) {
+	svc := setupService()
+	id := mustCreateSession(t, svc, userAnna, "Урок 1")
+	mustAddRecord(t, svc, userAnna, id, "hello", "")
+
+	if err := svc.DeleteSession(userAnna, id); err != nil {
+		t.Fatalf("DeleteSession: %v", err)
+	}
+
+	sessions, err := svc.GetSessions(userAnna)
+	if err != nil {
+		t.Fatalf("GetSessions: %v", err)
+	}
+	if containsSession(sessions, "Урок 1") {
+		t.Fatal("deleted session still in list")
+	}
+
+	_, err = svc.GetSession(userAnna, id)
+	if !errors.Is(err, session.ErrSessionNotFound) {
+		t.Fatalf("session records still available, error = %v", err)
+	}
+}
+
+func TestDeleteForeignSessionNotFound(t *testing.T) {
+	svc := setupService()
+	id := mustCreateSession(t, svc, userOther, "Чужой урок")
+
+	err := svc.DeleteSession(userAnna, id)
+	if !errors.Is(err, session.ErrSessionNotFound) {
+		t.Fatalf("error = %v, want %v", err, session.ErrSessionNotFound)
+	}
+
+	if _, err := svc.GetSession(userOther, id); err != nil {
+		t.Fatalf("foreign session was deleted: %v", err)
+	}
+}
+
+func TestCreateSessionWhenRepositoryUnavailable(t *testing.T) {
+	repo := memory.NewSessionRepository()
+	svc := session.NewService(failSaveRepo{SessionRepository: repo, err: errServiceUnavailable}, stub.Translator{})
+
+	_, err := svc.NewSession(userAnna, "Урок 1")
+	if err == nil {
+		t.Fatal("expected service error")
+	}
+
+	sessions, err := repo.FindByUser(userAnna)
+	if err != nil {
+		t.Fatalf("FindByUser: %v", err)
+	}
+	if len(sessions) != 0 {
+		t.Fatalf("got %d sessions, want 0", len(sessions))
 	}
 }

@@ -1,12 +1,14 @@
 package session
 
 import (
-	"VSRT-Lang/internal/http/handlers"
-	"VSRT-Lang/internal/http/middleware"
-	domain "VSRT-Lang/internal/session"
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"VSRT-Lang/internal/http/handlers"
+	"VSRT-Lang/internal/http/middleware"
+	domain "VSRT-Lang/internal/session"
 )
 
 // DeleteSession godoc
@@ -40,7 +42,7 @@ func (h *Handler) DeleteSession(w http.ResponseWriter, r *http.Request) {
 	}
 	err = h.service.DeleteSession(userID, int64(sessionID))
 	if err != nil {
-		if err == domain.ErrUnauthorized {
+		if errors.Is(err, domain.ErrUnauthorized) || errors.Is(err, domain.ErrSessionNotFound) {
 			handlers.WriteError(w, http.StatusNotFound, "session_not_found", err.Error())
 			return
 		}

@@ -1,12 +1,15 @@
 package session
 
 import (
-	"VSRT-Lang/internal/user"
 	"errors"
+	"strings"
+
+	"VSRT-Lang/internal/user"
 )
 
 var ErrUnauthorized = errors.New("unauthorized")
 var ErrSessionNotFound = errors.New("session not found")
+var ErrSessionNameRequired = errors.New("session name is required")
 
 type Service struct {
 	repo       Repository
@@ -21,6 +24,10 @@ func NewService(repo Repository, translator Translator) *Service {
 }
 
 func (s *Service) NewSession(userId user.UserId, name string) (int64, error) {
+	if strings.TrimSpace(name) == "" {
+		return 0, ErrSessionNameRequired
+	}
+
 	session := NewSession(userId, name)
 	id, err := s.repo.Save(session)
 	if err != nil {
@@ -49,9 +56,6 @@ func (s *Service) GetSession(userId user.UserId, sessionId int64) (Session, erro
 func (s *Service) DeleteSession(userId user.UserId, sessionId int64) error {
 	session, err := s.findSession(userId, sessionId)
 	if err != nil {
-		if errors.Is(err, ErrSessionNotFound) {
-			return ErrUnauthorized
-		}
 		return err
 	}
 
@@ -86,13 +90,10 @@ func (s *Service) AddRecord(c AddRecordCommand) (Record, error) {
 func (s *Service) DeleteRecord(userId user.UserId, sessionId int64, phrase string) error {
 	session, err := s.findSession(userId, sessionId)
 	if err != nil {
-		if errors.Is(err, ErrSessionNotFound) {
-			return ErrUnauthorized
-		}
 		return err
 	}
 
-	delete(session.Records, phrase)
+	session.DeleteRecord(phrase)
 	_, err = s.repo.Save(session)
 	return err
 }

@@ -1,10 +1,15 @@
 package session
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+	"strings"
+)
 
+var ErrPhraseRequired = errors.New("phrase is required")
 
 type Context struct {
-	Phrase     string `json:"phrase"`
+	Phrase      string `json:"phrase"`
 	Translation string `json:"translation"`
 }
 
@@ -48,10 +53,10 @@ type recordTranslations struct {
 }
 
 type recordData struct {
-	Contexts  []Context
-	BaseForm  string
-	Synonyms  []string
-	Antonyms  []string
+	Contexts []Context
+	BaseForm string
+	Synonyms []string
+	Antonyms []string
 }
 
 func validateCommand(cmd NewRecordCommand) error {
@@ -59,8 +64,8 @@ func validateCommand(cmd NewRecordCommand) error {
 		return fmt.Errorf("translator is required")
 	}
 
-	if cmd.Phrase == "" {
-		return fmt.Errorf("phrase is required")
+	if strings.TrimSpace(cmd.Phrase) == "" {
+		return ErrPhraseRequired
 	}
 
 	return nil
@@ -150,7 +155,7 @@ func buildRecord(
 	contexts = append(contexts, data.Contexts...)
 
 	return &Record{
-		Phrase:       cmd.Phrase,
+		Phrase:       strings.TrimSpace(cmd.Phrase),
 		Translations: translations.Phrase,
 		Synonyms:     data.Synonyms,
 		Antonyms:     data.Antonyms,
@@ -158,4 +163,45 @@ func buildRecord(
 		Contexts:     contexts,
 		Count:        1,
 	}
+}
+
+func (r *Record) registerSave(context string, translator Translator) error {
+	if err := r.ensureUserContext(context, translator); err != nil {
+		return err
+	}
+	r.Count++
+	return nil
+}
+
+func (r *Record) ensureUserContext(context string, translator Translator) error {
+	if context == "" {
+		return nil
+	}
+	for _, existing := range r.Contexts {
+		if existing.Phrase == context {
+			return nil
+		}
+	}
+
+	translation, err := translateUserContext(translator, context)
+	if err != nil {
+		return err
+	}
+
+	r.Contexts = append(r.Contexts, Context{
+		Phrase:      context,
+		Translation: translation,
+	})
+	return nil
+}
+
+func translateUserContext(translator Translator, context string) (string, error) {
+	translations, err := translator.Translate(context)
+	if err != nil {
+		return "", err
+	}
+	if len(translations) == 0 {
+		return "", fmt.Errorf("translator returned no translation for context %q", context)
+	}
+	return translations[0], nil
 }
