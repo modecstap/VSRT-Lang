@@ -97,3 +97,8 @@ docker-compose restart translator
 ```
 
 После успешной инициализации `libretranslate` сервис `translator` должен запуститься корректно.
+
+## Agent setup
+
+Shared agent layout: [`AGENTS.md`](AGENTS.md). Hookup for Cursor, Claude Code, and others: [`.agents/docs/onboarding.md`](.agents/docs/onboarding.md).
+

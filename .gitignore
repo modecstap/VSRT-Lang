@@ -11,3 +11,13 @@ GO-Manager/.idea
 __pycache__/
 .vscode/launch.json
 GO-Manager/cmd/__debug_bin.exe
+
+# Agent plans and local artifacts
+.agents/plans/**
+.claude/plans/**
+.claude/worktrees/**
+.claude/settings.local.json
+.claude/__pycache__
+CLAUDE.local.md
+.cursor/plans/**
+
