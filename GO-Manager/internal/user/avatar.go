@@ -20,7 +20,6 @@ var (
 	ErrAvatarTooLarge    = errors.New("avatar too large")
 	ErrInvalidAvatarType = errors.New("invalid avatar type")
 	ErrAvatarDimensions  = errors.New("avatar dimensions invalid")
-	ErrNoAvatar          = errors.New("avatar not found")
 )
 
 type Avatar struct {
@@ -28,7 +27,7 @@ type Avatar struct {
 	MediaType string
 }
 
-func PrepareAvatar(raw []byte) (Avatar, error) {
+func prepareAvatar(raw []byte) (Avatar, error) {
 	if len(raw) == 0 {
 		return Avatar{}, ErrInvalidAvatarType
 	}

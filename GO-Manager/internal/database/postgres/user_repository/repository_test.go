@@ -74,11 +74,12 @@ func TestRepository_FindByEmail_ReturnsUser(t *testing.T) {
 	defer db.Close()
 
 	expected := user.NewUser("demo", "demo@example.com", "secret")
+	png := []byte{1, 2, 3}
 
-	rows := sqlmock.NewRows([]string{"id", "username", "email", "password", "created_at"}).
-		AddRow(expected.ID, expected.Username, expected.Email, expected.Password, expected.CreatedAt)
+	rows := sqlmock.NewRows([]string{"id", "username", "email", "password", "created_at", "avatar", "avatar_media_type"}).
+		AddRow(expected.ID, expected.Username, expected.Email, expected.Password, expected.CreatedAt, png, "image/png")
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, username, email, password, created_at
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, username, email, password, created_at, avatar, avatar_media_type
          FROM users
          WHERE email = $1`)).
 		WithArgs(expected.Email).
@@ -93,6 +94,9 @@ func TestRepository_FindByEmail_ReturnsUser(t *testing.T) {
 	if got.ID != expected.ID || got.Username != expected.Username || got.Email != expected.Email || got.Password != expected.Password || !got.CreatedAt.Equal(expected.CreatedAt) {
 		t.Fatalf("unexpected user returned: %#v", got)
 	}
+	if got.Avatar.MediaType != "image/png" || string(got.Avatar.Bytes) != string(png) {
+		t.Fatalf("unexpected avatar: %#v", got.Avatar)
+	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet expectations: %v", err)
@@ -103,7 +107,7 @@ func TestRepository_FindByEmail_NotFound(t *testing.T) {
 	db, mock := setupDB(t)
 	defer db.Close()
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, username, email, password, created_at
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, username, email, password, created_at, avatar, avatar_media_type
          FROM users
          WHERE email = $1`)).
 		WithArgs("missing@example.com").
@@ -125,11 +129,12 @@ func TestRepository_FindByUsername_ReturnsUser(t *testing.T) {
 	defer db.Close()
 
 	expected := user.NewUser("demo", "demo@example.com", "secret")
+	png := []byte{1, 2, 3}
 
-	rows := sqlmock.NewRows([]string{"id", "username", "email", "password", "created_at"}).
-		AddRow(expected.ID, expected.Username, expected.Email, expected.Password, expected.CreatedAt)
+	rows := sqlmock.NewRows([]string{"id", "username", "email", "password", "created_at", "avatar", "avatar_media_type"}).
+		AddRow(expected.ID, expected.Username, expected.Email, expected.Password, expected.CreatedAt, png, "image/png")
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, username, email, password, created_at
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, username, email, password, created_at, avatar, avatar_media_type
          FROM users
          WHERE username = $1`)).
 		WithArgs(expected.Username).
@@ -144,6 +149,9 @@ func TestRepository_FindByUsername_ReturnsUser(t *testing.T) {
 	if got.ID != expected.ID || got.Username != expected.Username || got.Email != expected.Email || got.Password != expected.Password || !got.CreatedAt.Equal(expected.CreatedAt) {
 		t.Fatalf("unexpected user returned: %#v", got)
 	}
+	if got.Avatar.MediaType != "image/png" || string(got.Avatar.Bytes) != string(png) {
+		t.Fatalf("unexpected avatar: %#v", got.Avatar)
+	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet expectations: %v", err)
@@ -154,7 +162,7 @@ func TestRepository_FindByUsername_NotFound(t *testing.T) {
 	db, mock := setupDB(t)
 	defer db.Close()
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, username, email, password, created_at
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, username, email, password, created_at, avatar, avatar_media_type
          FROM users
          WHERE username = $1`)).
 		WithArgs("missing-username").
@@ -176,11 +184,12 @@ func TestRepository_FindByID_ReturnsUser(t *testing.T) {
 	defer db.Close()
 
 	expected := user.NewUser("demo", "demo@example.com", "secret")
+	png := []byte{1, 2, 3}
 
-	rows := sqlmock.NewRows([]string{"id", "username", "email", "password", "created_at"}).
-		AddRow(expected.ID, expected.Username, expected.Email, expected.Password, expected.CreatedAt)
+	rows := sqlmock.NewRows([]string{"id", "username", "email", "password", "created_at", "avatar", "avatar_media_type"}).
+		AddRow(expected.ID, expected.Username, expected.Email, expected.Password, expected.CreatedAt, png, "image/png")
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, username, email, password, created_at
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, username, email, password, created_at, avatar, avatar_media_type
          FROM users
          WHERE id = $1`)).
 		WithArgs(expected.ID).
@@ -195,6 +204,9 @@ func TestRepository_FindByID_ReturnsUser(t *testing.T) {
 	if got.ID != expected.ID || got.Username != expected.Username || got.Email != expected.Email || got.Password != expected.Password || !got.CreatedAt.Equal(expected.CreatedAt) {
 		t.Fatalf("unexpected user returned: %#v", got)
 	}
+	if got.Avatar.MediaType != "image/png" || string(got.Avatar.Bytes) != string(png) {
+		t.Fatalf("unexpected avatar: %#v", got.Avatar)
+	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet expectations: %v", err)
@@ -205,7 +217,7 @@ func TestRepository_FindByID_NotFound(t *testing.T) {
 	db, mock := setupDB(t)
 	defer db.Close()
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, username, email, password, created_at
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, username, email, password, created_at, avatar, avatar_media_type
          FROM users
          WHERE id = $1`)).
 		WithArgs("missing-id").
@@ -259,62 +271,26 @@ func TestRepository_SaveAvatar_NotFound(t *testing.T) {
 	}
 }
 
-func TestRepository_GetAvatar_ReturnsBytes(t *testing.T) {
+func TestRepository_FindByID_NullAvatar(t *testing.T) {
 	db, mock := setupDB(t)
 	defer db.Close()
 
-	raw := []byte{9, 8, 7}
-	rows := sqlmock.NewRows([]string{"avatar", "avatar_media_type"}).
-		AddRow(raw, "image/png")
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT avatar, avatar_media_type FROM users WHERE id = $1`)).
-		WithArgs("user-1").
+	expected := user.NewUser("demo", "demo@example.com", "secret")
+	rows := sqlmock.NewRows([]string{"id", "username", "email", "password", "created_at", "avatar", "avatar_media_type"}).
+		AddRow(expected.ID, expected.Username, expected.Email, expected.Password, expected.CreatedAt, nil, nil)
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, username, email, password, created_at, avatar, avatar_media_type
+         FROM users
+         WHERE id = $1`)).
+		WithArgs(expected.ID).
 		WillReturnRows(rows)
 
 	repo := New(db)
-	got, err := repo.GetAvatar("user-1")
+	got, err := repo.FindByID(expected.ID)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
-	if got.MediaType != "image/png" || string(got.Bytes) != string(raw) {
-		t.Fatalf("unexpected avatar: %#v", got)
-	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("unmet expectations: %v", err)
-	}
-}
-
-func TestRepository_GetAvatar_Null(t *testing.T) {
-	db, mock := setupDB(t)
-	defer db.Close()
-
-	rows := sqlmock.NewRows([]string{"avatar", "avatar_media_type"}).
-		AddRow(nil, nil)
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT avatar, avatar_media_type FROM users WHERE id = $1`)).
-		WithArgs("user-1").
-		WillReturnRows(rows)
-
-	repo := New(db)
-	_, err := repo.GetAvatar("user-1")
-	if err != user.ErrNoAvatar {
-		t.Fatalf("expected ErrNoAvatar, got %v", err)
-	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("unmet expectations: %v", err)
-	}
-}
-
-func TestRepository_GetAvatar_NotFound(t *testing.T) {
-	db, mock := setupDB(t)
-	defer db.Close()
-
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT avatar, avatar_media_type FROM users WHERE id = $1`)).
-		WithArgs("missing").
-		WillReturnError(sql.ErrNoRows)
-
-	repo := New(db)
-	_, err := repo.GetAvatar("missing")
-	if err == nil || err.Error() != "user not found" {
-		t.Fatalf("expected user not found, got %v", err)
+	if got.Avatar.Bytes != nil {
+		t.Fatalf("Avatar.Bytes = %v, want nil", got.Avatar.Bytes)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet expectations: %v", err)

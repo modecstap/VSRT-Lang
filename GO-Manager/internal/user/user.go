@@ -24,6 +24,7 @@ type User struct {
 	Email     string
 	Password  string
 	CreatedAt time.Time
+	Avatar    Avatar
 }
 
 type Repository interface {
@@ -32,7 +33,6 @@ type Repository interface {
 	FindByUsername(username string) (*User, error)
 	FindByID(id string) (*User, error)
 	SaveAvatar(id UserId, avatar Avatar) error
-	GetAvatar(id UserId) (Avatar, error)
 }
 
 func NewUser(username, email, password string) *User {
@@ -43,6 +43,15 @@ func NewUser(username, email, password string) *User {
 		Password:  password,
 		CreatedAt: time.Now(),
 	}
+}
+
+func (u *User) SetAvatar(raw []byte) error {
+	avatar, err := prepareAvatar(raw)
+	if err != nil {
+		return err
+	}
+	u.Avatar = avatar
+	return nil
 }
 
 func HashPassword(password string) (string, error) {

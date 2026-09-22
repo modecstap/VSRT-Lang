@@ -7,18 +7,16 @@ import (
 )
 
 func (r *Repository) FindByID(id string) (*user.User, error) {
-	user := &user.User{}
+	found := &user.User{}
+	var media sql.NullString
 	err := r.db.QueryRow(
-		`SELECT id, username, email, password, created_at
+		`SELECT id, username, email, password, created_at, avatar, avatar_media_type
          FROM users
          WHERE id = $1`,
 		id,
 	).Scan(
-		&user.ID,
-		&user.Username,
-		&user.Email,
-		&user.Password,
-		&user.CreatedAt,
+		&found.ID, &found.Username, &found.Email, &found.Password, &found.CreatedAt,
+		&found.Avatar.Bytes, &media,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -26,5 +24,10 @@ func (r *Repository) FindByID(id string) (*user.User, error) {
 		}
 		return nil, err
 	}
-	return user, nil
+	if found.Avatar.Bytes == nil {
+		found.Avatar = user.Avatar{}
+	} else {
+		found.Avatar.MediaType = media.String
+	}
+	return found, nil
 }

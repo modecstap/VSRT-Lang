@@ -49,7 +49,7 @@ func decodePNG(t *testing.T, raw []byte) image.Image {
 	return img
 }
 
-func TestPrepareAvatar_SquareFormatsBecomePNG(t *testing.T) {
+func TestSetAvatar_SquareFormatsBecomePNG(t *testing.T) {
 	t.Parallel()
 
 	red := color.RGBA{R: 255, A: 255}
@@ -66,10 +66,12 @@ func TestPrepareAvatar_SquareFormatsBecomePNG(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
-			got, err := PrepareAvatar(c.raw)
+			u := &User{}
+			err := u.SetAvatar(c.raw)
 			if err != nil {
-				t.Fatalf("PrepareAvatar: %v", err)
+				t.Fatalf("SetAvatar: %v", err)
 			}
+			got := u.Avatar
 			if got.MediaType != "image/png" {
 				t.Fatalf("MediaType = %q, want image/png", got.MediaType)
 			}
@@ -81,7 +83,7 @@ func TestPrepareAvatar_SquareFormatsBecomePNG(t *testing.T) {
 	}
 }
 
-func TestPrepareAvatar_CenterCropsNonSquare(t *testing.T) {
+func TestSetAvatar_CenterCropsNonSquare(t *testing.T) {
 	t.Parallel()
 
 	src := image.NewRGBA(image.Rect(0, 0, 500, 400))
@@ -98,11 +100,12 @@ func TestPrepareAvatar_CenterCropsNonSquare(t *testing.T) {
 		}
 	}
 
-	got, err := PrepareAvatar(encodePNG(t, src))
+	u := &User{}
+	err := u.SetAvatar(encodePNG(t, src))
 	if err != nil {
-		t.Fatalf("PrepareAvatar: %v", err)
+		t.Fatalf("SetAvatar: %v", err)
 	}
-	img := decodePNG(t, got.Bytes)
+	img := decodePNG(t, u.Avatar.Bytes)
 	if img.Bounds().Dx() != 400 || img.Bounds().Dy() != 400 {
 		t.Fatalf("bounds = %dx%d, want 400x400", img.Bounds().Dx(), img.Bounds().Dy())
 	}
@@ -118,20 +121,21 @@ func TestPrepareAvatar_CenterCropsNonSquare(t *testing.T) {
 	}
 }
 
-func TestPrepareAvatar_Square512IsNotCropped(t *testing.T) {
+func TestSetAvatar_Square512IsNotCropped(t *testing.T) {
 	t.Parallel()
 
-	got, err := PrepareAvatar(encodePNG(t, solidRGBA(512, 512, color.RGBA{A: 255})))
+	u := &User{}
+	err := u.SetAvatar(encodePNG(t, solidRGBA(512, 512, color.RGBA{A: 255})))
 	if err != nil {
-		t.Fatalf("PrepareAvatar: %v", err)
+		t.Fatalf("SetAvatar: %v", err)
 	}
-	bounds := decodePNG(t, got.Bytes).Bounds()
+	bounds := decodePNG(t, u.Avatar.Bytes).Bounds()
 	if bounds.Dx() != 512 || bounds.Dy() != 512 {
 		t.Fatalf("bounds = %dx%d, want 512x512", bounds.Dx(), bounds.Dy())
 	}
 }
 
-func TestPrepareAvatar_Rejects(t *testing.T) {
+func TestSetAvatar_Rejects(t *testing.T) {
 	t.Parallel()
 
 	var gifBuf bytes.Buffer
@@ -155,7 +159,8 @@ func TestPrepareAvatar_Rejects(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
-			_, err := PrepareAvatar(c.raw)
+			u := &User{}
+			err := u.SetAvatar(c.raw)
 			if err != c.want {
 				t.Fatalf("error = %v, want %v", err, c.want)
 			}

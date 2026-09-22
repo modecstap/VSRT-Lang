@@ -79,7 +79,7 @@ func startServer(deps *router.ServerDependens) {
 	handlers := myHttp.Handlers{
 		Auth:           auth_handler.NewAuth(deps.AuthService),
 		Session:        session_handler.NewHandler(deps.SessionService),
-		User:           user_handler.NewHandler(deps.UserRepo, deps.SessionRepo),
+		User:           user_handler.NewHandler(deps.UserService, deps.SessionRepo),
 		AuthMiddleware: middleware.Auth(deps.JwtService),
 	}
 

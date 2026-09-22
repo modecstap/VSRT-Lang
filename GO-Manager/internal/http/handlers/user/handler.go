@@ -9,17 +9,21 @@ type SessionRepository interface {
 	FindByUser(userId domain.UserId) ([]session.Session, error)
 }
 
+type AvatarService interface {
+	SaveAvatar(id domain.UserId, raw []byte) error
+}
+
 type Handler struct {
-	userRepo    domain.Repository
-	sessionRepo SessionRepository
+	avatarService AvatarService
+	sessionRepo   SessionRepository
 }
 
 func NewHandler(
-	userRepo domain.Repository,
+	avatarService AvatarService,
 	sessionRepo SessionRepository,
 ) *Handler {
 	return &Handler{
-		userRepo:    userRepo,
-		sessionRepo: sessionRepo,
+		avatarService: avatarService,
+		sessionRepo:   sessionRepo,
 	}
 }

@@ -57,30 +57,20 @@ func (h *Handler) SaveAvatar(w http.ResponseWriter, r *http.Request) {
 		handlers.WriteError(w, http.StatusBadRequest, "avatar_missing", err.Error())
 		return
 	}
-	if len(raw) > domain.MaxAvatarBytes {
-		handlers.WriteError(w, http.StatusBadRequest, "avatar_too_large", "avatar too large")
-		return
-	}
 
-	avatar, err := domain.PrepareAvatar(raw)
-	if err != nil {
+	if err := h.avatarService.SaveAvatar(userId, raw); err != nil {
 		switch {
 		case errors.Is(err, domain.ErrAvatarTooLarge):
 			handlers.WriteError(w, http.StatusBadRequest, "avatar_too_large", err.Error())
 		case errors.Is(err, domain.ErrAvatarDimensions):
 			handlers.WriteError(w, http.StatusBadRequest, "avatar_dimensions_invalid", err.Error())
-		default:
+		case errors.Is(err, domain.ErrInvalidAvatarType):
 			handlers.WriteError(w, http.StatusBadRequest, "invalid_avatar_type", err.Error())
-		}
-		return
-	}
-
-	if err := h.userRepo.SaveAvatar(userId, avatar); err != nil {
-		if err.Error() == "user not found" {
+		case err.Error() == "user not found":
 			handlers.WriteError(w, http.StatusNotFound, "user_not_found", err.Error())
-			return
+		default:
+			handlers.WriteError(w, http.StatusInternalServerError, "avatar_save_failed", err.Error())
 		}
-		handlers.WriteError(w, http.StatusInternalServerError, "avatar_save_failed", err.Error())
 		return
 	}
 

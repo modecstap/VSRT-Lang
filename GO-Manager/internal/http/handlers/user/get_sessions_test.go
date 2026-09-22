@@ -14,17 +14,6 @@ import (
 	domain "VSRT-Lang/internal/user"
 )
 
-type fakeUserRepo struct{}
-
-func (fakeUserRepo) Create(*domain.User) error                     { return nil }
-func (fakeUserRepo) FindByEmail(string) (*domain.User, error)      { return nil, nil }
-func (fakeUserRepo) FindByUsername(string) (*domain.User, error)   { return nil, nil }
-func (fakeUserRepo) FindByID(string) (*domain.User, error)         { return nil, nil }
-func (fakeUserRepo) SaveAvatar(domain.UserId, domain.Avatar) error { return nil }
-func (fakeUserRepo) GetAvatar(domain.UserId) (domain.Avatar, error) {
-	return domain.Avatar{}, domain.ErrNoAvatar
-}
-
 type fakeSessionRepo struct {
 	sessions []session.Session
 	err      error
@@ -106,7 +95,7 @@ func TestHandler_GetUserSessions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			h := NewHandler(fakeUserRepo{}, tt.repo)
+			h := NewHandler(nil, tt.repo)
 			req := httptest.NewRequest(http.MethodGet, tt.path, nil)
 
 			var rw *httptest.ResponseRecorder

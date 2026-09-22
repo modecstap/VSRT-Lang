@@ -18,6 +18,7 @@ import (
 	"VSRT-Lang/internal/http/middleware"
 	"VSRT-Lang/internal/session"
 	"VSRT-Lang/internal/translators/stub"
+	"VSRT-Lang/internal/user"
 )
 
 type tokenPairResponse struct {
@@ -36,7 +37,7 @@ func newTestMux() *http.ServeMux {
 	return NewServeMux(Handlers{
 		Auth:           authhandler.NewAuth(authSvc),
 		Session:        sessionhandler.NewHandler(sessionSvc),
-		User:           userhandler.NewHandler(users, sessions),
+		User:           userhandler.NewHandler(user.NewService(users), sessions),
 		AuthMiddleware: middleware.Auth(jwtSvc),
 	})
 }

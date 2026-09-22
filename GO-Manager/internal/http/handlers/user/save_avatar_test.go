@@ -3,62 +3,28 @@ package user
 import (
 	"bytes"
 	"encoding/json"
-	"image"
-	"image/color"
-	"image/gif"
-	"image/png"
+	"errors"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"VSRT-Lang/internal/database/memory"
 	"VSRT-Lang/internal/http/handlers"
 	domain "VSRT-Lang/internal/user"
 )
 
-type recordingUserRepo struct {
-	lastID     domain.UserId
-	lastAvatar domain.Avatar
-	saveErr    error
+type fakeAvatarService struct {
+	id     domain.UserId
+	raw    []byte
+	err    error
+	called int
 }
 
-func (r *recordingUserRepo) Create(*domain.User) error                   { return nil }
-func (r *recordingUserRepo) FindByEmail(string) (*domain.User, error)    { return nil, nil }
-func (r *recordingUserRepo) FindByUsername(string) (*domain.User, error) { return nil, nil }
-func (r *recordingUserRepo) FindByID(string) (*domain.User, error)       { return nil, nil }
-func (r *recordingUserRepo) GetAvatar(domain.UserId) (domain.Avatar, error) {
-	return domain.Avatar{}, domain.ErrNoAvatar
-}
-func (r *recordingUserRepo) SaveAvatar(id domain.UserId, avatar domain.Avatar) error {
-	r.lastID = id
-	r.lastAvatar = avatar
-	return r.saveErr
-}
-
-func pngBytes(t *testing.T, w, h int) []byte {
-	t.Helper()
-	img := image.NewRGBA(image.Rect(0, 0, w, h))
-	for y := 0; y < h; y++ {
-		for x := 0; x < w; x++ {
-			img.SetRGBA(x, y, color.RGBA{G: 255, A: 255})
-		}
-	}
-	var buf bytes.Buffer
-	if err := png.Encode(&buf, img); err != nil {
-		t.Fatalf("png.Encode: %v", err)
-	}
-	return buf.Bytes()
-}
-
-func gifBytes(t *testing.T) []byte {
-	t.Helper()
-	img := image.NewRGBA(image.Rect(0, 0, 8, 8))
-	var buf bytes.Buffer
-	if err := gif.Encode(&buf, img, nil); err != nil {
-		t.Fatalf("gif.Encode: %v", err)
-	}
-	return buf.Bytes()
+func (f *fakeAvatarService) SaveAvatar(id domain.UserId, raw []byte) error {
+	f.called++
+	f.id = id
+	f.raw = bytes.Clone(raw)
+	return f.err
 }
 
 func avatarRequest(t *testing.T, field, filename string, data []byte) *http.Request {
@@ -85,9 +51,9 @@ func avatarRequest(t *testing.T, field, filename string, data []byte) *http.Requ
 func TestHandler_SaveAvatar_Success(t *testing.T) {
 	t.Parallel()
 
-	repo := &recordingUserRepo{}
-	h := NewHandler(repo, nil)
-	raw := pngBytes(t, 16, 16)
+	svc := &fakeAvatarService{}
+	h := NewHandler(svc, nil)
+	raw := []byte("raw-upload")
 	rw := serveAuthed(t, h.SaveAvatar, avatarRequest(t, "avatar", "a.png", raw), "user-1")
 
 	if rw.Code != http.StatusNoContent {
@@ -96,40 +62,44 @@ func TestHandler_SaveAvatar_Success(t *testing.T) {
 	if rw.Header().Get("Content-Type") != "" {
 		t.Fatalf("Content-Type = %q, want empty", rw.Header().Get("Content-Type"))
 	}
-	if repo.lastID != "user-1" {
-		t.Fatalf("saved id = %q, want user-1", repo.lastID)
+	if svc.id != "user-1" {
+		t.Fatalf("saved id = %q, want user-1", svc.id)
 	}
-	want, err := domain.PrepareAvatar(raw)
-	if err != nil {
-		t.Fatalf("PrepareAvatar: %v", err)
-	}
-	if repo.lastAvatar.MediaType != "image/png" || !bytes.Equal(repo.lastAvatar.Bytes, want.Bytes) {
-		t.Fatalf("stored avatar mismatch")
+	if !bytes.Equal(svc.raw, raw) {
+		t.Fatalf("saved bytes = %q, want raw upload", svc.raw)
 	}
 }
 
 func TestHandler_SaveAvatar_Errors(t *testing.T) {
 	t.Parallel()
 
+	oversize := make([]byte, domain.MaxAvatarBytes+multipartEnvelopeSlack+1)
+
 	tests := []struct {
-		name  string
-		auth  bool
-		field string
-		file  []byte
-		want  int
-		code  string
+		name   string
+		auth   bool
+		field  string
+		file   []byte
+		svcErr error
+		want   int
+		code   string
+		called bool
 	}{
-		{name: "missing field", auth: true, field: "file", file: pngBytes(t, 8, 8), want: http.StatusBadRequest, code: "avatar_missing"},
-		{name: "gif", auth: true, field: "avatar", file: gifBytes(t), want: http.StatusBadRequest, code: "invalid_avatar_type"},
-		{name: "oversized", auth: true, field: "avatar", file: make([]byte, domain.MaxAvatarBytes+1), want: http.StatusBadRequest, code: "avatar_too_large"},
-		{name: "513px", auth: true, field: "avatar", file: pngBytes(t, 513, 1), want: http.StatusBadRequest, code: "avatar_dimensions_invalid"},
-		{name: "no context", auth: false, field: "avatar", file: pngBytes(t, 8, 8), want: http.StatusUnauthorized, code: "unauthorized"},
+		{name: "missing field", auth: true, field: "file", file: []byte("x"), want: http.StatusBadRequest, code: "avatar_missing"},
+		{name: "no context", auth: false, field: "avatar", file: []byte("x"), want: http.StatusUnauthorized, code: "unauthorized"},
+		{name: "body over max reader", auth: true, field: "avatar", file: oversize, want: http.StatusBadRequest, code: "avatar_too_large"},
+		{name: "invalid type", auth: true, field: "avatar", file: []byte("x"), svcErr: domain.ErrInvalidAvatarType, want: http.StatusBadRequest, code: "invalid_avatar_type", called: true},
+		{name: "dimensions", auth: true, field: "avatar", file: []byte("x"), svcErr: domain.ErrAvatarDimensions, want: http.StatusBadRequest, code: "avatar_dimensions_invalid", called: true},
+		{name: "too large", auth: true, field: "avatar", file: []byte("x"), svcErr: domain.ErrAvatarTooLarge, want: http.StatusBadRequest, code: "avatar_too_large", called: true},
+		{name: "missing user", auth: true, field: "avatar", file: []byte("x"), svcErr: errors.New("user not found"), want: http.StatusNotFound, code: "user_not_found", called: true},
+		{name: "persist failed", auth: true, field: "avatar", file: []byte("x"), svcErr: errors.New("db down"), want: http.StatusInternalServerError, code: "avatar_save_failed", called: true},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			h := NewHandler(&recordingUserRepo{}, nil)
+			svc := &fakeAvatarService{err: tt.svcErr}
+			h := NewHandler(svc, nil)
 			req := avatarRequest(t, tt.field, "a.bin", tt.file)
 			var rw *httptest.ResponseRecorder
 			if tt.auth {
@@ -148,54 +118,12 @@ func TestHandler_SaveAvatar_Errors(t *testing.T) {
 			if got.Error.Code != tt.code {
 				t.Fatalf("error code = %q, want %q", got.Error.Code, tt.code)
 			}
+			if tt.called && svc.called != 1 {
+				t.Fatalf("service calls = %d, want 1", svc.called)
+			}
+			if !tt.called && svc.called != 0 {
+				t.Fatalf("service calls = %d, want 0", svc.called)
+			}
 		})
-	}
-}
-
-func TestHandler_SaveAvatar_IsolatedByToken(t *testing.T) {
-	t.Parallel()
-
-	repo := memory.NewUserRepository()
-	a := domain.NewUser("alice", "alice@example.com", "secret")
-	a.ID = "user-a"
-	b := domain.NewUser("bob", "bob@example.com", "secret")
-	b.ID = "user-b"
-	if err := repo.Create(a); err != nil {
-		t.Fatalf("create a: %v", err)
-	}
-	if err := repo.Create(b); err != nil {
-		t.Fatalf("create b: %v", err)
-	}
-
-	h := NewHandler(repo, nil)
-	pngA := pngBytes(t, 8, 8)
-	pngB := pngBytes(t, 16, 16)
-
-	rwA := serveAuthed(t, h.SaveAvatar, avatarRequest(t, "avatar", "a.png", pngA), "user-a")
-	if rwA.Code != http.StatusNoContent {
-		t.Fatalf("A status = %d, body=%s", rwA.Code, rwA.Body.String())
-	}
-	rwB := serveAuthed(t, h.SaveAvatar, avatarRequest(t, "avatar", "b.png", pngB), "user-b")
-	if rwB.Code != http.StatusNoContent {
-		t.Fatalf("B status = %d, body=%s", rwB.Code, rwB.Body.String())
-	}
-
-	gotA, err := repo.GetAvatar("user-a")
-	if err != nil {
-		t.Fatalf("GetAvatar A: %v", err)
-	}
-	gotB, err := repo.GetAvatar("user-b")
-	if err != nil {
-		t.Fatalf("GetAvatar B: %v", err)
-	}
-	if bytes.Equal(gotA.Bytes, gotB.Bytes) {
-		t.Fatal("B save overwrote A avatar")
-	}
-	wantA, err := domain.PrepareAvatar(pngA)
-	if err != nil {
-		t.Fatalf("PrepareAvatar A: %v", err)
-	}
-	if !bytes.Equal(gotA.Bytes, wantA.Bytes) {
-		t.Fatal("A avatar changed after B save")
 	}
 }

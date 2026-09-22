@@ -12,7 +12,6 @@ type UserRepository struct {
 	usersByID       map[string]*user.User
 	usersByEmail    map[string]*user.User
 	usersByUsername map[string]*user.User
-	avatars         map[string]user.Avatar
 }
 
 func NewUserRepository() *UserRepository {
@@ -20,80 +19,74 @@ func NewUserRepository() *UserRepository {
 		usersByID:       make(map[string]*user.User),
 		usersByEmail:    make(map[string]*user.User),
 		usersByUsername: make(map[string]*user.User),
-		avatars:         make(map[string]user.Avatar),
 	}
 }
 
-func (r *UserRepository) Create(user *user.User) error {
+func (r *UserRepository) Create(u *user.User) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	if _, exists := r.usersByEmail[user.Email]; exists {
+	if _, exists := r.usersByEmail[u.Email]; exists {
 		return errors.New("user already exists")
 	}
 
-	if user.ID == "" {
-		user.ID = "user-" + time.Now().Format("20060102150405")
+	if u.ID == "" {
+		u.ID = "user-" + time.Now().Format("20060102150405")
 	}
 
-	r.usersByID[user.ID] = user
-	r.usersByEmail[user.Email] = user
-	r.usersByUsername[user.Username] = user
+	r.usersByID[u.ID] = u
+	r.usersByEmail[u.Email] = u
+	r.usersByUsername[u.Username] = u
 	return nil
 }
 
 func (r *UserRepository) FindByEmail(email string) (*user.User, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	user, ok := r.usersByEmail[email]
+	stored, ok := r.usersByEmail[email]
 	if !ok {
 		return nil, errors.New("user not found")
 	}
-	return user, nil
+	return cloneUser(stored), nil
 }
 
 func (r *UserRepository) FindByUsername(username string) (*user.User, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	user, ok := r.usersByUsername[username]
+	stored, ok := r.usersByUsername[username]
 	if !ok {
 		return nil, errors.New("user not found")
 	}
-	return user, nil
+	return cloneUser(stored), nil
 }
 
 func (r *UserRepository) FindByID(id string) (*user.User, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	user, ok := r.usersByID[id]
+	stored, ok := r.usersByID[id]
 	if !ok {
 		return nil, errors.New("user not found")
 	}
-	return user, nil
+	return cloneUser(stored), nil
 }
 
 func (r *UserRepository) SaveAvatar(id user.UserId, avatar user.Avatar) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	if _, ok := r.usersByID[string(id)]; !ok {
+	stored, ok := r.usersByID[string(id)]
+	if !ok {
 		return errors.New("user not found")
 	}
 	copied := make([]byte, len(avatar.Bytes))
 	copy(copied, avatar.Bytes)
-	r.avatars[string(id)] = user.Avatar{Bytes: copied, MediaType: avatar.MediaType}
+	stored.Avatar = user.Avatar{Bytes: copied, MediaType: avatar.MediaType}
 	return nil
 }
 
-func (r *UserRepository) GetAvatar(id user.UserId) (user.Avatar, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	if _, ok := r.usersByID[string(id)]; !ok {
-		return user.Avatar{}, errors.New("user not found")
+func cloneUser(src *user.User) *user.User {
+	dst := *src
+	if src.Avatar.Bytes != nil {
+		dst.Avatar.Bytes = make([]byte, len(src.Avatar.Bytes))
+		copy(dst.Avatar.Bytes, src.Avatar.Bytes)
 	}
-	avatar, ok := r.avatars[string(id)]
-	if !ok {
-		return user.Avatar{}, user.ErrNoAvatar
-	}
-	copied := make([]byte, len(avatar.Bytes))
-	copy(copied, avatar.Bytes)
-	return user.Avatar{Bytes: copied, MediaType: avatar.MediaType}, nil
+	return &dst
 }

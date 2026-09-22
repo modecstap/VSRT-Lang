@@ -8,6 +8,7 @@ import (
 	"VSRT-Lang/internal/net_translator"
 	"VSRT-Lang/internal/session"
 	"VSRT-Lang/internal/translators/stub"
+	"VSRT-Lang/internal/user"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -17,6 +18,7 @@ import (
 
 type ServerDependens struct {
 	UserRepo       *user_repository.Repository
+	UserService    *user.Service
 	SessionRepo    *session_repository.Repository
 	SessionService *session.Service
 	AuthService    *auth.Service
@@ -45,6 +47,7 @@ func DependensFromEnv(db *sql.DB) (*ServerDependens, error) {
 	sessionService := session.NewService(sessionRepo, translator)
 
 	userRepo := user_repository.New(db)
+	userService := user.NewService(userRepo)
 	tokenRepo := refresh_token_repository.New(db)
 	secret, ok := os.LookupEnv("SECRET_KEY")
 	if !ok {
@@ -59,6 +62,7 @@ func DependensFromEnv(db *sql.DB) (*ServerDependens, error) {
 
 	return &ServerDependens{
 		UserRepo:       userRepo,
+		UserService:    userService,
 		SessionRepo:    sessionRepo,
 		SessionService: sessionService,
 		AuthService:    authService,

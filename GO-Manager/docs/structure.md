@@ -31,12 +31,13 @@
 
 ### `internal/user`
 
-Реализует: доменную модель пользователя, контракт хранилища, хеширование пароля, валидацию email/пароля и подготовку аватара.
+Реализует: доменную модель пользователя, прикладной сервис аватара, контракт хранилища, хеширование пароля и валидацию email/пароля.
 
 Содержит:
 
-- `user.go` — `User`, `UserId`, `Repository` (`Create`, `FindByEmail`, `FindByUsername`, `FindByID`, `SaveAvatar`, `GetAvatar`), `NewUser`, bcrypt-хеш и сравнение пароля. В `User` нет полей аватара: find/create не грузят blob.
-- `avatar.go` — `Avatar`, `PrepareAvatar`: JPEG/PNG/WebP ≤ 2 MiB, стороны ≤ 512, неквадрат режется по центру в квадрат меньшей стороны, всегда PNG (`image/png`).
+- `user.go` — `User` (поле `Avatar`), `UserId`, `Repository` (`Create`, `FindByEmail`, `FindByUsername`, `FindByID`, `SaveAvatar`), `NewUser`, `SetAvatar`, bcrypt-хеш и сравнение пароля. `NewUser` оставляет `Avatar` нулевым.
+- `avatar.go` — `Avatar` (`Bytes`, `MediaType`). Правила JPEG/PNG/WebP ≤ 2 MiB, стороны ≤ 512, неквадрат режется по центру в квадрат меньшей стороны, хранение PNG (`image/png`) доступны только через `User.SetAvatar`.
+- `service.go` — `SaveAvatar`: загрузка пользователя по id, `SetAvatar` с сырыми байтами файла, запись через `Repository.SaveAvatar`.
 - `validate.go` — `ValidateEmail`, `ValidatePassword` (минимум 8 символов, верхний и нижний регистр, цифра).
 
 ### `internal/auth`
@@ -71,7 +72,7 @@ HTTP-маршруты `/refresh` и `/logout` в роутере не зарег�
 Содержит:
 
 - `router.go` — `NewServeMux`: публичные `POST /register`, `POST /login`; защищённые `POST /sessions`, `DELETE /sessions/`, `POST /sessions/`, `GET /sessions/`, `GET /users/`, `POST /users/avatar`; раздача Swagger.
-- `server_deps.go` — `DependensFromEnv`: postgres-репозитории, `auth.Service`, `session.Service`, JWT; выбор Translator по `MODE`.
+- `server_deps.go` — `DependensFromEnv`: postgres-репозитории, `auth.Service`, `session.Service`, `user.Service`, JWT; выбор Translator по `MODE`.
 
 ### `internal/http/handlers`
 
@@ -110,9 +111,9 @@ HTTP-маршруты `/refresh` и `/logout` в роутере не зарег�
 
 Содержит:
 
-- `handler.go` — `Handler` с `user.Repository` и репозиторием сессий.
+- `handler.go` — `Handler` с узким интерфейсом сервиса аватара (`SaveAvatar`) и репозиторием сессий. Репозитория пользователя в handler нет.
 - `get_sessions.go` — `GET /users/sessions`: сессии по `user_id` из токена.
-- `save_avatar.go` — `POST /users/avatar`: multipart `avatar`, `PrepareAvatar`, `SaveAvatar`, ответ `204`. GET аватара нет.
+- `save_avatar.go` — `POST /users/avatar`: JWT, multipart `avatar`, лимит `MaxBytesReader`, вызов сервиса, ответ `204`. Подготовки изображения в handler нет. GET аватара нет.
 
 ### `internal/http/middleware`
 
@@ -147,12 +148,11 @@ HTTP-маршруты `/refresh` и `/logout` в роутере не зарег�
 Содержит:
 
 - `repository.go` — обёртка над `*sql.DB`.
-- `create.go` — вставка пользователя (пять колонок, аватар NULL).
-- `find_by_id.go` — поиск по id.
-- `find_by_email.go` — поиск по email.
-- `find_by_username.go` — поиск по username.
+- `create.go` — вставка пользователя без колонок аватара (в БД остаётся NULL).
+- `find_by_id.go` — поиск по id, вместе с `avatar` и `avatar_media_type`. NULL — нулевой `Avatar`.
+- `find_by_email.go` — поиск по email, те же колонки аватара.
+- `find_by_username.go` — поиск по username, те же колонки аватара.
 - `save_avatar.go` — `UPDATE` PNG-байтов и `image/png`; 0 строк — `"user not found"`.
-- `get_avatar.go` — `SELECT avatar, avatar_media_type`; нет строки — `"user not found"`; NULL — `ErrNoAvatar`.
 
 ### `internal/database/postgres/session_repository`
 
@@ -181,7 +181,7 @@ HTTP-маршруты `/refresh` и `/logout` в роутере не зарег�
 
 Содержит:
 
-- `user_repository.go` — пользователи в картах по id/email/username; аватары (PNG) в отдельной карте, replace при повторном `SaveAvatar`.
+- `user_repository.go` — пользователи в картах по id/email/username; аватар хранится на `User`. `SaveAvatar` копирует байты и заменяет предыдущие. `Find*` возвращает копию пользователя с копией байтов аватара.
 - `session.go` — сессии в памяти с клонированием записей.
 - `token_repository.go` — refresh-токены по хешу.
 
