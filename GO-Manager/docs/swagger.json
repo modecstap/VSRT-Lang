@@ -301,6 +301,49 @@
                 }
             }
         },
+        "/users/avatar": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Upload a JPEG, PNG, or WebP image; it is cropped to a square if needed and stored as PNG",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "Save user avatar",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "Avatar image",
+                        "name": "avatar",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "invalid avatar",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/users/sessions": {
             "get": {
                 "security": [

@@ -119,6 +119,18 @@ ALTER TABLE records
 DROP CONSTRAINT unique_session_phrase;
 `,
 	},
+	{
+		Version: 5,
+		Name:    "add_user_avatar",
+		Up: `
+ALTER TABLE users
+    ADD COLUMN avatar BYTEA,
+    ADD COLUMN avatar_media_type TEXT;
+`,
+		Down: `
+ALTER TABLE users DROP COLUMN avatar_media_type, DROP COLUMN avatar;
+`,
+	},
 }
 
 const schemaMigrationsTable = `

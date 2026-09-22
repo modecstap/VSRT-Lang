@@ -282,6 +282,34 @@ paths:
       summary: Save record to session
       tags:
       - session
+  /users/avatar:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload a JPEG, PNG, or WebP image; it is cropped to a square if
+        needed and stored as PNG
+      parameters:
+      - description: Avatar image
+        in: formData
+        name: avatar
+        required: true
+        type: file
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: invalid avatar
+          schema:
+            type: string
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Save user avatar
+      tags:
+      - user
   /users/sessions:
     get:
       description: Retrieve all sessions for the authenticated user

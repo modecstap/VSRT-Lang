@@ -174,6 +174,7 @@ func TestNewServeMux_ProtectedRoutesRequireAuth(t *testing.T) {
 		{name: "save record", method: http.MethodPost, path: "/sessions/1/records", body: map[string]string{"phrase": "hello", "context": "world"}},
 		{name: "get records", method: http.MethodGet, path: "/sessions/1/records"},
 		{name: "user sessions", method: http.MethodGet, path: "/users/sessions"},
+		{name: "save avatar", method: http.MethodPost, path: "/users/avatar"},
 	}
 
 	for _, tt := range tests {

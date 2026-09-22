@@ -4,8 +4,8 @@ import (
 	"errors"
 	"regexp"
 	"time"
-	"github.com/google/uuid"
 
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -31,6 +31,8 @@ type Repository interface {
 	FindByEmail(email string) (*User, error)
 	FindByUsername(username string) (*User, error)
 	FindByID(id string) (*User, error)
+	SaveAvatar(id UserId, avatar Avatar) error
+	GetAvatar(id UserId) (Avatar, error)
 }
 
 func NewUser(username, email, password string) *User {
@@ -58,5 +60,3 @@ func HashPassword(password string) (string, error) {
 func ComparePassword(hash, password string) bool {
 	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)) == nil
 }
-
-

@@ -12,6 +12,7 @@ type UserRepository struct {
 	usersByID       map[string]*user.User
 	usersByEmail    map[string]*user.User
 	usersByUsername map[string]*user.User
+	avatars         map[string]user.Avatar
 }
 
 func NewUserRepository() *UserRepository {
@@ -19,6 +20,7 @@ func NewUserRepository() *UserRepository {
 		usersByID:       make(map[string]*user.User),
 		usersByEmail:    make(map[string]*user.User),
 		usersByUsername: make(map[string]*user.User),
+		avatars:         make(map[string]user.Avatar),
 	}
 }
 
@@ -67,4 +69,31 @@ func (r *UserRepository) FindByID(id string) (*user.User, error) {
 		return nil, errors.New("user not found")
 	}
 	return user, nil
+}
+
+func (r *UserRepository) SaveAvatar(id user.UserId, avatar user.Avatar) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if _, ok := r.usersByID[string(id)]; !ok {
+		return errors.New("user not found")
+	}
+	copied := make([]byte, len(avatar.Bytes))
+	copy(copied, avatar.Bytes)
+	r.avatars[string(id)] = user.Avatar{Bytes: copied, MediaType: avatar.MediaType}
+	return nil
+}
+
+func (r *UserRepository) GetAvatar(id user.UserId) (user.Avatar, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	if _, ok := r.usersByID[string(id)]; !ok {
+		return user.Avatar{}, errors.New("user not found")
+	}
+	avatar, ok := r.avatars[string(id)]
+	if !ok {
+		return user.Avatar{}, user.ErrNoAvatar
+	}
+	copied := make([]byte, len(avatar.Bytes))
+	copy(copied, avatar.Bytes)
+	return user.Avatar{Bytes: copied, MediaType: avatar.MediaType}, nil
 }
