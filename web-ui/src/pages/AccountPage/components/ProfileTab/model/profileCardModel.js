@@ -39,6 +39,20 @@ function withRefreshMark(username) {
   return mark;
 }
 
+export function avatarUploadError(error) {
+  const code = error?.response?.data?.error?.code;
+  switch (code) {
+    case 'avatar_too_large':
+      return 'Image is too large';
+    case 'invalid_avatar_type':
+      return 'Use a JPEG, PNG, or WebP image';
+    case 'avatar_dimensions_invalid':
+      return 'Image is too wide or too tall';
+    default:
+      return 'Unable to save avatar';
+  }
+}
+
 export function profileCardView({ data, error }) {
   if (data == null) {
     return error ? loadErrorCard : loadingCard;

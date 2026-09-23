@@ -5,7 +5,7 @@ import ProfileUserCard from './components/ProfileUserCard';
 import SessionList from './components/SessionList';
 
 function ProfileTab() {
-    const user = useProfileCard();
+    const { uploading, uploadError, handleAvatarChange, ...user } = useProfileCard();
     const {
         sessions,
         loading,
@@ -22,7 +22,12 @@ function ProfileTab() {
     return (
         <div className={styles.container}>
             <div className={styles.card}>
-                <ProfileUserCard user={user} />
+                <ProfileUserCard
+                    user={user}
+                    uploading={uploading}
+                    uploadError={uploadError}
+                    handleAvatarChange={handleAvatarChange}
+                />
             </div>
 
             <SessionList
