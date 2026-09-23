@@ -39,7 +39,8 @@ function SessionTab() {
                                     type="button"
                                     onClick={() => handleSelectWord(word)}
                                 >
-                                    <span>- {word.word}</span>
+                                    <span className={styles.wordLabel}>- {word.word}</span>
+                                    <span className={styles.wordCount}>{word.count}</span>
                                 </Button>
                             ))
                         )}

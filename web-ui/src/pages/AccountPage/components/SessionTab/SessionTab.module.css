@@ -81,6 +81,11 @@
 }
 
 .wordItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: var(--spacing-3);
   border: 1px solid transparent;
   color: var(--text-contrast);
   background: var(--bg-contrast);
@@ -89,6 +94,15 @@
   padding: 0;
   content-visibility: auto;
   contain-intrinsic-size: 2.5rem;
+}
+
+.wordLabel {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.wordCount {
+  flex-shrink: 0;
 }
 
 .wordItem:hover,

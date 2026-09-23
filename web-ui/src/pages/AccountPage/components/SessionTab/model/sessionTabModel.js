@@ -11,6 +11,8 @@ export function mapRecordToWord(record, index = 0) {
   const antonyms = record?.antonyms || record?.Antonyms || [];
   const baseForm = record?.baseForm || record?.BaseForm || record?.base_form || phrase;
   const contexts = record?.contexts || record?.Contexts || [];
+  const rawCount = record?.count ?? record?.Count;
+  const count = Number(rawCount);
 
   return {
     id: record?.id || `${normalizeWord(phrase) || 'word'}-${index}`,
@@ -20,6 +22,7 @@ export function mapRecordToWord(record, index = 0) {
     antonyms,
     meaning: baseForm || 'No meaning provided yet.',
     contexts: contexts.map((item) => item?.phrase || item?.Phrase || item?.translation || item?.Translation || ''),
+    count: Number.isFinite(count) ? count : 0,
   };
 }
 
