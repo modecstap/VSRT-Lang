@@ -284,8 +284,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/VSRT-Lang_internal_session.Record"
                         }
                     },
                     "400": {

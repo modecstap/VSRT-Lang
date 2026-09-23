@@ -70,13 +70,10 @@ export async function fetchSessionRecords(sessionId) {
 }
 
 export async function saveSessionRecord(sessionId, payload) {
-  await apiClient.post(`/sessions/${sessionId}/records`, {
+  const response = await apiClient.post(`/sessions/${sessionId}/records`, {
     phrase: payload.phrase,
     context: payload.context,
   });
 
-  return {
-    phrase: payload.phrase,
-    contexts: payload.context ? [{ phrase: payload.context }] : [],
-  };
+  return response.data;
 }

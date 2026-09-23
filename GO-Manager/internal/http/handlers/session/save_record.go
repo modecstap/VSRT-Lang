@@ -23,7 +23,7 @@ type createRecordRequest struct {
 // @Produce      json
 // @Param        id    path      int                 true  "Session ID"
 // @Param        body  body      createRecordRequest true  "Record data"
-// @Success      201   {object}  map[string]any
+// @Success      201   {object}  domain.Record
 // @Failure      400   {string}  string  "invalid request"
 // @Failure      404   {string}  string  "not found"
 // @Failure      500   {string}  string  "internal error"
@@ -54,7 +54,7 @@ func (h *Handler) SaveRecord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = h.service.AddRecord(domain.AddRecordCommand{
+	record, err := h.service.AddRecord(domain.AddRecordCommand{
 		UserId:    userID,
 		SessionId: int64(sessionID),
 		Phrase:    req.Phrase,
@@ -71,5 +71,5 @@ func (h *Handler) SaveRecord(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	_ = json.NewEncoder(w).Encode(map[string]any{"message": "record saved"})
+	_ = json.NewEncoder(w).Encode(record)
 }

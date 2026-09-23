@@ -272,8 +272,7 @@ paths:
         "201":
           description: Created
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/VSRT-Lang_internal_session.Record'
         "400":
           description: invalid request
           schema:

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -13,6 +14,18 @@ import (
 
 func TestHandler_SaveRecord(t *testing.T) {
 	t.Parallel()
+
+	saved := domain.Record{
+		Phrase:       "hello",
+		Translations: []string{"привет"},
+		Synonyms:     []string{"hi"},
+		Antonyms:     []string{"bye"},
+		BaseForm:     "hello",
+		Contexts: []domain.Context{
+			{Phrase: "world", Translation: "мир"},
+		},
+		Count: 2,
+	}
 
 	tests := []struct {
 		name          string
@@ -33,7 +46,7 @@ func TestHandler_SaveRecord(t *testing.T) {
 					if cmd.UserId != testUserID || cmd.SessionId != 3 || cmd.Phrase != "hello" || cmd.Context != "world" {
 						return domain.Record{}, errors.New("unexpected add record arguments")
 					}
-					return domain.Record{Phrase: cmd.Phrase}, nil
+					return saved, nil
 				},
 			},
 			wantStatus: http.StatusCreated,
@@ -130,12 +143,25 @@ func TestHandler_SaveRecord(t *testing.T) {
 				return
 			}
 
-			var got map[string]any
-			if err := json.NewDecoder(rw.Body).Decode(&got); err != nil {
+			body := rw.Body.Bytes()
+
+			var got domain.Record
+			if err := json.Unmarshal(body, &got); err != nil {
 				t.Fatalf("decode response: %v", err)
 			}
-			if got["message"] != "record saved" {
-				t.Fatalf("response = %#v", got)
+			if !reflect.DeepEqual(got, saved) {
+				t.Fatalf("response = %#v, want %#v", got, saved)
+			}
+
+			var raw map[string]any
+			if err := json.Unmarshal(body, &raw); err != nil {
+				t.Fatalf("decode raw response: %v", err)
+			}
+			if _, ok := raw["message"]; ok {
+				t.Fatalf("response has unexpected message key: %#v", raw)
+			}
+			if _, ok := raw["records"]; ok {
+				t.Fatalf("response has unexpected records key: %#v", raw)
 			}
 		})
 	}
