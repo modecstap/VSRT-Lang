@@ -58,7 +58,7 @@ func (h *Handler) SaveAvatar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.avatarService.SaveAvatar(userId, raw); err != nil {
+	if err := h.service.SaveAvatar(userId, raw); err != nil {
 		switch {
 		case errors.Is(err, domain.ErrAvatarTooLarge):
 			handlers.WriteError(w, http.StatusBadRequest, "avatar_too_large", err.Error())

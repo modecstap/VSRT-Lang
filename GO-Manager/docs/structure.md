@@ -37,7 +37,7 @@
 
 - `user.go` — `User` (поле `Avatar`), `UserId`, `Repository` (`Create`, `FindByEmail`, `FindByUsername`, `FindByID`, `SaveAvatar`), `NewUser`, `SetAvatar`, bcrypt-хеш и сравнение пароля. `NewUser` оставляет `Avatar` нулевым.
 - `avatar.go` — `Avatar` (`Bytes`, `MediaType`). Правила JPEG/PNG/WebP ≤ 2 MiB, стороны ≤ 512, неквадрат режется по центру в квадрат меньшей стороны, хранение PNG (`image/png`) доступны только через `User.SetAvatar`.
-- `service.go` — `SaveAvatar`: загрузка пользователя по id, `SetAvatar` с сырыми байтами файла, запись через `Repository.SaveAvatar`.
+- `service.go` — `SaveAvatar`: загрузка пользователя по id, `SetAvatar` с сырыми байтами файла, запись через `Repository.SaveAvatar`. `Get`: загрузка пользователя через `FindByID`, без изменения сущности и без лога.
 - `validate.go` — `ValidateEmail`, `ValidatePassword` (минимум 8 символов, верхний и нижний регистр, цифра).
 
 ### `internal/auth`
@@ -71,7 +71,7 @@ HTTP-маршруты `/refresh` и `/logout` в роутере не зарег�
 
 Содержит:
 
-- `router.go` — `NewServeMux`: публичные `POST /register`, `POST /login`; защищённые `POST /sessions`, `DELETE /sessions/`, `POST /sessions/`, `GET /sessions/`, `GET /users/`, `POST /users/avatar`; раздача Swagger.
+- `router.go` — `NewServeMux`: публичные `POST /register`, `POST /login`; защищённые `POST /sessions`, `DELETE /sessions/`, `POST /sessions/`, `GET /sessions/`, `GET /users/`, `GET /users/me`, `POST /users/avatar`; раздача Swagger.
 - `server_deps.go` — `DependensFromEnv`: postgres-репозитории, `auth.Service`, `session.Service`, `user.Service`, JWT; выбор Translator по `MODE`.
 
 ### `internal/http/handlers`
@@ -107,13 +107,14 @@ HTTP-маршруты `/refresh` и `/logout` в роутере не зарег�
 
 ### `internal/http/handlers/user`
 
-Реализует: HTTP-слой списка сессий текущего пользователя и сохранения аватара.
+Реализует: HTTP-слой списка сессий текущего пользователя, сохранения аватара и отдачи текущего пользователя.
 
 Содержит:
 
-- `handler.go` — `Handler` с узким интерфейсом сервиса аватара (`SaveAvatar`) и репозиторием сессий. Репозитория пользователя в handler нет.
+- `handler.go` — `Handler` с интерфейсом `Service` (`SaveAvatar`, `Get`) и репозиторием сессий. Репозитория пользователя в handler нет.
 - `get_sessions.go` — `GET /users/sessions`: сессии по `user_id` из токена.
-- `save_avatar.go` — `POST /users/avatar`: JWT, multipart `avatar`, лимит `MaxBytesReader`, вызов сервиса, ответ `204`. Подготовки изображения в handler нет. GET аватара нет.
+- `get_me.go` — `GET /users/me`: ид из токена, один вызов `Service.Get`, JSON `username`, `email`, `avatar` как data URL PNG или `null`.
+- `save_avatar.go` — `POST /users/avatar`: JWT, multipart `avatar`, лимит `MaxBytesReader`, вызов сервиса, ответ `204`. Подготовки изображения в handler нет. Отдельного GET файла аватара нет; байты отдаются внутри `GET /users/me`.
 
 ### `internal/http/middleware`
 
@@ -225,6 +226,7 @@ HTTP-маршруты `/refresh` и `/logout` в роутере не зарег�
             → session.Repository (postgres)
             → Translator (net_translator | stub)
       → handlers/user → session.Repository.FindByUser
+      → handlers/user → user.Service.Get → user.Repository.FindByID
 ```
 
 Создание карточки: `POST /sessions/{id}/records` → `AddRecord` → `Session.SaveRecord` → `NewRecord` → Translator → `Repository.Save`.

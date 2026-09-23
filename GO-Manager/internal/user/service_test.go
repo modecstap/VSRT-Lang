@@ -70,6 +70,20 @@ func tinyGIF(t *testing.T) []byte {
 	return buf.Bytes()
 }
 
+func TestService_Get(t *testing.T) {
+	owner := NewUser("owner", "owner@example.com", "Password1")
+	if err := owner.SetAvatar(tinyPNG(t, 4, 4)); err != nil {
+		t.Fatalf("SetAvatar: %v", err)
+	}
+	got, err := NewService(newAvatarRepo(owner)).Get(UserId(owner.ID))
+	if err != nil || got.Username != owner.Username || got.Email != owner.Email || !bytes.Equal(got.Avatar.Bytes, owner.Avatar.Bytes) {
+		t.Fatalf("Get = %+v, %v", got, err)
+	}
+	if _, err = NewService(newAvatarRepo()).Get("missing"); err == nil || err.Error() != "user not found" {
+		t.Fatalf("error = %v, want user not found", err)
+	}
+}
+
 func TestService_SaveAvatar_StoresPNGForThatUserOnly(t *testing.T) {
 	owner := NewUser("owner", "owner@example.com", "Password1")
 	other := NewUser("other", "other@example.com", "Password1")

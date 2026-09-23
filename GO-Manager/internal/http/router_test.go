@@ -94,6 +94,22 @@ func TestNewServeMux_AuthAndSessionLifecycle(t *testing.T) {
 		t.Fatal("expected access token")
 	}
 
+	for _, path := range []string{"/users/me", "/users/me?id=not-demo"} {
+		me := doJSON(t, mux, http.MethodGet, path, tokens.AccessToken, nil)
+		var got struct {
+			Username string  `json:"username"`
+			Email    string  `json:"email"`
+			Avatar   *string `json:"avatar"`
+		}
+		if me.Code != http.StatusOK || json.Unmarshal(me.Body.Bytes(), &got) != nil ||
+			got.Username != "demo" || got.Email != "demo@example.com" || got.Avatar != nil {
+			t.Fatalf("%s status=%d body=%s", path, me.Code, me.Body.String())
+		}
+	}
+	if notMe := doJSON(t, mux, http.MethodGet, "/users/not-me", tokens.AccessToken, nil); notMe.Code != http.StatusNotFound {
+		t.Fatalf("not-me status = %d, want 404; body=%s", notMe.Code, notMe.Body.String())
+	}
+
 	created := doJSON(t, mux, http.MethodPost, "/sessions", tokens.AccessToken, map[string]string{
 		"name": "daily",
 	})
@@ -175,6 +191,7 @@ func TestNewServeMux_ProtectedRoutesRequireAuth(t *testing.T) {
 		{name: "save record", method: http.MethodPost, path: "/sessions/1/records", body: map[string]string{"phrase": "hello", "context": "world"}},
 		{name: "get records", method: http.MethodGet, path: "/sessions/1/records"},
 		{name: "user sessions", method: http.MethodGet, path: "/users/sessions"},
+		{name: "current user", method: http.MethodGet, path: "/users/me"},
 		{name: "save avatar", method: http.MethodPost, path: "/users/avatar"},
 	}
 
@@ -186,6 +203,22 @@ func TestNewServeMux_ProtectedRoutesRequireAuth(t *testing.T) {
 				t.Fatalf("status = %d, want 401; body=%s", rw.Code, rw.Body.String())
 			}
 		})
+	}
+
+	for _, tt := range []struct{ header, want string }{
+		{"", "unauthorized\n"},
+		{"Token abc", "invalid authorization header\n"},
+		{"Bearer not-a-token", "invalid token\n"},
+	} {
+		req := httptest.NewRequest(http.MethodGet, "/users/me", nil)
+		if tt.header != "" {
+			req.Header.Set("Authorization", tt.header)
+		}
+		rw := httptest.NewRecorder()
+		mux.ServeHTTP(rw, req)
+		if rw.Code != http.StatusUnauthorized || rw.Body.String() != tt.want {
+			t.Fatalf("header %q status=%d body=%q, want 401 %q", tt.header, rw.Code, rw.Body.String(), tt.want)
+		}
 	}
 }
 

@@ -27,6 +27,10 @@ func (f *fakeAvatarService) SaveAvatar(id domain.UserId, raw []byte) error {
 	return f.err
 }
 
+func (f *fakeAvatarService) Get(domain.UserId) (*domain.User, error) {
+	return nil, errors.New("not implemented")
+}
+
 func avatarRequest(t *testing.T, field, filename string, data []byte) *http.Request {
 	t.Helper()
 	var body bytes.Buffer
