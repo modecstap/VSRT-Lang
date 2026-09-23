@@ -290,6 +290,44 @@ paths:
       summary: Save record to session
       tags:
       - session
+  /sessions/{id}/records/{phrase}:
+    delete:
+      description: Deletes one record from a session by phrase
+      parameters:
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Record phrase
+        in: path
+        name: phrase
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: invalid request
+          schema:
+            type: string
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+        "404":
+          description: not found
+          schema:
+            type: string
+        "500":
+          description: internal error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Delete session record
+      tags:
+      - session
   /users/avatar:
     post:
       consumes:

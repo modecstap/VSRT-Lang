@@ -38,6 +38,14 @@ func TestHandler_DeleteSession(t *testing.T) {
 			wantStatus: http.StatusNoContent,
 		},
 		{
+			name:          "rejects record path",
+			path:          "/sessions/7/records/hello",
+			auth:          true,
+			service:       &fakeService{},
+			wantStatus:    http.StatusNotFound,
+			wantPlainBody: "not found",
+		},
+		{
 			name:          "rejects unknown route",
 			path:          "/other/7",
 			auth:          true,

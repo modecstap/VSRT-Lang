@@ -9,6 +9,7 @@ type Service interface {
 	NewSession(user.UserId, string) (int64, error)
 	GetSession(user.UserId, int64) (domain.Session, error)
 	DeleteSession(user.UserId, int64) error
+	DeleteRecord(user.UserId, int64, string) error
 	AddRecord(domain.AddRecordCommand) (domain.Record, error)
 }
 

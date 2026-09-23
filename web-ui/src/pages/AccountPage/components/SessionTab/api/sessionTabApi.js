@@ -1,5 +1,7 @@
 import {
+  deleteSessionRecord,
   fetchSessionRecords,
+  getActiveSessionId,
   getOrCreateSessionId,
   saveSessionRecord,
   sessionRecordsKey,
@@ -34,4 +36,14 @@ export async function saveWordEntry(payload) {
     phrase: payload.word.trim(),
     context: payload.context,
   });
+}
+
+export async function deleteWordEntry(word) {
+  const sessionId = getActiveSessionId();
+
+  if (!sessionId) {
+    throw new Error('Session was not created');
+  }
+
+  return deleteSessionRecord(sessionId, word);
 }

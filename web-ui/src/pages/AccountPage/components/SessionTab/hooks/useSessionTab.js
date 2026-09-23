@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import useSWR from 'swr';
 import { getActiveSessionId } from '../../../../../api/sessions';
-import { loadSavedWords, saveWordEntry, sessionRecordsKey } from '../api/sessionTabApi';
+import { deleteWordEntry, loadSavedWords, saveWordEntry, sessionRecordsKey } from '../api/sessionTabApi';
 import {
   buildWordDetails,
   buildWordMap,
   mapRecordToWord,
   mergeSavedWord,
   normalizeWord,
+  removeSavedWord,
 } from '../model/sessionTabModel';
 
 const createInitialForm = () => ({
@@ -30,6 +31,8 @@ function useSessionTab() {
   const [selectedWord, setSelectedWord] = useState(null);
   const [isWriting, setIsWriting] = useState(false);
   const [writeError, setWriteError] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   const wordsByNormalized = buildWordMap(words);
   const activeWord = selectedWord
@@ -83,6 +86,31 @@ function useSessionTab() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!activeWord) {
+      return;
+    }
+
+    const phrase = activeWord.word;
+    setIsDeleting(true);
+    setDeleteError('');
+
+    try {
+      await deleteWordEntry(phrase);
+      await mutate(
+        (currentWords = []) => removeSavedWord(currentWords, phrase),
+        { revalidate: false }
+      );
+      mutate();
+      setSelectedWord(null);
+      setForm(createInitialForm());
+    } catch (submitError) {
+      setDeleteError('Unable to delete word');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const handleSelectWord = (word) => {
     setSelectedWord(word);
     setForm({ word: word.word, context: '' });
@@ -92,10 +120,13 @@ function useSessionTab() {
     details: buildWordDetails(activeWord),
     error: error ? 'Unable to load words' : '',
     form,
+    deleteError,
     handleContextChange,
+    handleDelete,
     handleSelectWord,
     handleWordChange,
     handleWrite,
+    isDeleting,
     isWriting,
     loading: isLoading,
     selectedWord: activeWord,

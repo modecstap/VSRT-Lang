@@ -37,6 +37,9 @@
   grid-area: list;
   background: var(--bg-contrast);
   padding: var(--spacing-4);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .wordCard {
@@ -67,6 +70,14 @@
 .list {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.deleteButton {
+  flex: 0 0 auto;
+  width: 100%;
 }
 
 .wordItem {

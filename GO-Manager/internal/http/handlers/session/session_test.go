@@ -21,6 +21,7 @@ type fakeService struct {
 	newSession    func(user.UserId, string) (int64, error)
 	getSession    func(user.UserId, int64) (domain.Session, error)
 	deleteSession func(user.UserId, int64) error
+	deleteRecord  func(user.UserId, int64, string) error
 	addRecord     func(domain.AddRecordCommand) (domain.Record, error)
 }
 
@@ -43,6 +44,13 @@ func (f *fakeService) DeleteSession(userID user.UserId, sessionID int64) error {
 		return errors.New("unexpected DeleteSession")
 	}
 	return f.deleteSession(userID, sessionID)
+}
+
+func (f *fakeService) DeleteRecord(userID user.UserId, sessionID int64, phrase string) error {
+	if f.deleteRecord == nil {
+		return errors.New("unexpected DeleteRecord")
+	}
+	return f.deleteRecord(userID, sessionID, phrase)
 }
 
 func (f *fakeService) AddRecord(cmd domain.AddRecordCommand) (domain.Record, error) {

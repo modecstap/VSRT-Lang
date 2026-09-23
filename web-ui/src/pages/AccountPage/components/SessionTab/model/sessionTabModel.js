@@ -37,6 +37,11 @@ export function findWordEntry(word, words = []) {
   return buildWordMap(words).get(normalizeWord(word)) || null;
 }
 
+export function removeSavedWord(words = [], phrase) {
+  const target = normalizeWord(phrase);
+  return words.filter((item) => normalizeWord(item.word) !== target);
+}
+
 export function mergeSavedWord(words = [], savedWord) {
   const normalized = normalizeWord(savedWord.word);
   const nextWords = words.slice();

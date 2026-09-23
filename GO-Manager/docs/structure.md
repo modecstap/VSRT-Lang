@@ -71,7 +71,7 @@ HTTP-маршруты `/refresh` и `/logout` в роутере не зарег�
 
 Содержит:
 
-- `router.go` — `NewServeMux`: публичные `POST /register`, `POST /login`; защищённые `POST /sessions`, `DELETE /sessions/`, `POST /sessions/`, `GET /sessions/`, `GET /users/`, `GET /users/me`, `POST /users/avatar`; раздача Swagger.
+- `router.go` — `NewServeMux`: публичные `POST /register`, `POST /login`; защищённые `POST /sessions`, `DELETE /sessions/{id}`, `DELETE /sessions/{id}/records/{phrase}`, `DELETE /sessions/{id}/records`, `DELETE /sessions/{id}/records/`, `POST /sessions/`, `GET /sessions/`, `GET /users/`, `GET /users/me`, `POST /users/avatar`; раздача Swagger.
 - `server_deps.go` — `DependensFromEnv`: postgres-репозитории, `auth.Service`, `session.Service`, `user.Service`, JWT; выбор Translator по `MODE`.
 
 ### `internal/http/handlers`
@@ -104,6 +104,7 @@ HTTP-маршруты `/refresh` и `/logout` в роутере не зарег�
 - `save_record.go` — разбор пути `/sessions/{id}/records`, вызов `AddRecord`.
 - `get_records.go` — список записей сессии.
 - `delete.go` — удаление сессии, `204` при успехе.
+- `delete_record.go` — `DELETE /sessions/{id}/records/{phrase}`: JWT, одна фраза, вызов `DeleteRecord`, ответ `204`. Чужая сессия — `session_not_found`. Пустая фраза — `400`.
 
 ### `internal/http/handlers/user`
 

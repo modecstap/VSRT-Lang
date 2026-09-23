@@ -31,7 +31,10 @@ func NewServeMux(h Handlers) *http.ServeMux {
 		}
 
 		mux.Handle("POST /sessions", protected(http.HandlerFunc(h.Session.CreateSession)))
-		mux.Handle("DELETE /sessions/", protected(http.HandlerFunc(h.Session.DeleteSession)))
+		mux.Handle("DELETE /sessions/{id}", protected(http.HandlerFunc(h.Session.DeleteSession)))
+		mux.Handle("DELETE /sessions/{id}/records/{phrase}", protected(http.HandlerFunc(h.Session.DeleteRecord)))
+		mux.Handle("DELETE /sessions/{id}/records", protected(http.HandlerFunc(h.Session.DeleteRecord)))
+		mux.Handle("DELETE /sessions/{id}/records/{$}", protected(http.HandlerFunc(h.Session.DeleteRecord)))
 		mux.Handle("POST /sessions/", protected(http.HandlerFunc(h.Session.SaveRecord)))
 		mux.Handle("GET /sessions/", protected(http.HandlerFunc(h.Session.GetRecords)))
 	}

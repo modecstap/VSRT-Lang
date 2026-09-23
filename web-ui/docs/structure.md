@@ -49,7 +49,7 @@
 - `client.js` — axios с `REACT_APP_API_URL` (по умолчанию `http://localhost:8080`); подстановка `Authorization: Bearer`; на `401` вне `/login` и `/register` очищает сессию и отправляет на `/`.
 - `auth.js` — чтение/запись access и refresh токенов, `hasAccessToken`.
 - `storage.js` — ключи `vsrt.auth.v1` и `vsrt.session.v1`; миграция со старых ключей `access_token`, `refresh_token`, `session_tab_session_id`.
-- `sessions.js` — `GET /users/sessions`, создание и удаление сессии, активный `sessionId`, `GET/POST /sessions/{id}/records`, ключи SWR.
+- `sessions.js` — `GET /users/sessions`, создание и удаление сессии, активный `sessionId`, `GET/POST /sessions/{id}/records`, `DELETE /sessions/{id}/records/{phrase}`, ключи SWR.
 
 ### `src/pages/LoginPage`
 
@@ -155,7 +155,7 @@
 
 Содержит:
 
-- `SessionTab.jsx` — список сохранённых слов, перевод/синонимы/антонимы, значение и контексты, поля Word/Context, кнопка WRITE.
+- `SessionTab.jsx` — список сохранённых слов, перевод/синонимы/антонимы, значение и контексты, поля Word/Context, кнопка WRITE. В колонке списка под словами кнопка `delete`: удаляет активное слово, без подтверждения.
 
 #### `SessionTab/api`
 
@@ -163,7 +163,7 @@
 
 Содержит:
 
-- `sessionTabApi.js` — `loadSavedWords` (`getOrCreateSessionId` + `fetchSessionRecords`); `saveWordEntry` (`phrase`, `context`).
+- `sessionTabApi.js` — `loadSavedWords` (`getOrCreateSessionId` + `fetchSessionRecords`); `saveWordEntry` (`phrase`, `context`); `deleteWordEntry` (активный `sessionId` и фраза, сессию не создаёт).
 
 #### `SessionTab/model`
 
@@ -171,7 +171,7 @@
 
 Содержит:
 
-- `sessionTabModel.js` — `mapRecordToWord`, `buildWordMap`, `mergeSavedWord`, `buildWordDetails` (строка переводов, списки синонимов/антонимов/контекстов, базовая форма как «значение»).
+- `sessionTabModel.js` — `mapRecordToWord`, `buildWordMap`, `mergeSavedWord`, `removeSavedWord`, `buildWordDetails` (строка переводов, списки синонимов/антонимов/контекстов, базовая форма как «значение»).
 
 #### `SessionTab/hooks`
 
@@ -179,7 +179,7 @@
 
 Содержит:
 
-- `useSessionTab.js` — SWR по `sessionRecordsKey(activeSessionId)`; синхронизация поля ввода с выбранным словом; `WRITE` вызывает API и обновляет список.
+- `useSessionTab.js` — SWR по `sessionRecordsKey(activeSessionId)`; синхронизация поля ввода с выбранным словом; `WRITE` вызывает API и обновляет список. `delete` убирает активное слово, очищает форму и сбрасывает выбор.
 
 ### `src/shared/ui`
 

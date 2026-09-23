@@ -46,6 +46,10 @@ export async function createSession(sessionName = 'Session') {
   return String(sessionId);
 }
 
+export async function deleteSessionRecord(sessionId, phrase) {
+  await apiClient.delete(`/sessions/${sessionId}/records/${encodeURIComponent(phrase)}`);
+}
+
 export async function deleteSession(sessionId) {
   await apiClient.delete(`/sessions/${sessionId}`);
 

@@ -24,7 +24,7 @@ import (
 // @Router      /sessions/{id} [delete]
 func (h *Handler) DeleteSession(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/"), "/")
-	if len(parts) < 2 || parts[0] != "sessions" {
+	if len(parts) != 2 || parts[0] != "sessions" {
 		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}

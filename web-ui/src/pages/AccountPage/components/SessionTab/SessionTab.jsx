@@ -5,13 +5,16 @@ import styles from './SessionTab.module.css';
 
 function SessionTab() {
     const {
+        deleteError,
         details,
         error,
         form,
         handleContextChange,
+        handleDelete,
         handleSelectWord,
         handleWordChange,
         handleWrite,
+        isDeleting,
         isWriting,
         loading,
         selectedWord,
@@ -41,6 +44,14 @@ function SessionTab() {
                             ))
                         )}
                     </div>
+                    <Button
+                        type="button"
+                        className={styles.deleteButton}
+                        onClick={handleDelete}
+                        disabled={isDeleting}
+                    >
+                        {deleteError ? deleteError : isDeleting ? '...' : 'delete'}
+                    </Button>
                 </div>
                 <div className={`${styles.panel} ${styles.wordCard}`}>
                     {details ? (

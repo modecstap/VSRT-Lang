@@ -175,6 +175,149 @@ func TestNewServeMux_AuthAndSessionLifecycle(t *testing.T) {
 	}
 }
 
+func TestNewServeMux_DeleteRecord(t *testing.T) {
+	mux := newTestMux()
+
+	demo := loginUser(t, mux, "demo", "demo@example.com", "Password1")
+	sessionID := createSession(t, mux, demo)
+	saveRecord(t, mux, demo, sessionID, "hello")
+	saveRecord(t, mux, demo, sessionID, "world")
+
+	other := loginUser(t, mux, "other", "other@example.com", "Password1")
+	foreign := doJSON(t, mux, http.MethodDelete, "/sessions/"+sessionID+"/records/hello", other, nil)
+	if foreign.Code != http.StatusNotFound {
+		t.Fatalf("foreign delete status = %d, want 404; body=%s", foreign.Code, foreign.Body.String())
+	}
+	var foreignErr handlers.ErrorResponse
+	if err := json.NewDecoder(foreign.Body).Decode(&foreignErr); err != nil {
+		t.Fatalf("decode foreign delete: %v", err)
+	}
+	if foreignErr.Error.Code != "session_not_found" {
+		t.Fatalf("foreign delete code = %q, want session_not_found", foreignErr.Error.Code)
+	}
+	if phrases := recordPhrases(t, mux, demo, sessionID); !containsPhrase(phrases, "hello") {
+		t.Fatalf("phrases after foreign delete = %v, want hello", phrases)
+	}
+
+	deleted := doJSON(t, mux, http.MethodDelete, "/sessions/"+sessionID+"/records/hello", demo, nil)
+	if deleted.Code != http.StatusNoContent {
+		t.Fatalf("delete record status = %d, want 204; body=%s", deleted.Code, deleted.Body.String())
+	}
+	phrases := recordPhrases(t, mux, demo, sessionID)
+	if containsPhrase(phrases, "hello") || !containsPhrase(phrases, "world") {
+		t.Fatalf("phrases after delete = %v, want world only", phrases)
+	}
+
+	missingPhrase := doJSON(t, mux, http.MethodDelete, "/sessions/"+sessionID+"/records", demo, nil)
+	if missingPhrase.Code != http.StatusBadRequest {
+		t.Fatalf("missing phrase status = %d, want 400; body=%s", missingPhrase.Code, missingPhrase.Body.String())
+	}
+	if phrases = recordPhrases(t, mux, demo, sessionID); !containsPhrase(phrases, "world") {
+		t.Fatalf("phrases after empty delete = %v, want world", phrases)
+	}
+
+	extra := doJSON(t, mux, http.MethodDelete, "/sessions/"+sessionID+"/extra", demo, nil)
+	if extra.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("extra path status = %d, want 405; body=%s", extra.Code, extra.Body.String())
+	}
+	if phrases = recordPhrases(t, mux, demo, sessionID); !containsPhrase(phrases, "world") {
+		t.Fatalf("phrases after extra path = %v, want world", phrases)
+	}
+}
+
+func loginUser(t *testing.T, mux http.Handler, username, email, password string) string {
+	t.Helper()
+
+	register := doJSON(t, mux, http.MethodPost, "/register", "", map[string]string{
+		"username": username,
+		"email":    email,
+		"password": password,
+	})
+	if register.Code != http.StatusOK {
+		t.Fatalf("register %s status = %d, body=%s", username, register.Code, register.Body.String())
+	}
+
+	login := doJSON(t, mux, http.MethodPost, "/login", "", map[string]string{
+		"login":    username,
+		"password": password,
+	})
+	if login.Code != http.StatusOK {
+		t.Fatalf("login %s status = %d, body=%s", username, login.Code, login.Body.String())
+	}
+
+	var tokens tokenPairResponse
+	if err := json.NewDecoder(login.Body).Decode(&tokens); err != nil {
+		t.Fatalf("decode tokens: %v", err)
+	}
+	if tokens.AccessToken == "" {
+		t.Fatal("expected access token")
+	}
+	return tokens.AccessToken
+}
+
+func createSession(t *testing.T, mux http.Handler, token string) string {
+	t.Helper()
+
+	created := doJSON(t, mux, http.MethodPost, "/sessions", token, map[string]string{"name": "daily"})
+	if created.Code != http.StatusCreated {
+		t.Fatalf("create session status = %d, body=%s", created.Code, created.Body.String())
+	}
+
+	var sessionResp struct {
+		ID int64 `json:"id"`
+	}
+	if err := json.NewDecoder(created.Body).Decode(&sessionResp); err != nil {
+		t.Fatalf("decode session: %v", err)
+	}
+	if sessionResp.ID == 0 {
+		t.Fatal("expected session id")
+	}
+	return strconv.FormatInt(sessionResp.ID, 10)
+}
+
+func saveRecord(t *testing.T, mux http.Handler, token, sessionID, phrase string) {
+	t.Helper()
+
+	saved := doJSON(t, mux, http.MethodPost, "/sessions/"+sessionID+"/records", token, map[string]string{
+		"phrase":  phrase,
+		"context": "sample",
+	})
+	if saved.Code != http.StatusCreated {
+		t.Fatalf("save %s status = %d, body=%s", phrase, saved.Code, saved.Body.String())
+	}
+}
+
+func recordPhrases(t *testing.T, mux http.Handler, token, sessionID string) []string {
+	t.Helper()
+
+	records := doJSON(t, mux, http.MethodGet, "/sessions/"+sessionID+"/records", token, nil)
+	if records.Code != http.StatusOK {
+		t.Fatalf("get records status = %d, want 200; body=%s", records.Code, records.Body.String())
+	}
+
+	var recordsResp struct {
+		Records []session.Record `json:"records"`
+	}
+	if err := json.NewDecoder(records.Body).Decode(&recordsResp); err != nil {
+		t.Fatalf("decode records: %v", err)
+	}
+
+	phrases := make([]string, 0, len(recordsResp.Records))
+	for _, record := range recordsResp.Records {
+		phrases = append(phrases, record.Phrase)
+	}
+	return phrases
+}
+
+func containsPhrase(phrases []string, phrase string) bool {
+	for _, item := range phrases {
+		if item == phrase {
+			return true
+		}
+	}
+	return false
+}
+
 func TestNewServeMux_ProtectedRoutesRequireAuth(t *testing.T) {
 	t.Parallel()
 
@@ -188,6 +331,7 @@ func TestNewServeMux_ProtectedRoutesRequireAuth(t *testing.T) {
 	}{
 		{name: "create session", method: http.MethodPost, path: "/sessions", body: map[string]string{"name": "demo"}},
 		{name: "delete session", method: http.MethodDelete, path: "/sessions/1"},
+		{name: "delete record", method: http.MethodDelete, path: "/sessions/1/records/hello"},
 		{name: "save record", method: http.MethodPost, path: "/sessions/1/records", body: map[string]string{"phrase": "hello", "context": "world"}},
 		{name: "get records", method: http.MethodGet, path: "/sessions/1/records"},
 		{name: "user sessions", method: http.MethodGet, path: "/users/sessions"},
