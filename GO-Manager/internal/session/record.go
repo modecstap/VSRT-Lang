@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 )
 
 var ErrPhraseRequired = errors.New("phrase is required")
@@ -112,24 +113,47 @@ func translateRecord(
 }
 
 func collectRecordData(cmd NewRecordCommand) (recordData, error) {
-	contexts, err := cmd.Translator.TakeContexts(cmd.Phrase)
-	if err != nil {
-		return recordData{}, err
-	}
+	var (
+		wg sync.WaitGroup
 
-	baseForm, err := cmd.Translator.TakeBaseForm(cmd.Phrase)
-	if err != nil {
-		return recordData{}, err
-	}
+		contexts    []Context
+		contextsErr error
+		baseForm    string
+		baseFormErr error
+		synonyms    []string
+		synonymsErr error
+		antonyms    []string
+		antonymsErr error
+	)
 
-	synonyms, err := cmd.Translator.TakeSynonyms(cmd.Phrase)
-	if err != nil {
-		return recordData{}, err
-	}
+	wg.Add(4)
+	go func() {
+		defer wg.Done()
+		contexts, contextsErr = cmd.Translator.TakeContexts(cmd.Phrase)
+	}()
+	go func() {
+		defer wg.Done()
+		baseForm, baseFormErr = cmd.Translator.TakeBaseForm(cmd.Phrase)
+	}()
+	go func() {
+		defer wg.Done()
+		synonyms, synonymsErr = cmd.Translator.TakeSynonyms(cmd.Phrase)
+	}()
+	go func() {
+		defer wg.Done()
+		antonyms, antonymsErr = cmd.Translator.TakeAntonyms(cmd.Phrase)
+	}()
+	wg.Wait()
 
-	antonyms, err := cmd.Translator.TakeAntonyms(cmd.Phrase)
-	if err != nil {
-		return recordData{}, err
+	switch {
+	case contextsErr != nil:
+		return recordData{}, contextsErr
+	case baseFormErr != nil:
+		return recordData{}, baseFormErr
+	case synonymsErr != nil:
+		return recordData{}, synonymsErr
+	case antonymsErr != nil:
+		return recordData{}, antonymsErr
 	}
 
 	return recordData{
