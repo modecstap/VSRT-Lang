@@ -1,15 +1,11 @@
 import useProfileTab from './hooks/useProfileTab';
+import useProfileCard from './hooks/useProfileCard';
 import styles from "./ProfileTab.module.css";
 import ProfileUserCard from './components/ProfileUserCard';
 import SessionList from './components/SessionList';
 
-const user = {
-    login: "MODECSTAP",
-    email: "TONI.SHEBANIN@MAIL.RU",
-    avatar: "https://i.pravatar.cc/150?img=12",
-};
-
 function ProfileTab() {
+    const user = useProfileCard();
     const {
         sessions,
         loading,

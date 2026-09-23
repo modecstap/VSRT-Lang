@@ -110,7 +110,7 @@
 
 Содержит:
 
-- `ProfileTab.jsx` — карточка пользователя и таблица сессий. Данные пользователя сейчас зашиты в компоненте, не загружаются с API.
+- `ProfileTab.jsx` — карточка пользователя и таблица сессий. Карточка берёт имя, почту и аватар из `useProfileCard` (`GET /users/me`); список сессий по-прежнему из `useProfileTab`.
 
 #### `ProfileTab/api`
 
@@ -119,6 +119,7 @@
 Содержит:
 
 - `profileTabApi.js` — `fetchUserSessions`, `createSession`, `deleteSession`, `setActiveSessionId`, ключи SWR.
+- `getCurrentUser.js` — `GET /users/me`, ключ SWR `['current-user']`.
 
 #### `ProfileTab/model`
 
@@ -127,6 +128,7 @@
 Содержит:
 
 - `profileTabModel.js` — `mapSessionToViewModel` / `buildSessionsViewModel`: `id`, имя, число сохранённых записей, дата (если API её отдаёт).
+- `profileCardModel.js` — `profileCardView` собирает загрузку, ошибку без тела, успешное тело и ошибку повтора при уже полученном теле.
 
 #### `ProfileTab/hooks`
 
@@ -135,6 +137,7 @@
 Содержит:
 
 - `useProfileTab.js` — SWR по `SESSIONS_SWR_KEY`; создание сессии с переходом на `/account/session`; выбор сессии записывает активный id; удаление обновляет кэш.
+- `useProfileCard.js` — SWR по `['current-user']`, наружу отдаёт результат `profileCardView`.
 
 #### `ProfileTab/components`
 
@@ -142,7 +145,7 @@
 
 Содержит:
 
-- `ProfileUserCard.jsx` — аватар, login, email, кнопка CHANGE (без обработчика).
+- `ProfileUserCard.jsx` — аватар, username, email, кнопка CHANGE (без обработчика).
 - `SessionList.jsx` — поле имени, кнопка NEW, таблица сессий, удаление без перехода в сессию.
 
 ### `src/pages/AccountPage/components/SessionTab`
@@ -197,6 +200,7 @@
                 → api/client.js → GO-Manager /login, /register
       AccountPage
         → ProfileTab → useProfileTab → api/sessions.js → /users/sessions, /sessions
+        → ProfileTab → useProfileCard → getCurrentUser.js → /users/me
         → SessionTab → useSessionTab → sessionTabApi → /sessions/{id}/records
 ```
 

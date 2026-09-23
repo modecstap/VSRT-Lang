@@ -6,13 +6,13 @@ function ProfileUserCard({ user }) {
         <div className={styles.user}>
             <img
                 src={user.avatar}
-                alt={user.login}
+                alt={user.username}
                 className={styles.avatar}
             />
 
             <div className={styles.info}>
                 <div>
-                    <h1>{user.login}</h1>
+                    <h1>{user.username}</h1>
                     <p>{user.email}</p>
                 </div>
 
