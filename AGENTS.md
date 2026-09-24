@@ -40,6 +40,7 @@ web-ui layers, bottom-up (lower never knows upper): API (no React) → Model (no
 
 - [GO-Manager structure](GO-Manager/docs/structure.md) — read when changing manager modules, HTTP, sessions, or auth.
 - [GO-Manager configuration](GO-Manager/docs/configuration.md) — read when adding or changing manager env vars.
+- [GO-Manager architecture](GO-Manager/docs/architecture-guide.md) — read when adding or changing manager modules.
 - [Translator structure](Translator/docs/structure.md) — read when changing translator workers, HTTP, or linguistics.
 - [Translator env](Translator/docs/Readme.md) — read when changing LibreTranslate env.
 - [web-ui structure](web-ui/docs/structure.md) — read when changing UI layers, routes, or the API client.
