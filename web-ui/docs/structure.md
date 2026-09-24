@@ -150,6 +150,7 @@
 - `profileTabApi.js` — `fetchUserSessions`, `createSession`, `deleteSession`, `setActiveSessionId`, ключи SWR.
 - `getCurrentUser.js` — `GET /users/me`, ключ SWR `['current-user']`.
 - `saveAvatar.js` — `POST /users/avatar`, multipart-поле `avatar`.
+- `saveProfile.js` — `POST /users/me` с `username` и `email`.
 
 #### `ProfileTab/model`
 
@@ -158,7 +159,7 @@
 Содержит:
 
 - `profileTabModel.js` — `mapSessionToViewModel` / `buildSessionsViewModel`: `id`, имя, число сохранённых записей, дата (если API её отдаёт).
-- `profileCardModel.js` — `profileCardView` собирает загрузку, ошибку без тела, успешное тело и ошибку повтора при уже полученном теле. `avatarUploadError` переводит код ошибки сохранения аватара в строку карточки.
+- `profileCardModel.js` — `profileCardView` собирает загрузку, ошибку без тела, успешное тело и ошибку повтора при уже полученном теле. `avatarUploadError` переводит код ошибки сохранения аватара в строку карточки. `profileSaveError` переводит коды сохранения профиля в строки кнопки.
 
 #### `ProfileTab/hooks`
 
@@ -167,7 +168,7 @@
 Содержит:
 
 - `useProfileTab.js` — SWR по `SESSIONS_SWR_KEY`; создание сессии с переходом на `/account/session`; выбор сессии записывает активный id; удаление обновляет кэш.
-- `useProfileCard.js` — SWR по `['current-user']`; загрузка аватара; наружу `uploading`, `uploadError`, `handleAvatarChange` и поля карточки. После HTTP 204 обновляет тот же ключ. `uploadError` сам очищается через 5 секунд.
+- `useProfileCard.js` — SWR по `['current-user']`; загрузка аватара; `CHANGE` / `SAVE` / `Sending...` / `SUCCESS` или сопоставленная ошибка 3 секунды. Успех обновляет `['current-user']`. Наружу поля карточки, черновик и подпись кнопки. `uploadError` сам очищается через 5 секунд.
 
 #### `ProfileTab/components`
 
@@ -175,7 +176,7 @@
 
 Содержит:
 
-- `ProfileUserCard.jsx` — аватар: иконка загрузки по hover и focus, клик открывает выбор файла. Ошибка загрузки на 5 секунд заменяет username. Кнопка CHANGE без обработчика.
+- `ProfileUserCard.jsx` — аватар: иконка загрузки по hover и focus, клик открывает выбор файла. Ошибка загрузки на 5 секунд заменяет username в режиме просмотра. `CHANGE` превращает username и email в поля ввода; кнопка показывает подпись хука.
 - `SessionList.jsx` — поле имени, кнопка NEW, таблица сессий, удаление без перехода в сессию.
 
 ### `src/pages/AccountPage/components/SessionTab`
@@ -234,6 +235,7 @@
         → ProfileTab → useProfileTab → api/sessions.js → /users/sessions, /sessions
         → ProfileTab → useProfileCard → getCurrentUser.js → GET /users/me
         → ProfileTab → useProfileCard → saveAvatar.js → POST /users/avatar
+        → ProfileTab → useProfileCard → saveProfile.js → POST /users/me
         → SessionTab → useSessionTab → sessionTabApi → /sessions/{id}/records
 ```
 

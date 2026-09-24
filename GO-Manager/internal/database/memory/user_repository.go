@@ -77,6 +77,11 @@ func (r *UserRepository) Save(u *user.User) error {
 	if !ok {
 		return user.ErrNotFound
 	}
+	if other, exists := r.usersByUsername[u.Username]; exists && other.ID != u.ID {
+		return user.ErrUsernameTaken
+	} else if other, exists := r.usersByEmail[u.Email]; exists && other.ID != u.ID {
+		return user.ErrEmailTaken
+	}
 	if old.Email != u.Email {
 		delete(r.usersByEmail, old.Email)
 	}

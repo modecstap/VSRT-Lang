@@ -23,6 +23,10 @@ func (f *fakeUserService) SaveAvatar(domain.UserId, []byte) error {
 	return errors.New("not implemented")
 }
 
+func (f *fakeUserService) UpdateProfile(domain.UserId, string, string) error {
+	return errors.New("not implemented")
+}
+
 func (f *fakeUserService) Get(id domain.UserId) (*domain.User, error) {
 	f.called++
 	f.gotID = id

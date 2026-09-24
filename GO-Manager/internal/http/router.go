@@ -52,6 +52,7 @@ func NewServeMux(h Handlers) *http.ServeMux {
 
 		mux.Handle("GET /users/", protected(http.HandlerFunc(h.User.GetUserSessions)))
 		mux.Handle("GET /users/me", protected(http.HandlerFunc(h.User.GetMe)))
+		mux.Handle("POST /users/me", protected(http.HandlerFunc(h.User.UpdateProfile)))
 		mux.Handle("POST /users/avatar", protected(http.HandlerFunc(h.User.SaveAvatar)))
 	}
 

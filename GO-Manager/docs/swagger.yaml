@@ -133,6 +133,13 @@ definitions:
       username:
         type: string
     type: object
+  internal_http_handlers_user.UpdateProfileRequest:
+    properties:
+      email:
+        type: string
+      username:
+        type: string
+    type: object
 info:
   contact: {}
   description: My API documentation
@@ -476,6 +483,39 @@ paths:
       security:
       - BearerAuth: []
       summary: Get current user
+      tags:
+      - user
+    post:
+      consumes:
+      - application/json
+      description: 'Set username and email for the access token subject. Codes: username_required,
+        email_required, invalid_email, invalid_request, unauthorized, username_taken,
+        email_taken, user_not_found, profile_save_failed'
+      parameters:
+      - description: Username and email
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_http_handlers_user.UpdateProfileRequest'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: invalid profile
+          schema:
+            type: string
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+        "409":
+          description: username or email taken
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Update current user profile
       tags:
       - user
   /users/sessions:

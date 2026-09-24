@@ -10,9 +10,13 @@ import (
 )
 
 var (
-	ErrInvalidEmail = errors.New("invalid email")
-	ErrWeakPassword = errors.New("password must be at least 8 characters and include uppercase, lowercase and digit")
-	ErrNotFound     = errors.New("user not found")
+	ErrInvalidEmail     = errors.New("invalid email")
+	ErrWeakPassword     = errors.New("password must be at least 8 characters and include uppercase, lowercase and digit")
+	ErrNotFound         = errors.New("user not found")
+	ErrUsernameRequired = errors.New("username required")
+	ErrEmailRequired    = errors.New("email required")
+	ErrUsernameTaken    = errors.New("username taken")
+	ErrEmailTaken       = errors.New("email taken")
 )
 
 var emailRegex = regexp.MustCompile(`^[^\s@]+@[^\s@]+\.[^\s@]+$`)
@@ -53,6 +57,21 @@ func (u *User) SetAvatar(raw []byte) error {
 		return err
 	}
 	u.Avatar = avatar
+	return nil
+}
+
+func (u *User) SetProfile(username, email string) error {
+	if username == "" {
+		return ErrUsernameRequired
+	}
+	if email == "" {
+		return ErrEmailRequired
+	}
+	if !ValidateEmail(email) {
+		return ErrInvalidEmail
+	}
+	u.Username = username
+	u.Email = email
 	return nil
 }
 

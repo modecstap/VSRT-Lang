@@ -12,6 +12,7 @@ type SessionRepository interface {
 type Service interface {
 	SaveAvatar(id domain.UserId, raw []byte) error
 	Get(id domain.UserId) (*domain.User, error)
+	UpdateProfile(id domain.UserId, username, email string) error
 }
 
 type Handler struct {

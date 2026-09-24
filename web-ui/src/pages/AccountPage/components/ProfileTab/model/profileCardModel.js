@@ -39,6 +39,24 @@ function withRefreshMark(username) {
   return mark;
 }
 
+export function profileSaveError(error) {
+  const code = error?.response?.data?.error?.code;
+  switch (code) {
+    case 'username_required':
+      return 'Username required';
+    case 'email_required':
+      return 'Email required';
+    case 'invalid_email':
+      return 'Invalid email';
+    case 'username_taken':
+      return 'Username taken';
+    case 'email_taken':
+      return 'Email taken';
+    default:
+      return 'Unable to save';
+  }
+}
+
 export function avatarUploadError(error) {
   const code = error?.response?.data?.error?.code;
   switch (code) {

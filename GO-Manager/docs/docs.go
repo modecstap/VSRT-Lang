@@ -537,6 +537,55 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Set username and email for the access token subject. Codes: username_required, email_required, invalid_email, invalid_request, unauthorized, username_taken, email_taken, user_not_found, profile_save_failed",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "Update current user profile",
+                "parameters": [
+                    {
+                        "description": "Username and email",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers_user.UpdateProfileRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "invalid profile",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "409": {
+                        "description": "username or email taken",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
             }
         },
         "/users/sessions": {
@@ -781,6 +830,17 @@ const docTemplate = `{
                 "avatar": {
                     "type": "string"
                 },
+                "email": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_http_handlers_user.UpdateProfileRequest": {
+            "type": "object",
+            "properties": {
                 "email": {
                     "type": "string"
                 },

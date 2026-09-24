@@ -1,4 +1,4 @@
-import { avatarUploadError, profileCardView } from './profileCardModel';
+import { avatarUploadError, profileCardView, profileSaveError } from './profileCardModel';
 
 const placeholder = 'https://i.pravatar.cc/150?img=12';
 const body = {
@@ -55,6 +55,16 @@ test('profileCardView covers load, error, success, and refresh failure', () => {
 function uploadError(code) {
   return { response: { data: { error: { code } } } };
 }
+
+test('profileSaveError maps server codes and falls back', () => {
+  expect(profileSaveError(uploadError('username_required'))).toBe('Username required');
+  expect(profileSaveError(uploadError('email_required'))).toBe('Email required');
+  expect(profileSaveError(uploadError('invalid_email'))).toBe('Invalid email');
+  expect(profileSaveError(uploadError('username_taken'))).toBe('Username taken');
+  expect(profileSaveError(uploadError('email_taken'))).toBe('Email taken');
+  expect(profileSaveError(uploadError('profile_save_failed'))).toBe('Unable to save');
+  expect(profileSaveError(new Error('down'))).toBe('Unable to save');
+});
 
 test('avatarUploadError maps server codes and falls back', () => {
   expect(avatarUploadError(uploadError('avatar_too_large'))).toBe('Image is too large');

@@ -1,7 +1,11 @@
 package user_repository
 
 import (
+	"errors"
+
 	"VSRT-Lang/internal/user"
+
+	"github.com/lib/pq"
 )
 
 func (r *Repository) Save(u *user.User) error {
@@ -24,6 +28,15 @@ func (r *Repository) Save(u *user.User) error {
 		u.ID,
 	)
 	if err != nil {
+		var pgErr *pq.Error
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			switch pgErr.Constraint {
+			case "users_username_key":
+				return user.ErrUsernameTaken
+			case "users_email_key":
+				return user.ErrEmailTaken
+			}
+		}
 		return err
 	}
 	n, err := result.RowsAffected()

@@ -35,9 +35,9 @@
 
 Содержит:
 
-- `user.go` — `User` (поле `Avatar`), `UserId`, `Repository` (`Create`, `FindByEmail`, `FindByUsername`, `FindByID`, `Save`, `SaveAvatar`), `NewUser`, `SetAvatar`, `SetPassword`, bcrypt-хеш и сравнение пароля. `NewUser` оставляет `Avatar` нулевым. `ErrNotFound` — `"user not found"`.
+- `user.go` — `User` (поле `Avatar`), `UserId`, `Repository` (`Create`, `FindByEmail`, `FindByUsername`, `FindByID`, `Save`, `SaveAvatar`), `NewUser`, `SetAvatar`, `SetPassword`, bcrypt-хеш и сравнение пароля. `NewUser` оставляет `Avatar` нулевым. `ErrNotFound` — `"user not found"`. `SetProfile` отвергает пустой username, пустой email и email, не прошедший `ValidateEmail`. Пароль и аватар не меняет.
 - `avatar.go` — `Avatar` (`Bytes`, `MediaType`). Правила JPEG/PNG/WebP ≤ 2 MiB, стороны ≤ 512, неквадрат режется по центру в квадрат меньшей стороны, хранение PNG (`image/png`) доступны только через `User.SetAvatar`.
-- `service.go` — `SaveAvatar`: загрузка пользователя по id, `SetAvatar` с сырыми байтами файла, запись через `Repository.SaveAvatar`. `Get`: загрузка пользователя через `FindByID`, без изменения сущности и без лога.
+- `service.go` — `SaveAvatar`: загрузка пользователя по id, `SetAvatar` с сырыми байтами файла, запись через `Repository.SaveAvatar`. `Get`: загрузка пользователя через `FindByID`, без изменения сущности и без лога. `UpdateProfile`: загрузка по id, `SetProfile`, `Save`. Без лога.
 - `validate.go` — `ValidateEmail`, `ValidatePassword` (минимум 8 символов, верхний и нижний регистр, цифра).
 
 ### `internal/passwordreset`
@@ -92,7 +92,7 @@ HTTP-маршруты `/refresh` и `/logout` в роутере не зарег�
 
 Содержит:
 
-- `router.go` — `NewServeMux`: публичные `POST /register`, `POST /login`, `POST /forgot-password`, `POST /reset-password`; защищённые `POST /sessions`, `DELETE /sessions/{id}`, `DELETE /sessions/{id}/records/{phrase}`, `DELETE /sessions/{id}/records`, `DELETE /sessions/{id}/records/`, `POST /sessions/`, `GET /sessions/`, `GET /users/`, `GET /users/me`, `POST /users/avatar`; раздача Swagger.
+- `router.go` — `NewServeMux`: публичные `POST /register`, `POST /login`, `POST /forgot-password`, `POST /reset-password`; защищённые `POST /sessions`, `DELETE /sessions/{id}`, `DELETE /sessions/{id}/records/{phrase}`, `DELETE /sessions/{id}/records`, `DELETE /sessions/{id}/records/`, `POST /sessions/`, `GET /sessions/`, `GET /users/`, `GET /users/me`, `POST /users/me`, `POST /users/avatar`; раздача Swagger.
 - `server_deps.go` — `DependensFromEnv`: postgres-репозитории, `auth.Service`, `session.Service`, `user.Service`, `passwordreset.Service`, JWT, SMTP mailer; выбор Translator по `MODE`.
 
 ### `internal/http/handlers`
@@ -144,9 +144,10 @@ HTTP-маршруты `/refresh` и `/logout` в роутере не зарег�
 
 Содержит:
 
-- `handler.go` — `Handler` с интерфейсом `Service` (`SaveAvatar`, `Get`) и репозиторием сессий. Репозитория пользователя в handler нет.
+- `handler.go` — `Handler` с интерфейсом `Service` (`SaveAvatar`, `Get`, `UpdateProfile`) и репозиторием сессий. Репозитория пользователя в handler нет.
 - `get_sessions.go` — `GET /users/sessions`: сессии по `user_id` из токена.
 - `get_me.go` — `GET /users/me`: ид из токена, один вызов `Service.Get`, JSON `username`, `email`, `avatar` как data URL PNG или `null`.
+- `update_profile.go` — `POST /users/me`: JSON `username` и `email`, один вызов `UpdateProfile`, ответ `204`. Коды: `username_required`, `email_required`, `invalid_email`, `invalid_request`, `unauthorized`, `username_taken`, `email_taken`, `user_not_found`, `profile_save_failed`.
 - `save_avatar.go` — `POST /users/avatar`: JWT, multipart `avatar`, лимит `MaxBytesReader`, вызов сервиса, ответ `204`. Подготовки изображения в handler нет. Отдельного GET файла аватара нет; байты отдаются внутри `GET /users/me`.
 
 ### `internal/http/middleware`
@@ -273,6 +274,7 @@ HTTP-маршруты `/refresh` и `/logout` в роутере не зарег�
             → Translator (net_translator | stub)
       → handlers/user → session.Repository.FindByUser
       → handlers/user → user.Service.Get → user.Repository.FindByID
+      → handlers/user → user.Service.UpdateProfile → user.Repository.FindByID + Save
 ```
 
 Публичные сброс-пароля: `POST /forgot-password`, `POST /reset-password` → handler → `passwordreset.Service`.

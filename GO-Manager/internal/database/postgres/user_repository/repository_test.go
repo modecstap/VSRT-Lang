@@ -2,12 +2,14 @@ package user_repository
 
 import (
 	"database/sql"
+	"errors"
 	"regexp"
 	"testing"
 
 	"VSRT-Lang/internal/user"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/lib/pq"
 )
 
 type sqlmockRows = sqlmock.Rows
@@ -232,6 +234,53 @@ func TestRepository_FindByID_NotFound(t *testing.T) {
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet expectations: %v", err)
 	}
+}
+
+func TestRepository_Save_UniqueViolation(t *testing.T) {
+	const updateSQL = `UPDATE users\s+SET username = \$1, email = \$2, password = \$3, avatar = \$4, avatar_media_type = \$5\s+WHERE id = \$6`
+
+	cases := []struct {
+		name       string
+		constraint string
+		want       error
+	}{
+		{name: "username", constraint: "users_username_key", want: user.ErrUsernameTaken},
+		{name: "email", constraint: "users_email_key", want: user.ErrEmailTaken},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			db, mock := setupDB(t)
+			defer db.Close()
+			row := user.NewUser("demo", "demo@example.com", "secret")
+			mock.ExpectExec(updateSQL).
+				WithArgs(row.Username, row.Email, row.Password, nil, nil, row.ID).
+				WillReturnError(&pq.Error{Code: "23505", Constraint: c.constraint})
+			err := New(db).Save(row)
+			if !errors.Is(err, c.want) {
+				t.Fatalf("Save error = %v, want %v", err, c.want)
+			}
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Fatalf("unmet expectations: %v", err)
+			}
+		})
+	}
+
+	t.Run("other constraint", func(t *testing.T) {
+		db, mock := setupDB(t)
+		defer db.Close()
+		row := user.NewUser("demo", "demo@example.com", "secret")
+		pgErr := &pq.Error{Code: "23505", Constraint: "users_id_key", Message: "duplicate"}
+		mock.ExpectExec(updateSQL).
+			WithArgs(row.Username, row.Email, row.Password, nil, nil, row.ID).
+			WillReturnError(pgErr)
+		err := New(db).Save(row)
+		if errors.Is(err, user.ErrUsernameTaken) || errors.Is(err, user.ErrEmailTaken) || err != pgErr {
+			t.Fatalf("Save error = %v, want original pq error", err)
+		}
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("unmet expectations: %v", err)
+		}
+	})
 }
 
 func TestRepository_SaveAvatar(t *testing.T) {

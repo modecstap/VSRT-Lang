@@ -31,6 +31,10 @@ func (f *fakeAvatarService) Get(domain.UserId) (*domain.User, error) {
 	return nil, errors.New("not implemented")
 }
 
+func (f *fakeAvatarService) UpdateProfile(domain.UserId, string, string) error {
+	return errors.New("not implemented")
+}
+
 func avatarRequest(t *testing.T, field, filename string, data []byte) *http.Request {
 	t.Helper()
 	var body bytes.Buffer

@@ -81,6 +81,36 @@ func TestHashPassword_EmptyPassword(t *testing.T) {
 	}
 }
 
+func TestSetProfile(t *testing.T) {
+	cases := []struct {
+		name, username, email string
+		wantErr               error
+	}{
+		{name: "empty username", email: "ada@example.com", wantErr: ErrUsernameRequired},
+		{name: "empty email", username: "ada", wantErr: ErrEmailRequired},
+		{name: "invalid email", username: "ada", email: "userexample.com", wantErr: ErrInvalidEmail},
+		{name: "success", username: "ada", email: "ada@example.com"},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			u := NewUser("old", "old@example.com", "hashed")
+			u.Avatar = Avatar{Bytes: []byte{9}, MediaType: "image/png"}
+			err := u.SetProfile(c.username, c.email)
+			if err != c.wantErr {
+				t.Fatalf("SetProfile error = %v, want %v", err, c.wantErr)
+			}
+			wantUser, wantEmail := "old", "old@example.com"
+			if c.wantErr == nil {
+				wantUser, wantEmail = "ada", "ada@example.com"
+			}
+			if u.Username != wantUser || u.Email != wantEmail || u.Password != "hashed" || string(u.Avatar.Bytes) != "\x09" {
+				t.Fatalf("user = %+v", u)
+			}
+		})
+	}
+}
+
 func TestSetPassword(t *testing.T) {
 	u := NewUser("u", "u@example.com", "OldPass1")
 	old := u.Password
