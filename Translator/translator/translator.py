@@ -95,8 +95,12 @@ class Translator(ITranslator):
 
         :return: base form of the word
         """
-        base_form = wordnet.morphy(target.content)
-        return Word(content=base_form)
+        try:
+            base_form = wordnet.morphy(target.content)
+            return Word(content=base_form)
+        except Exception:
+            return Word(content="NONE")
+
 
     def _translate_text(self, phrase: str, count: int) -> list[str]:
         """Translate text using the LibreTranslate API."""
