@@ -47,7 +47,7 @@
 
 Содержит:
 
-- `client.js` — axios с `REACT_APP_API_URL` (по умолчанию `http://localhost:8080`); подстановка `Authorization: Bearer`; на `401` вне `/login`, `/register`, `/forgot-password` и `/reset-password` очищает сессию и отправляет на `/`.
+- `client.js` — axios; `baseURL` равен `REACT_APP_API_URL`, а если переменная пустая или не задана — `http://localhost:8080` (`npm start`). Образ из `web-ui/Dockerfile` собирается с `REACT_APP_API_URL=/`, поэтому бандл стека бьёт в тот же origin, что и страница. Подстановка `Authorization: Bearer`; на `401` вне `/login`, `/register`, `/forgot-password` и `/reset-password` очищает сессию и отправляет на `/`.
 - `auth.js` — чтение/запись access и refresh токенов, `hasAccessToken`.
 - `storage.js` — ключи `vsrt.auth.v1` и `vsrt.session.v1`; миграция со старых ключей `access_token`, `refresh_token`, `session_tab_session_id`.
 - `sessions.js` — `GET /users/sessions`, создание и удаление сессии, активный `sessionId`, `GET/POST /sessions/{id}/records`, `DELETE /sessions/{id}/records/{phrase}`, ключи SWR.
@@ -238,5 +238,7 @@
         → ProfileTab → useProfileCard → saveProfile.js → POST /users/me
         → SessionTab → useSessionTab → sessionTabApi → /sessions/{id}/records
 ```
+
+В compose браузер не открывает порт manager; nginx web-ui проксирует `/login`, `/register`, `/sessions`, `/users` и POST `/forgot-password` с POST `/reset-password` на `manager:8080`. GET `/forgot-password` и GET `/reset-password` остаются страницами SPA.
 
 Активная сессия: `ProfileTab` пишет id в `localStorage`. `SessionTab` читает его; если id нет, `getOrCreateSessionId` создаёт сессию на backend.
