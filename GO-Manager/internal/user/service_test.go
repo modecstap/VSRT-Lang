@@ -42,6 +42,14 @@ func (r *avatarRepo) FindByID(id string) (*User, error) {
 	return u, nil
 }
 
+func (r *avatarRepo) Save(u *User) error {
+	if _, ok := r.byID[u.ID]; !ok {
+		return errors.New("user not found")
+	}
+	r.byID[u.ID] = u
+	return nil
+}
+
 func (r *avatarRepo) SaveAvatar(id UserId, avatar Avatar) error {
 	u, ok := r.byID[string(id)]
 	if !ok {

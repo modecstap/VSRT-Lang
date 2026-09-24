@@ -3,6 +3,8 @@ import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
 import { hasAccessToken } from './api/auth';
 
 const LoginPage = lazy(() => import('./pages/LoginPage/LoginPage'));
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage/ResetPasswordPage'));
 const AccountPage = lazy(() => import('./pages/AccountPage/AccountPage'));
 const ProfileTab = lazy(() => import('./pages/AccountPage/components/ProfileTab/ProfileTab'));
 const SessionTab = lazy(() => import('./pages/AccountPage/components/SessionTab/SessionTab'));
@@ -35,6 +37,14 @@ export const router = createBrowserRouter([
   {
     path: '/',
     element: <GuestOnly />,
+  },
+  {
+    path: '/forgot-password',
+    element: withSuspense(<ForgotPasswordPage />),
+  },
+  {
+    path: '/reset-password',
+    element: withSuspense(<ResetPasswordPage />),
   },
   {
     path: '/account',

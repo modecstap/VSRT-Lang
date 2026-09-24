@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -65,8 +66,12 @@ func readRequestBody(r *http.Request) map[string]any {
 	if err := json.Unmarshal(data, &payload); err != nil {
 		return nil
 	}
-	for _, key := range []string{"password", "token", "access_token", "refresh_token", "authorization"} {
-		if _, ok := payload[key]; ok {
+	for key := range payload {
+		lower := strings.ToLower(key)
+		switch {
+		case strings.Contains(lower, "password"):
+			payload[key] = "[REDACTED]"
+		case lower == "token", lower == "access_token", lower == "refresh_token", lower == "authorization":
 			payload[key] = "[REDACTED]"
 		}
 	}

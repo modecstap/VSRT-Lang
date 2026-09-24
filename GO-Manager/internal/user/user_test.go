@@ -81,6 +81,32 @@ func TestHashPassword_EmptyPassword(t *testing.T) {
 	}
 }
 
+func TestSetPassword(t *testing.T) {
+	u := NewUser("u", "u@example.com", "OldPass1")
+	old := u.Password
+
+	if err := u.SetPassword("weak"); err != ErrWeakPassword {
+		t.Fatalf("weak password error = %v, want %v", err, ErrWeakPassword)
+	}
+	if u.Password != old {
+		t.Fatal("weak password must not change Password")
+	}
+
+	if err := u.SetPassword("NewPass1"); err != nil {
+		t.Fatalf("SetPassword: %v", err)
+	}
+	if u.Password == "NewPass1" || u.Password == old {
+		t.Fatal("Password must become bcrypt hash")
+	}
+	if !ComparePassword(u.Password, "NewPass1") {
+		t.Fatal("new password must match hash")
+	}
+
+	if err := u.SetPassword("NewPass1"); err != nil {
+		t.Fatalf("same password again: %v", err)
+	}
+}
+
 func TestNewUser(t *testing.T) {
 	username := "testuser"
 	email := "test@example.com"

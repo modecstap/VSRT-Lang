@@ -22,7 +22,11 @@ apiClient.interceptors.response.use(
   (error) => {
     const status = error.response?.status;
     const url = error.config?.url || '';
-    const isAuthRequest = url.includes('/login') || url.includes('/register');
+    const isAuthRequest =
+      url.includes('/login') ||
+      url.includes('/register') ||
+      url.includes('/forgot-password') ||
+      url.includes('/reset-password');
 
     if (status === 401 && !isAuthRequest) {
       clearAuthTokens();

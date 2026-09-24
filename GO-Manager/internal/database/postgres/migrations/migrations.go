@@ -131,6 +131,21 @@ ALTER TABLE users
 ALTER TABLE users DROP COLUMN avatar_media_type, DROP COLUMN avatar;
 `,
 	},
+	{
+		Version: 6,
+		Name:    "create_password_resets",
+		Up: `
+CREATE TABLE password_resets (
+    user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    token_hash TEXT UNIQUE,
+    sent_at TIMESTAMPTZ NOT NULL,
+    expires_at TIMESTAMPTZ
+);
+`,
+		Down: `
+DROP TABLE IF EXISTS password_resets;
+`,
+	},
 }
 
 const schemaMigrationsTable = `

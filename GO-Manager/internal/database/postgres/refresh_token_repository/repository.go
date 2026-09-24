@@ -9,12 +9,21 @@ import (
 	"VSRT-Lang/internal/auth"
 )
 
+type dbConn interface {
+	Exec(query string, args ...any) (sql.Result, error)
+	QueryRow(query string, args ...any) *sql.Row
+}
+
 type Repository struct {
-	db *sql.DB
+	db dbConn
 }
 
 func New(db *sql.DB) *Repository {
 	return &Repository{db: db}
+}
+
+func NewTx(tx *sql.Tx) *Repository {
+	return &Repository{db: tx}
 }
 
 func (r *Repository) Save(token *auth.RefreshToken) error {
@@ -81,6 +90,14 @@ func (r *Repository) RevokeByHash(hash string) error {
 		return errors.New("refresh token not found")
 	}
 	return nil
+}
+
+func (r *Repository) RevokeByUserID(userID string) error {
+	_, err := r.db.Exec(
+		`UPDATE refresh_tokens SET revoked = true WHERE user_id = $1 AND revoked = false`,
+		userID,
+	)
+	return err
 }
 
 func (r *Repository) DeleteByHash(hash string) error {

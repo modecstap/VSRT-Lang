@@ -2,10 +2,13 @@ package router
 
 import (
 	"VSRT-Lang/internal/auth"
+	"VSRT-Lang/internal/database/postgres/password_reset_repository"
 	"VSRT-Lang/internal/database/postgres/refresh_token_repository"
 	"VSRT-Lang/internal/database/postgres/session_repository"
 	"VSRT-Lang/internal/database/postgres/user_repository"
+	"VSRT-Lang/internal/mail"
 	"VSRT-Lang/internal/net_translator"
+	"VSRT-Lang/internal/passwordreset"
 	"VSRT-Lang/internal/session"
 	"VSRT-Lang/internal/translators/stub"
 	"VSRT-Lang/internal/user"
@@ -17,13 +20,14 @@ import (
 )
 
 type ServerDependens struct {
-	UserRepo       *user_repository.Repository
-	UserService    *user.Service
-	SessionRepo    *session_repository.Repository
-	SessionService *session.Service
-	AuthService    *auth.Service
-	JwtService     *auth.JWTService
-	Host           string
+	UserRepo             *user_repository.Repository
+	UserService          *user.Service
+	SessionRepo          *session_repository.Repository
+	SessionService       *session.Service
+	AuthService          *auth.Service
+	JwtService           *auth.JWTService
+	PasswordResetService *passwordreset.Service
+	Host                 string
 }
 
 func DependensFromEnv(db *sql.DB) (*ServerDependens, error) {
@@ -60,14 +64,29 @@ func DependensFromEnv(db *sql.DB) (*ServerDependens, error) {
 		jwtService,
 	)
 
+	publicSiteURL := os.Getenv("PUBLIC_SITE_URL")
+	mailCfg := mail.LoadConfig()
+	mailer := mail.NewSender(mailCfg)
+	linkRepo := password_reset_repository.New(db)
+	tx := password_reset_repository.NewTransactor(db)
+	passwordResetService := passwordreset.NewService(
+		userRepo,
+		linkRepo,
+		mailer,
+		tx,
+		publicSiteURL,
+		nil,
+	)
+
 	return &ServerDependens{
-		UserRepo:       userRepo,
-		UserService:    userService,
-		SessionRepo:    sessionRepo,
-		SessionService: sessionService,
-		AuthService:    authService,
-		JwtService:     jwtService,
-		Host:           host,
+		UserRepo:             userRepo,
+		UserService:          userService,
+		SessionRepo:          sessionRepo,
+		SessionService:       sessionService,
+		AuthService:          authService,
+		JwtService:           jwtService,
+		PasswordResetService: passwordResetService,
+		Host:                 host,
 	}, nil
 }
 

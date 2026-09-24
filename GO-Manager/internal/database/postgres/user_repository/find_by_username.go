@@ -20,7 +20,7 @@ func (r *Repository) FindByUsername(username string) (*user.User, error) {
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, errors.New("user not found")
+			return nil, user.ErrNotFound
 		}
 		return nil, err
 	}

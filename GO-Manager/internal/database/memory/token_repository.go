@@ -43,6 +43,17 @@ func (r *RefreshTokenRepository) RevokeByHash(hash string) error {
 	return nil
 }
 
+func (r *RefreshTokenRepository) RevokeByUserID(userID string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for _, token := range r.tokensByHash {
+		if token.UserID == userID {
+			token.Revoked = true
+		}
+	}
+	return nil
+}
+
 func (r *RefreshTokenRepository) DeleteByHash(hash string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()

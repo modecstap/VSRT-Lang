@@ -13,9 +13,11 @@ import (
 	"VSRT-Lang/internal/database/memory"
 	"VSRT-Lang/internal/http/handlers"
 	authhandler "VSRT-Lang/internal/http/handlers/auth"
+	passwordresethandler "VSRT-Lang/internal/http/handlers/passwordreset"
 	sessionhandler "VSRT-Lang/internal/http/handlers/session"
 	userhandler "VSRT-Lang/internal/http/handlers/user"
 	"VSRT-Lang/internal/http/middleware"
+	"VSRT-Lang/internal/passwordreset"
 	"VSRT-Lang/internal/session"
 	"VSRT-Lang/internal/translators/stub"
 	"VSRT-Lang/internal/user"
@@ -30,17 +32,32 @@ func newTestMux() *http.ServeMux {
 	users := memory.NewUserRepository()
 	tokens := memory.NewRefreshTokenRepository()
 	sessions := memory.NewSessionRepository()
+	links := memory.NewPasswordResetRepository()
 	jwtSvc := auth.NewJWTService("test-secret")
 	authSvc := auth.NewService(users, tokens, jwtSvc)
 	sessionSvc := session.NewService(sessions, stub.Translator{})
+	tx := memory.NewPasswordResetTransactor(users, links, tokens)
+	resetSvc := passwordreset.NewService(
+		users,
+		links,
+		nopMailer{},
+		tx,
+		"http://localhost",
+		nil,
+	)
 
 	return NewServeMux(Handlers{
 		Auth:           authhandler.NewAuth(authSvc),
+		PasswordReset:  passwordresethandler.NewHandler(resetSvc),
 		Session:        sessionhandler.NewHandler(sessionSvc),
 		User:           userhandler.NewHandler(user.NewService(users), sessions),
 		AuthMiddleware: middleware.Auth(jwtSvc),
 	})
 }
+
+type nopMailer struct{}
+
+func (nopMailer) Send(to, link string) error { return nil }
 
 func doJSON(t *testing.T, mux http.Handler, method, path, token string, body any) *httptest.ResponseRecorder {
 	t.Helper()

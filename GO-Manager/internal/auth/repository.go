@@ -17,5 +17,6 @@ type RefreshTokenRepository interface {
 	Save(token *RefreshToken) error
 	FindByHash(hash string) (*RefreshToken, error)
 	RevokeByHash(hash string) error
+	RevokeByUserID(userID string) error
 	DeleteByHash(hash string) error
 }

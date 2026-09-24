@@ -33,9 +33,10 @@ func (r *UserRepository) Create(u *user.User) error {
 		u.ID = "user-" + time.Now().Format("20060102150405")
 	}
 
-	r.usersByID[u.ID] = u
-	r.usersByEmail[u.Email] = u
-	r.usersByUsername[u.Username] = u
+	stored := cloneUser(u)
+	r.usersByID[stored.ID] = stored
+	r.usersByEmail[stored.Email] = stored
+	r.usersByUsername[stored.Username] = stored
 	return nil
 }
 
@@ -44,7 +45,7 @@ func (r *UserRepository) FindByEmail(email string) (*user.User, error) {
 	defer r.mu.RUnlock()
 	stored, ok := r.usersByEmail[email]
 	if !ok {
-		return nil, errors.New("user not found")
+		return nil, user.ErrNotFound
 	}
 	return cloneUser(stored), nil
 }
@@ -54,7 +55,7 @@ func (r *UserRepository) FindByUsername(username string) (*user.User, error) {
 	defer r.mu.RUnlock()
 	stored, ok := r.usersByUsername[username]
 	if !ok {
-		return nil, errors.New("user not found")
+		return nil, user.ErrNotFound
 	}
 	return cloneUser(stored), nil
 }
@@ -64,9 +65,29 @@ func (r *UserRepository) FindByID(id string) (*user.User, error) {
 	defer r.mu.RUnlock()
 	stored, ok := r.usersByID[id]
 	if !ok {
-		return nil, errors.New("user not found")
+		return nil, user.ErrNotFound
 	}
 	return cloneUser(stored), nil
+}
+
+func (r *UserRepository) Save(u *user.User) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	old, ok := r.usersByID[u.ID]
+	if !ok {
+		return user.ErrNotFound
+	}
+	if old.Email != u.Email {
+		delete(r.usersByEmail, old.Email)
+	}
+	if old.Username != u.Username {
+		delete(r.usersByUsername, old.Username)
+	}
+	stored := cloneUser(u)
+	r.usersByID[stored.ID] = stored
+	r.usersByEmail[stored.Email] = stored
+	r.usersByUsername[stored.Username] = stored
+	return nil
 }
 
 func (r *UserRepository) SaveAvatar(id user.UserId, avatar user.Avatar) error {
@@ -74,7 +95,7 @@ func (r *UserRepository) SaveAvatar(id user.UserId, avatar user.Avatar) error {
 	defer r.mu.Unlock()
 	stored, ok := r.usersByID[string(id)]
 	if !ok {
-		return errors.New("user not found")
+		return user.ErrNotFound
 	}
 	copied := make([]byte, len(avatar.Bytes))
 	copy(copied, avatar.Bytes)

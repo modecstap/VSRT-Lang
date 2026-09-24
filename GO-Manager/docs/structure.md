@@ -35,10 +35,31 @@
 
 Содержит:
 
-- `user.go` — `User` (поле `Avatar`), `UserId`, `Repository` (`Create`, `FindByEmail`, `FindByUsername`, `FindByID`, `SaveAvatar`), `NewUser`, `SetAvatar`, bcrypt-хеш и сравнение пароля. `NewUser` оставляет `Avatar` нулевым.
+- `user.go` — `User` (поле `Avatar`), `UserId`, `Repository` (`Create`, `FindByEmail`, `FindByUsername`, `FindByID`, `Save`, `SaveAvatar`), `NewUser`, `SetAvatar`, `SetPassword`, bcrypt-хеш и сравнение пароля. `NewUser` оставляет `Avatar` нулевым. `ErrNotFound` — `"user not found"`.
 - `avatar.go` — `Avatar` (`Bytes`, `MediaType`). Правила JPEG/PNG/WebP ≤ 2 MiB, стороны ≤ 512, неквадрат режется по центру в квадрат меньшей стороны, хранение PNG (`image/png`) доступны только через `User.SetAvatar`.
 - `service.go` — `SaveAvatar`: загрузка пользователя по id, `SetAvatar` с сырыми байтами файла, запись через `Repository.SaveAvatar`. `Get`: загрузка пользователя через `FindByID`, без изменения сущности и без лога.
 - `validate.go` — `ValidateEmail`, `ValidatePassword` (минимум 8 символов, верхний и нижний регистр, цифра).
+
+### `internal/passwordreset`
+
+Реализует: запрос письма со ссылкой сброса и смену пароля по секрету. Не вызывает `auth.Service` и `user.Service`.
+
+Содержит:
+
+- `reset_link.go` — `ResetLink`, `LinkTTL` / `SendCooldown` (по 15 минут), `NewResetLink`, `Active`, `CoolingDown`, `Consume`.
+- `repository.go` — `Repository`, `Transactor`, `TxRepos`, `Mailer`.
+- `service.go` — `RequestReset`, `ResetPassword`; секрет 32 байта `crypto/rand` + `base64.RawURLEncoding`, в БД SHA-256 hex; при неизвестном email — `nil` без письма.
+
+### `internal/mail`
+
+Реализует: шаблон письма сброса и SMTP-доставку. Тема и текст только в шаблоне.
+
+Содержит:
+
+- `password_reset.tmpl` — вшитый шаблон (`go:embed`): заголовки `Content-Type` / `Subject` и тело с `{{.Link}}`.
+- `template.go` — разбор шаблона в `Message`.
+- `config.go` — `LoadConfig` из `SMTP_*` без обязательности переменных.
+- `smtp.go` — `Sender.Send` реализует `passwordreset.Mailer`; порт 465 — TLS, иначе STARTTLS при наличии; URL ссылки в лог не пишется.
 
 ### `internal/auth`
 
@@ -48,7 +69,7 @@
 
 - `service.go` — `Register`, `Login`, `Refresh`, `Logout`; поиск пользователя по username, затем по email; SHA-256 хеш refresh-токена перед записью в БД.
 - `jwt.go` — HS256 access-токен (TTL 2 часа), разбор claims (`sub`, email, username), генерация refresh-токена (TTL 30 суток).
-- `repository.go` — `RefreshToken` и интерфейс `RefreshTokenRepository` (`Save`, `FindByHash`, `RevokeByHash`, `DeleteByHash`).
+- `repository.go` — `RefreshToken` и интерфейс `RefreshTokenRepository` (`Save`, `FindByHash`, `RevokeByHash`, `RevokeByUserID`, `DeleteByHash`).
 - `password.go` — локальные хелперы bcrypt и валидации. Регистрация и вход вызывают функции пакета `internal/user`.
 
 HTTP-маршруты `/refresh` и `/logout` в роутере не зарегистрированы. Методы `Refresh` и `Logout` есть только в сервисе.
@@ -71,8 +92,8 @@ HTTP-маршруты `/refresh` и `/logout` в роутере не зарег�
 
 Содержит:
 
-- `router.go` — `NewServeMux`: публичные `POST /register`, `POST /login`; защищённые `POST /sessions`, `DELETE /sessions/{id}`, `DELETE /sessions/{id}/records/{phrase}`, `DELETE /sessions/{id}/records`, `DELETE /sessions/{id}/records/`, `POST /sessions/`, `GET /sessions/`, `GET /users/`, `GET /users/me`, `POST /users/avatar`; раздача Swagger.
-- `server_deps.go` — `DependensFromEnv`: postgres-репозитории, `auth.Service`, `session.Service`, `user.Service`, JWT; выбор Translator по `MODE`.
+- `router.go` — `NewServeMux`: публичные `POST /register`, `POST /login`, `POST /forgot-password`, `POST /reset-password`; защищённые `POST /sessions`, `DELETE /sessions/{id}`, `DELETE /sessions/{id}/records/{phrase}`, `DELETE /sessions/{id}/records`, `DELETE /sessions/{id}/records/`, `POST /sessions/`, `GET /sessions/`, `GET /users/`, `GET /users/me`, `POST /users/avatar`; раздача Swagger.
+- `server_deps.go` — `DependensFromEnv`: postgres-репозитории, `auth.Service`, `session.Service`, `user.Service`, `passwordreset.Service`, JWT, SMTP mailer; выбор Translator по `MODE`.
 
 ### `internal/http/handlers`
 
@@ -92,6 +113,17 @@ HTTP-маршруты `/refresh` и `/logout` в роутере не зарег�
 - `dto.go` — `RegisterRequest`, `LoginRequest`.
 - `register.go` — `POST /register`: создаёт пользователя, отвечает `{id, email}`.
 - `login.go` — `POST /login`: возвращает `AccessToken` и `RefreshToken`.
+
+### `internal/http/handlers/passwordreset`
+
+Реализует: HTTP-слой запроса письма и смены пароля. JWT не требуется.
+
+Содержит:
+
+- `handler.go` — конструктор над `passwordreset.Service`.
+- `dto.go` — `ForgotPasswordRequest`, `ResetPasswordRequest`.
+- `forgot.go` — `POST /forgot-password`: валидация email, `204` при успехе и неизвестном email.
+- `reset.go` — `POST /reset-password`: токен и пароль, `204` при успехе.
 
 ### `internal/http/handlers/session`
 
@@ -125,7 +157,7 @@ HTTP-маршруты `/refresh` и `/logout` в роутере не зарег�
 
 - `auth.go` — проверка `Authorization: Bearer …`, запись `user_id` и email в context, `UserFromContext`.
 - `cors.go` — заголовки CORS и ответ на preflight `OPTIONS`.
-- `request_logger.go` — лог метода, пути, статуса, длительности; тело JSON с маскированием `password` и токенов.
+- `request_logger.go` — лог метода, пути, статуса, длительности; тело JSON с маскированием ключей, в имени которых есть `password`, и ключей `token` / `access_token` / `refresh_token` / `authorization`.
 
 ### `internal/database/postgres`
 
@@ -141,7 +173,7 @@ HTTP-маршруты `/refresh` и `/logout` в роутере не зарег�
 
 Содержит:
 
-- `migrations.go` — `Run`: пользователи, сессии, записи, refresh-токены; identity для `sessions.id`; колонка `count`; уникальность `(session_id, phrase)`; v5 nullable `avatar` BYTEA и `avatar_media_type` TEXT на `users`.
+- `migrations.go` — `Run`: пользователи, сессии, записи, refresh-токены; identity для `sessions.id`; колонка `count`; уникальность `(session_id, phrase)`; v5 nullable `avatar` BYTEA и `avatar_media_type` TEXT на `users`; v6 `password_resets` (одна строка на пользователя).
 
 ### `internal/database/postgres/user_repository`
 
@@ -149,12 +181,21 @@ HTTP-маршруты `/refresh` и `/logout` в роутере не зарег�
 
 Содержит:
 
-- `repository.go` — обёртка над `*sql.DB`.
+- `repository.go` — обёртка над `*sql.DB` / `*sql.Tx` (`New`, `NewTx`).
 - `create.go` — вставка пользователя без колонок аватара (в БД остаётся NULL).
 - `find_by_id.go` — поиск по id, вместе с `avatar` и `avatar_media_type`. NULL — нулевой `Avatar`.
 - `find_by_email.go` — поиск по email, те же колонки аватара.
 - `find_by_username.go` — поиск по username, те же колонки аватара.
-- `save_avatar.go` — `UPDATE` PNG-байтов и `image/png`; 0 строк — `"user not found"`.
+- `save.go` — `UPDATE` всей строки пользователя по id; 0 строк — `user.ErrNotFound`.
+- `save_avatar.go` — `UPDATE` PNG-байтов и `image/png`; 0 строк — `user.ErrNotFound`.
+
+### `internal/database/postgres/password_reset_repository`
+
+Реализует: postgres-реализацию `passwordreset.Repository` и `Transactor`.
+
+Содержит:
+
+- `repository.go` — upsert ссылки, `Take` / `TakeForUpdate` / `TakeByHash` (нет строки — `(nil, nil)`); `Transactor.Within` открывает `*sql.Tx` и отдаёт tx-репозитории user / links / refresh.
 
 ### `internal/database/postgres/session_repository`
 
@@ -175,7 +216,7 @@ HTTP-маршруты `/refresh` и `/logout` в роутере не зарег�
 
 Содержит:
 
-- `repository.go` — сохранение по `token_hash`, поиск, отзыв (`revoked = true`), удаление.
+- `repository.go` — сохранение по `token_hash`, поиск, отзыв (`revoked = true`), `RevokeByUserID`, удаление; `NewTx` для участия в транзакции сброса.
 
 ### `internal/database/memory`
 
@@ -183,9 +224,10 @@ HTTP-маршруты `/refresh` и `/logout` в роутере не зарег�
 
 Содержит:
 
-- `user_repository.go` — пользователи в картах по id/email/username; аватар хранится на `User`. `SaveAvatar` копирует байты и заменяет предыдущие. `Find*` возвращает копию пользователя с копией байтов аватара.
+- `user_repository.go` — пользователи в картах по id/email/username; аватар хранится на `User`. `Save` обновляет всю строку. `SaveAvatar` копирует байты и заменяет предыдущие. `Find*` возвращает копию пользователя с копией байтов аватара.
 - `session.go` — сессии в памяти с клонированием записей.
-- `token_repository.go` — refresh-токены по хешу.
+- `token_repository.go` — refresh-токены по хешу; `RevokeByUserID`.
+- `password_reset.go` — ссылки сброса и memory-`Transactor`.
 
 ### `internal/net_translator`
 
@@ -223,11 +265,16 @@ HTTP-маршруты `/refresh` и `/logout` в роутере не зарег�
 клиент
   → CORS / RequestLogger / ServeMux
       → handlers/auth → auth.Service → user.Repository + RefreshTokenRepository + JWTService
+      → handlers/passwordreset → passwordreset.Service
+            → user.Repository + passwordreset.Repository + RefreshTokenRepository + Mailer
+            (без auth.Service и user.Service)
       → middleware.Auth → handlers/session → session.Service
             → session.Repository (postgres)
             → Translator (net_translator | stub)
       → handlers/user → session.Repository.FindByUser
       → handlers/user → user.Service.Get → user.Repository.FindByID
 ```
+
+Публичные сброс-пароля: `POST /forgot-password`, `POST /reset-password` → handler → `passwordreset.Service`.
 
 Создание карточки: `POST /sessions/{id}/records` → `AddRecord` → `Session.SaveRecord` → `NewRecord` → Translator → `Repository.Save`.

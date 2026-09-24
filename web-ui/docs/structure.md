@@ -25,6 +25,7 @@
 - `index.js` — `ReactDOM.createRoot`, `SWRConfig` (`revalidateOnFocus`, `dedupingInterval: 2000`), `RouterProvider`.
 - `router.jsx` — `createBrowserRouter`:
   - `/` — страница входа; при наличии access-токена редирект на `/account`;
+  - `/forgot-password`, `/reset-password` — без `GuestOnly` и без `RequireAuth`; открываются и с токеном, и без;
   - `/account` — требуется токен; вкладки `profile` и `session`;
   - страницы грузятся через `React.lazy` / `Suspense`.
 - `routes/prefetch.js` — `prefetchAccount`, `prefetchSessionTab`: предварительная загрузка чанков кабинета.
@@ -46,10 +47,38 @@
 
 Содержит:
 
-- `client.js` — axios с `REACT_APP_API_URL` (по умолчанию `http://localhost:8080`); подстановка `Authorization: Bearer`; на `401` вне `/login` и `/register` очищает сессию и отправляет на `/`.
+- `client.js` — axios с `REACT_APP_API_URL` (по умолчанию `http://localhost:8080`); подстановка `Authorization: Bearer`; на `401` вне `/login`, `/register`, `/forgot-password` и `/reset-password` очищает сессию и отправляет на `/`.
 - `auth.js` — чтение/запись access и refresh токенов, `hasAccessToken`.
 - `storage.js` — ключи `vsrt.auth.v1` и `vsrt.session.v1`; миграция со старых ключей `access_token`, `refresh_token`, `session_tab_session_id`.
 - `sessions.js` — `GET /users/sessions`, создание и удаление сессии, активный `sessionId`, `GET/POST /sessions/{id}/records`, `DELETE /sessions/{id}/records/{phrase}`, ключи SWR.
+
+### `src/pages/ForgotPasswordPage`
+
+Реализует: запрос письма со ссылкой сброса. Маршрут не обёрнут в `GuestOnly`.
+
+Содержит:
+
+- `ForgotPasswordPage.jsx` — оболочка как у LoginPage, заголовок `FORGOT PASSWORD`.
+
+#### api / model / hooks / components
+
+- `api/forgotPassword.js` — `POST /forgot-password` (`email`).
+- `model/forgotPasswordFormModel.js` — `{ email }`.
+- `hooks/useForgotPasswordForm.js` — фазы кнопки `Send` / `Sending...` / ошибка / `Sent`.
+
+### `src/pages/ResetPasswordPage`
+
+Реализует: новый пароль по query `token`. Маршрут не обёрнут в `GuestOnly`.
+
+Содержит:
+
+- `ResetPasswordPage.jsx` — оболочка как у LoginPage, заголовок `RESET PASSWORD`.
+
+#### api / model / hooks / components
+
+- `api/resetPassword.js` — `POST /reset-password` (`token`, `password`).
+- `model/resetPasswordFormModel.js` — `{ password, repeatPassword }`.
+- `hooks/useResetPasswordForm.js` — сверка полей, фазы `Update` / `Updating...` / ошибка / `Success`; при успехе чистит токены и через 3 с ведёт на `/`.
 
 ### `src/pages/LoginPage`
 
@@ -194,11 +223,13 @@
 
 ```
 браузер
-  → router.jsx (токен? LoginPage : AccountPage)
+  → router.jsx (токен? LoginPage : AccountPage; forgot/reset всегда открыты)
       LoginPage
         → useLoginForm / useRegisterForm
             → pages/LoginPage/api
                 → api/client.js → GO-Manager /login, /register
+      ForgotPasswordPage → useForgotPasswordForm → POST /forgot-password
+      ResetPasswordPage → useResetPasswordForm → POST /reset-password
       AccountPage
         → ProfileTab → useProfileTab → api/sessions.js → /users/sessions, /sessions
         → ProfileTab → useProfileCard → getCurrentUser.js → GET /users/me

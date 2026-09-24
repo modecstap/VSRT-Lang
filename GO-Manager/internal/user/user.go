@@ -12,6 +12,7 @@ import (
 var (
 	ErrInvalidEmail = errors.New("invalid email")
 	ErrWeakPassword = errors.New("password must be at least 8 characters and include uppercase, lowercase and digit")
+	ErrNotFound     = errors.New("user not found")
 )
 
 var emailRegex = regexp.MustCompile(`^[^\s@]+@[^\s@]+\.[^\s@]+$`)
@@ -32,6 +33,7 @@ type Repository interface {
 	FindByEmail(email string) (*User, error)
 	FindByUsername(username string) (*User, error)
 	FindByID(id string) (*User, error)
+	Save(user *User) error
 	SaveAvatar(id UserId, avatar Avatar) error
 }
 
@@ -51,6 +53,18 @@ func (u *User) SetAvatar(raw []byte) error {
 		return err
 	}
 	u.Avatar = avatar
+	return nil
+}
+
+func (u *User) SetPassword(plain string) error {
+	if !ValidatePassword(plain) {
+		return ErrWeakPassword
+	}
+	hashed, err := HashPassword(plain)
+	if err != nil {
+		return err
+	}
+	u.Password = hashed
 	return nil
 }
 

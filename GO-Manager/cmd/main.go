@@ -6,6 +6,7 @@ import (
 	myHttp "VSRT-Lang/internal/http"
 	router "VSRT-Lang/internal/http"
 	auth_handler "VSRT-Lang/internal/http/handlers/auth"
+	passwordreset_handler "VSRT-Lang/internal/http/handlers/passwordreset"
 	session_handler "VSRT-Lang/internal/http/handlers/session"
 	user_handler "VSRT-Lang/internal/http/handlers/user"
 	"VSRT-Lang/internal/http/middleware"
@@ -78,6 +79,7 @@ func startServer(deps *router.ServerDependens) {
 	slog.Info("Setup handler")
 	handlers := myHttp.Handlers{
 		Auth:           auth_handler.NewAuth(deps.AuthService),
+		PasswordReset:  passwordreset_handler.NewHandler(deps.PasswordResetService),
 		Session:        session_handler.NewHandler(deps.SessionService),
 		User:           user_handler.NewHandler(deps.UserService, deps.SessionRepo),
 		AuthMiddleware: middleware.Auth(deps.JwtService),

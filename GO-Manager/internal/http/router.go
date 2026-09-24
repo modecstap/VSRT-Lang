@@ -3,6 +3,7 @@ package router
 import (
 	_ "VSRT-Lang/docs"
 	"VSRT-Lang/internal/http/handlers/auth"
+	passwordresethandler "VSRT-Lang/internal/http/handlers/passwordreset"
 	sessionhandler "VSRT-Lang/internal/http/handlers/session"
 	"VSRT-Lang/internal/http/handlers/user"
 	"VSRT-Lang/internal/http/middleware"
@@ -13,6 +14,7 @@ import (
 
 type Handlers struct {
 	Auth           *auth.Handler
+	PasswordReset  *passwordresethandler.Handler
 	Session        *sessionhandler.Handler
 	User           *user.Handler
 	AuthMiddleware middleware.Middleware
@@ -23,6 +25,10 @@ func NewServeMux(h Handlers) *http.ServeMux {
 
 	mux.HandleFunc("POST /register", h.Auth.Register)
 	mux.HandleFunc("POST /login", h.Auth.Login)
+	if h.PasswordReset != nil {
+		mux.HandleFunc("POST /forgot-password", h.PasswordReset.ForgotPassword)
+		mux.HandleFunc("POST /reset-password", h.PasswordReset.ResetPassword)
+	}
 	protected := h.AuthMiddleware
 
 	if h.Session != nil {

@@ -2,7 +2,6 @@ package user_repository
 
 import (
 	"VSRT-Lang/internal/user"
-	"errors"
 )
 
 func (r *Repository) SaveAvatar(id user.UserId, avatar user.Avatar) error {
@@ -20,7 +19,7 @@ func (r *Repository) SaveAvatar(id user.UserId, avatar user.Avatar) error {
 		return err
 	}
 	if n == 0 {
-		return errors.New("user not found")
+		return user.ErrNotFound
 	}
 	return nil
 }
