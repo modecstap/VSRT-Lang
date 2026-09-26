@@ -25,7 +25,7 @@
 
 Содержит:
 
-- `main.go` — JSON-логгер, цикл подключения к БД, `migrations.Run`, `DependensFromEnv`, регистрацию handler'ов, CORS, лог запросов, `ListenAndServe` на `MANAGER_HOST`.
+- `main.go` — JSON-логгер, цикл подключения к БД, `migrations.Run`, `DependensFromEnv`, регистрацию handler'ов (в том числе `Card` над `CardService`), CORS, лог запросов, `ListenAndServe` на `MANAGER_HOST`.
 
 ## Модули
 
@@ -80,11 +80,24 @@ HTTP-маршруты `/refresh` и `/logout` в роутере не зарег�
 
 Содержит:
 
-- `session.go` — структура `Session` (`ID`, `User`, `Name`, карта `Records` по фразе); `NewSession`; `SaveRecord` (новая карточка или увеличение `Count`); `GetRecords`.
+- `session.go` — структура `Session` (`ID`, `User`, `Name`, карта `Records` по ключу фразы); `NewSession`; `SaveRecord` (новая карточка или увеличение `Count`); `GetRecords`. `RecordKey` — ключ фразы (`strings.ToLower(strings.TrimSpace(phrase))`), экспортирован для `internal/card` и `session_repository`.
 - `record.go` — `Record` и `Context`; `NewRecord` собирает переводы, контексты, базовую форму, синонимы и антонимы через `Translator`.
 - `service.go` — `NewSession`, `GetSessions`, `GetSession`, `DeleteSession`, `AddRecord`, `DeleteRecord`; проверка владельца сессии (`ErrUnauthorized`, `ErrSessionNotFound`).
 - `repository.go` — интерфейс хранилища сессий: `Save`, `Take`, `FindByUser`, `Delete`.
 - `translator.go` — интерфейс лингвистического бэкенда: `Translate`, `TranslateBulk`, `TakeContexts`, `TakeSynonyms`, `TakeAntonyms`, `TakeBaseForm`.
+
+### `internal/card`
+
+Реализует: интервальное повторение (SM-2) над записями сессии. Содержимое карточки — `session.Record`; отдельной сущности карточки нет.
+
+Содержит:
+
+- `knowledge.go` — `Knowledge` (EF, repetitions, interval в днях, `DueAt`) с id `KnowledgeId{SessionID, PhraseKey}`, где `PhraseKey = session.RecordKey(phrase)`. `records.id` не используется: он меняется при каждом `Save` сессии. `NewKnowledge` — EF 2.5, нулевой `DueAt`. `Estimate` применяет оценку `REPEAT` / `DIFFICULT` / `EASY` / `MOMENTAL` (q = 0 / 3 / 4 / 5), EF не ниже 1.3. `DueBy` — готовность к повторению. Ошибки `ErrUnknownEstimation`, `ErrCardNotFound`.
+- `due.go` — `DueRecords`: готовые записи сессии; сначала без знания (нулевой due), затем по due по возрастанию, при равенстве — по фразе; `limit > 0` обрезает; результат не-nil.
+- `service.go` — `GetCards` (только чтение) и `UpdateKnowledge`. Проверка владельца — как в `session.Service`, чужая сессия — `session.ErrSessionNotFound`. Сессию читает через `session.Repository`, знание пишет через `card.Repository`. Текущий момент — из внедрённых часов, в UTC.
+- `repository.go` — `Repository`: `Save` (upsert), `Take` (нет строки — `(nil, nil)`), `FindBySession`.
+
+Знание создаётся лениво, при первой оценке. Запись без знания — новая карточка, готовая сразу. После `DeleteRecord` знание остаётся и не видно в выдаче; повторный `AddRecord` фразы продолжает прогресс. Знание удаляется только каскадом вместе с сессией.
 
 ### `internal/http`
 
@@ -92,8 +105,8 @@ HTTP-маршруты `/refresh` и `/logout` в роутере не зарег�
 
 Содержит:
 
-- `router.go` — `NewServeMux`: публичные `POST /register`, `POST /login`, `POST /forgot-password`, `POST /reset-password`; защищённые `POST /sessions`, `DELETE /sessions/{id}`, `DELETE /sessions/{id}/records/{phrase}`, `DELETE /sessions/{id}/records`, `DELETE /sessions/{id}/records/`, `POST /sessions/`, `GET /sessions/`, `GET /users/`, `GET /users/me`, `POST /users/me`, `POST /users/avatar`; раздача Swagger.
-- `server_deps.go` — `DependensFromEnv`: postgres-репозитории, `auth.Service`, `session.Service`, `user.Service`, `passwordreset.Service`, JWT, SMTP mailer; выбор Translator по `MODE`.
+- `router.go` — `NewServeMux`: публичные `POST /register`, `POST /login`, `POST /forgot-password`, `POST /reset-password`; защищённые `POST /sessions`, `DELETE /sessions/{id}`, `DELETE /sessions/{id}/records/{phrase}`, `DELETE /sessions/{id}/records`, `DELETE /sessions/{id}/records/`, `POST /sessions/`, `GET /sessions/`, `GET /sessions/{id}/cards`, `POST /sessions/{id}/cards`, `GET /users/`, `GET /users/me`, `POST /users/me`, `POST /users/avatar`; раздача Swagger.
+- `server_deps.go` — `DependensFromEnv`: postgres-репозитории (в том числе `knowledge_repository`), `auth.Service`, `session.Service`, `card.Service`, `user.Service`, `passwordreset.Service`, JWT, SMTP mailer; выбор Translator по `MODE`.
 
 ### `internal/http/handlers`
 
@@ -138,6 +151,16 @@ HTTP-маршруты `/refresh` и `/logout` в роутере не зарег�
 - `delete.go` — удаление сессии, `204` при успехе.
 - `delete_record.go` — `DELETE /sessions/{id}/records/{phrase}`: JWT, одна фраза, вызов `DeleteRecord`, ответ `204`. Чужая сессия — `session_not_found`. Пустая фраза — `400`.
 
+### `internal/http/handlers/card`
+
+Реализует: HTTP-слой карточек сессии. Пользователь берётся из JWT-контекста. Антонимов и полей SM-2 в ответах нет.
+
+Содержит:
+
+- `handler.go` — `Handler` и локальный интерфейс `Service` (`GetCards`, `UpdateKnowledge`).
+- `get_cards.go` — `GET /sessions/{id}/cards?limit=N`: готовые карточки `{"cards": [{front, back}]}`; `front` — `phrase`, `base_form`, `contexts`, `synonyms`; `back` — `translations`, `context_translations` в порядке контекстов; пустые списки — `[]`. Коды: `invalid_request` (id, `limit` не целое > 0), `unauthorized`, `session_not_found`, `cards_get_failed`.
+- `update_knowledge.go` — `POST /sessions/{id}/cards` с JSON `phrase`, `estimation`; ответ `204`. Коды: `invalid_request` (id, JSON, пустая фраза, неизвестная оценка), `unauthorized`, `session_not_found`, `card_not_found`, `card_estimate_failed`.
+
 ### `internal/http/handlers/user`
 
 Реализует: HTTP-слой списка сессий текущего пользователя, сохранения аватара и отдачи текущего пользователя.
@@ -174,7 +197,7 @@ HTTP-маршруты `/refresh` и `/logout` в роутере не зарег�
 
 Содержит:
 
-- `migrations.go` — `Run`: пользователи, сессии, записи, refresh-токены; identity для `sessions.id`; колонка `count`; уникальность `(session_id, phrase)`; v5 nullable `avatar` BYTEA и `avatar_media_type` TEXT на `users`; v6 `password_resets` (одна строка на пользователя).
+- `migrations.go` — `Run`: пользователи, сессии, записи, refresh-токены; identity для `sessions.id`; колонка `count`; уникальность `(session_id, phrase)`; v5 nullable `avatar` BYTEA и `avatar_media_type` TEXT на `users`; v6 `password_resets` (одна строка на пользователя); v7 сливает записи одной сессии с одинаковым `LOWER(phrase)` (остаётся меньший `id`, `count` суммируется, контексты удалённых строк теряются; `Down` пустой); v8 `record_knowledge` (PK `(session_id, phrase_key)`, FK на `sessions` с каскадом).
 
 ### `internal/database/postgres/user_repository`
 
@@ -205,11 +228,22 @@ HTTP-маршруты `/refresh` и `/logout` в роутере не зарег�
 Содержит:
 
 - `repository.go` — конструктор.
-- `models.go` — JSON-контексты и загрузка записей сессии (`applyRecords`).
+- `models.go` — JSON-контексты и загрузка записей сессии (`applyRecords`) под ключом `session.RecordKey(phrase)`.
 - `save.go` — upsert сессии, полная перезапись `records`.
 - `take.go` — сессия по id вместе с записями.
 - `get_by_user.go` — все сессии пользователя.
-- `delete.go` — удаление сессии (записи удаляются каскадом).
+- `delete.go` — удаление сессии (записи и знание удаляются каскадом).
+
+### `internal/database/postgres/knowledge_repository`
+
+Реализует: postgres-реализацию `card.Repository` над таблицей `record_knowledge`.
+
+Содержит:
+
+- `repository.go` — конструктор.
+- `save.go` — upsert по `(session_id, phrase_key)`.
+- `take.go` — знание по id; нет строки — `(nil, nil)`.
+- `find_by_session.go` — всё знание сессии.
 
 ### `internal/database/postgres/refresh_token_repository`
 
@@ -227,6 +261,7 @@ HTTP-маршруты `/refresh` и `/logout` в роутере не зарег�
 
 - `user_repository.go` — пользователи в картах по id/email/username; аватар хранится на `User`. `Save` обновляет всю строку. `SaveAvatar` копирует байты и заменяет предыдущие. `Find*` возвращает копию пользователя с копией байтов аватара.
 - `session.go` — сессии в памяти с клонированием записей.
+- `knowledge.go` — знание по `KnowledgeId`, хранится копией; `FindBySession` сортирует по `PhraseKey`.
 - `token_repository.go` — refresh-токены по хешу; `RevokeByUserID`.
 - `password_reset.go` — ссылки сброса и memory-`Transactor`.
 
@@ -272,6 +307,8 @@ HTTP-маршруты `/refresh` и `/logout` в роутере не зарег�
       → middleware.Auth → handlers/session → session.Service
             → session.Repository (postgres)
             → Translator (net_translator | stub)
+      → middleware.Auth → handlers/card → card.Service
+            → session.Repository (чтение) + card.Repository
       → handlers/user → session.Repository.FindByUser
       → handlers/user → user.Service.Get → user.Repository.FindByID
       → handlers/user → user.Service.UpdateProfile → user.Repository.FindByID + Save
@@ -280,3 +317,7 @@ HTTP-маршруты `/refresh` и `/logout` в роутере не зарег�
 Публичные сброс-пароля: `POST /forgot-password`, `POST /reset-password` → handler → `passwordreset.Service`.
 
 Создание карточки: `POST /sessions/{id}/records` → `AddRecord` → `Session.SaveRecord` → `NewRecord` → Translator → `Repository.Save`.
+
+Выдача карточек: `GET /sessions/{id}/cards` → `GetCards` → `DueRecords`.
+
+Оценка карточки: `POST /sessions/{id}/cards` → `UpdateKnowledge` → `Knowledge.Estimate` → `card.Repository.Save`.

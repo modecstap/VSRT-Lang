@@ -86,6 +86,53 @@ definitions:
       username:
         type: string
     type: object
+  internal_http_handlers_card.cardBack:
+    properties:
+      context_translations:
+        items:
+          type: string
+        type: array
+      translations:
+        items:
+          type: string
+        type: array
+    type: object
+  internal_http_handlers_card.cardFront:
+    properties:
+      base_form:
+        type: string
+      contexts:
+        items:
+          type: string
+        type: array
+      phrase:
+        type: string
+      synonyms:
+        items:
+          type: string
+        type: array
+    type: object
+  internal_http_handlers_card.cardResponse:
+    properties:
+      back:
+        $ref: '#/definitions/internal_http_handlers_card.cardBack'
+      front:
+        $ref: '#/definitions/internal_http_handlers_card.cardFront'
+    type: object
+  internal_http_handlers_card.cardsResponse:
+    properties:
+      cards:
+        items:
+          $ref: '#/definitions/internal_http_handlers_card.cardResponse'
+        type: array
+    type: object
+  internal_http_handlers_card.estimateCardRequest:
+    properties:
+      estimation:
+        type: string
+      phrase:
+        type: string
+    type: object
   internal_http_handlers_passwordreset.ForgotPasswordRequest:
     properties:
       email:
@@ -322,6 +369,88 @@ paths:
       summary: Delete session
       tags:
       - session
+  /sessions/{id}/cards:
+    get:
+      description: Returns session records that are due for review as cards
+      parameters:
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Max cards
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_http_handlers_card.cardsResponse'
+        "400":
+          description: invalid request
+          schema:
+            type: string
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+        "404":
+          description: not found
+          schema:
+            type: string
+        "500":
+          description: internal error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Get due cards
+      tags:
+      - card
+    post:
+      consumes:
+      - application/json
+      description: Applies a review estimation (REPEAT, DIFFICULT, EASY, MOMENTAL)
+        to a session card
+      parameters:
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Card estimation
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_http_handlers_card.estimateCardRequest'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: invalid request
+          schema:
+            type: string
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+        "404":
+          description: not found
+          schema:
+            type: string
+        "500":
+          description: internal error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Estimate card
+      tags:
+      - card
   /sessions/{id}/records:
     get:
       description: Retrieve records for the specified session
