@@ -58,8 +58,8 @@ function SessionTab() {
                     {details ? (
                         <>
                             <p className={styles.value}>{details.translation}</p>
-                            <p className={styles.value}>{details.synonyms.join(', ') || '—'}</p>
-                            <p className={styles.value}>{details.antonyms.join(', ') || '—'}</p>
+                            <p className={styles.value}>{details.synonyms}</p>
+                            <p className={styles.value}>{details.antonyms}</p>
                         </>
                     ) : (
                         <p className={styles.value}>Select or type a word to see details.</p>
@@ -69,7 +69,7 @@ function SessionTab() {
                     {details ? (
                         <>
                             <p className={styles.value}>{details.meaning}</p>
-                            <p className={styles.value}>{details.contexts.join(' | ') || '—'}</p>
+                            <p className={styles.value}>{details.contexts}</p>
                         </>
                     ) : (
                         <p className={styles.value}>Add a new word to populate this section.</p>
