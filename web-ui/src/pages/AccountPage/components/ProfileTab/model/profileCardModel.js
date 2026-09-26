@@ -65,7 +65,7 @@ export function avatarUploadError(error) {
     case 'invalid_avatar_type':
       return 'Use a JPEG, PNG, or WebP image';
     case 'avatar_dimensions_invalid':
-      return 'Image is too wide or too tall';
+      return 'Image must be max 512x512 px';
     default:
       return 'Unable to save avatar';
   }
