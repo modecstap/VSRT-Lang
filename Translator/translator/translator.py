@@ -99,7 +99,7 @@ class Translator(ITranslator):
             base_form = wordnet.morphy(target.content)
             return Word(content=base_form)
         except Exception:
-            return Word(content="NONE")
+            return Word(content="")
 
 
     def _translate_text(self, phrase: str, count: int) -> list[str]:
