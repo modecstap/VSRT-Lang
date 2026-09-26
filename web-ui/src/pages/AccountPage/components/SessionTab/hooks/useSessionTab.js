@@ -11,9 +11,9 @@ import {
   removeSavedWord,
 } from '../model/sessionTabModel';
 
-const createInitialForm = () => ({
-  word: '',
-  context: '',
+const createInitialForm = (context = "", word = "") => ({
+  word: word,
+  context: context,
 });
 
 function useSessionTab() {
@@ -78,7 +78,7 @@ function useSessionTab() {
 
       const nextEntry = buildWordMap(nextWords || []).get(normalizeWord(word)) || savedWord;
       setSelectedWord(nextEntry);
-      setForm(createInitialForm());
+      setForm(createInitialForm(form.context, ""));
     } catch (submitError) {
       setWriteError('Unable to save word');
     } finally {
