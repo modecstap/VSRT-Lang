@@ -75,7 +75,7 @@ func (r *Repository) applyRecords(s *session.Session) (*session.Session, error) 
 			rec.Contexts = fromDBContexts(dbContexts)
 		}
 
-		s.Records[rec.Phrase] = &rec
+		s.Records[session.RecordKey(rec.Phrase)] = &rec
 	}
 
 	if err := rows.Err(); err != nil {
