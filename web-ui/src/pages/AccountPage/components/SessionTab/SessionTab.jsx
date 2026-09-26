@@ -69,7 +69,7 @@ function SessionTab() {
                     {details ? (
                         <>
                             <p className={styles.value}>{details.meaning}</p>
-                            <p className={styles.value}>{details.contexts.join(' / ') || '—'}</p>
+                            <p className={styles.value}>{details.contexts.join(' | ') || '—'}</p>
                         </>
                     ) : (
                         <p className={styles.value}>Add a new word to populate this section.</p>
