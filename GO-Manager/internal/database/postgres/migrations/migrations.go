@@ -146,6 +146,56 @@ CREATE TABLE password_resets (
 DROP TABLE IF EXISTS password_resets;
 `,
 	},
+	{
+		Version: 7,
+		Name:    "merge_case_duplicate_records",
+		Up: `
+WITH duplicates AS (
+    SELECT
+        MIN(id) AS keep_id,
+        session_id,
+        LOWER(phrase) AS phrase_key,
+        SUM(count) AS total_count
+    FROM records
+    GROUP BY session_id, LOWER(phrase)
+    HAVING COUNT(*) > 1
+)
+UPDATE records r
+SET count = d.total_count
+FROM duplicates d
+WHERE r.id = d.keep_id;
+
+DELETE FROM records r
+WHERE EXISTS (
+    SELECT 1
+    FROM records r2
+    WHERE r2.session_id = r.session_id
+      AND LOWER(r2.phrase) = LOWER(r.phrase)
+      AND r2.id < r.id
+);
+`,
+		Down: `
+SELECT 1;
+`,
+	},
+	{
+		Version: 8,
+		Name:    "create_record_knowledge",
+		Up: `
+CREATE TABLE record_knowledge (
+    session_id BIGINT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+    phrase_key TEXT NOT NULL,
+    ease_factor DOUBLE PRECISION NOT NULL,
+    repetitions INTEGER NOT NULL,
+    interval_days INTEGER NOT NULL,
+    due_at TIMESTAMPTZ NOT NULL,
+    PRIMARY KEY (session_id, phrase_key)
+);
+`,
+		Down: `
+DROP TABLE IF EXISTS record_knowledge;
+`,
+	},
 }
 
 const schemaMigrationsTable = `
