@@ -3,6 +3,7 @@ package router
 import (
 	_ "VSRT-Lang/docs"
 	"VSRT-Lang/internal/http/handlers/auth"
+	cardhandler "VSRT-Lang/internal/http/handlers/card"
 	passwordresethandler "VSRT-Lang/internal/http/handlers/passwordreset"
 	sessionhandler "VSRT-Lang/internal/http/handlers/session"
 	"VSRT-Lang/internal/http/handlers/user"
@@ -14,6 +15,7 @@ import (
 
 type Handlers struct {
 	Auth           *auth.Handler
+	Card           *cardhandler.Handler
 	PasswordReset  *passwordresethandler.Handler
 	Session        *sessionhandler.Handler
 	User           *user.Handler
@@ -43,6 +45,15 @@ func NewServeMux(h Handlers) *http.ServeMux {
 		mux.Handle("DELETE /sessions/{id}/records/{$}", protected(http.HandlerFunc(h.Session.DeleteRecord)))
 		mux.Handle("POST /sessions/", protected(http.HandlerFunc(h.Session.SaveRecord)))
 		mux.Handle("GET /sessions/", protected(http.HandlerFunc(h.Session.GetRecords)))
+	}
+
+	if h.Card != nil {
+		if protected == nil {
+			protected = func(next http.Handler) http.Handler { return next }
+		}
+
+		mux.Handle("GET /sessions/{id}/cards", protected(http.HandlerFunc(h.Card.GetCards)))
+		mux.Handle("POST /sessions/{id}/cards", protected(http.HandlerFunc(h.Card.UpdateKnowledge)))
 	}
 
 	if h.User != nil {

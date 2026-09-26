@@ -2,6 +2,8 @@ package router
 
 import (
 	"VSRT-Lang/internal/auth"
+	"VSRT-Lang/internal/card"
+	"VSRT-Lang/internal/database/postgres/knowledge_repository"
 	"VSRT-Lang/internal/database/postgres/password_reset_repository"
 	"VSRT-Lang/internal/database/postgres/refresh_token_repository"
 	"VSRT-Lang/internal/database/postgres/session_repository"
@@ -24,6 +26,7 @@ type ServerDependens struct {
 	UserService          *user.Service
 	SessionRepo          *session_repository.Repository
 	SessionService       *session.Service
+	CardService          *card.Service
 	AuthService          *auth.Service
 	JwtService           *auth.JWTService
 	PasswordResetService *passwordreset.Service
@@ -49,6 +52,8 @@ func DependensFromEnv(db *sql.DB) (*ServerDependens, error) {
 		return nil, err
 	}
 	sessionService := session.NewService(sessionRepo, translator)
+	knowledgeRepo := knowledge_repository.New(db)
+	cardService := card.NewService(sessionRepo, knowledgeRepo, nil)
 
 	userRepo := user_repository.New(db)
 	userService := user.NewService(userRepo)
@@ -83,6 +88,7 @@ func DependensFromEnv(db *sql.DB) (*ServerDependens, error) {
 		UserService:          userService,
 		SessionRepo:          sessionRepo,
 		SessionService:       sessionService,
+		CardService:          cardService,
 		AuthService:          authService,
 		JwtService:           jwtService,
 		PasswordResetService: passwordResetService,
