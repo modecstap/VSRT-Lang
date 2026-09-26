@@ -30,7 +30,7 @@ func NewSession(
 }
 
 func (s *Session) SaveRecord(context string, phrase string, translator Translator) (Record, error) {
-	key := recordKey(phrase)
+	key := RecordKey(phrase)
 	if existing, ok := s.Records[key]; ok {
 		if err := existing.registerSave(context, translator); err != nil {
 			return Record{}, err
@@ -53,10 +53,10 @@ func (s *Session) SaveRecord(context string, phrase string, translator Translato
 }
 
 func (s *Session) DeleteRecord(phrase string) {
-	delete(s.Records, recordKey(phrase))
+	delete(s.Records, RecordKey(phrase))
 }
 
-func recordKey(phrase string) string {
+func RecordKey(phrase string) string {
 	return strings.ToLower(strings.TrimSpace(phrase))
 }
 
