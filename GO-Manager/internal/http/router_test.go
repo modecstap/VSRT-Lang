@@ -10,9 +10,11 @@ import (
 	"testing"
 
 	"VSRT-Lang/internal/auth"
+	"VSRT-Lang/internal/card"
 	"VSRT-Lang/internal/database/memory"
 	"VSRT-Lang/internal/http/handlers"
 	authhandler "VSRT-Lang/internal/http/handlers/auth"
+	cardhandler "VSRT-Lang/internal/http/handlers/card"
 	passwordresethandler "VSRT-Lang/internal/http/handlers/passwordreset"
 	sessionhandler "VSRT-Lang/internal/http/handlers/session"
 	userhandler "VSRT-Lang/internal/http/handlers/user"
@@ -36,6 +38,7 @@ func newTestMux() *http.ServeMux {
 	jwtSvc := auth.NewJWTService("test-secret")
 	authSvc := auth.NewService(users, tokens, jwtSvc)
 	sessionSvc := session.NewService(sessions, stub.Translator{})
+	cardSvc := card.NewService(sessions, memory.NewKnowledgeRepository(), nil)
 	tx := memory.NewPasswordResetTransactor(users, links, tokens)
 	resetSvc := passwordreset.NewService(
 		users,
@@ -48,6 +51,7 @@ func newTestMux() *http.ServeMux {
 
 	return NewServeMux(Handlers{
 		Auth:           authhandler.NewAuth(authSvc),
+		Card:           cardhandler.NewHandler(cardSvc),
 		PasswordReset:  passwordresethandler.NewHandler(resetSvc),
 		Session:        sessionhandler.NewHandler(sessionSvc),
 		User:           userhandler.NewHandler(user.NewService(users), sessions),
@@ -242,6 +246,44 @@ func TestNewServeMux_DeleteRecord(t *testing.T) {
 	}
 }
 
+func TestNewServeMux_Cards(t *testing.T) {
+	mux := newTestMux()
+
+	demo := loginUser(t, mux, "demo", "demo@example.com", "Password1")
+	sessionID := createSession(t, mux, demo)
+	saveRecord(t, mux, demo, sessionID, "hello")
+
+	cards := doJSON(t, mux, http.MethodGet, "/sessions/"+sessionID+"/cards", demo, nil)
+	var cardsResp struct {
+		Cards []struct {
+			Front struct {
+				Phrase string `json:"phrase"`
+			} `json:"front"`
+		} `json:"cards"`
+	}
+	if cards.Code != http.StatusOK || json.Unmarshal(cards.Body.Bytes(), &cardsResp) != nil ||
+		len(cardsResp.Cards) != 1 || cardsResp.Cards[0].Front.Phrase != "hello" {
+		t.Fatalf("get cards status=%d body=%s, want one hello card", cards.Code, cards.Body.String())
+	}
+
+	estimated := doJSON(t, mux, http.MethodPost, "/sessions/"+sessionID+"/cards", demo, map[string]string{
+		"phrase":     "hello",
+		"estimation": "EASY",
+	})
+	if estimated.Code != http.StatusNoContent {
+		t.Fatalf("estimate status = %d, want 204; body=%s", estimated.Code, estimated.Body.String())
+	}
+
+	empty := doJSON(t, mux, http.MethodGet, "/sessions/"+sessionID+"/cards", demo, nil)
+	if empty.Code != http.StatusOK || empty.Body.String() != "{\"cards\":[]}\n" {
+		t.Fatalf("get cards after estimate status=%d body=%q, want empty cards", empty.Code, empty.Body.String())
+	}
+
+	if phrases := recordPhrases(t, mux, demo, sessionID); len(phrases) != 1 || phrases[0] != "hello" {
+		t.Fatalf("records after estimate = %v, want hello", phrases)
+	}
+}
+
 func loginUser(t *testing.T, mux http.Handler, username, email, password string) string {
 	t.Helper()
 
@@ -351,6 +393,8 @@ func TestNewServeMux_ProtectedRoutesRequireAuth(t *testing.T) {
 		{name: "delete record", method: http.MethodDelete, path: "/sessions/1/records/hello"},
 		{name: "save record", method: http.MethodPost, path: "/sessions/1/records", body: map[string]string{"phrase": "hello", "context": "world"}},
 		{name: "get records", method: http.MethodGet, path: "/sessions/1/records"},
+		{name: "get cards", method: http.MethodGet, path: "/sessions/1/cards"},
+		{name: "estimate card", method: http.MethodPost, path: "/sessions/1/cards", body: map[string]string{"phrase": "hello", "estimation": "EASY"}},
 		{name: "user sessions", method: http.MethodGet, path: "/users/sessions"},
 		{name: "current user", method: http.MethodGet, path: "/users/me"},
 		{name: "update profile", method: http.MethodPost, path: "/users/me", body: map[string]string{"username": "demo", "email": "demo@example.com"}},
