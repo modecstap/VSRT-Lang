@@ -8,6 +8,7 @@ const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage/ResetPass
 const AccountPage = lazy(() => import('./pages/AccountPage/AccountPage'));
 const ProfileTab = lazy(() => import('./pages/AccountPage/components/ProfileTab/ProfileTab'));
 const SessionTab = lazy(() => import('./pages/AccountPage/components/SessionTab/SessionTab'));
+const CardTab = lazy(() => import('./pages/AccountPage/components/CardTab/CardTab'));
 
 function RouteFallback() {
   return <div>Loading...</div>;
@@ -64,6 +65,10 @@ export const router = createBrowserRouter([
           {
             path: 'session',
             element: withSuspense(<SessionTab />),
+          },
+          {
+            path: 'cards',
+            element: withSuspense(<CardTab />),
           },
         ],
       },

@@ -6,3 +6,7 @@ export function prefetchAccount() {
 export function prefetchSessionTab() {
   import(/* webpackPrefetch: true */ '../pages/AccountPage/components/SessionTab/SessionTab');
 }
+
+export function prefetchCardTab() {
+  import(/* webpackPrefetch: true */ '../pages/AccountPage/components/CardTab/CardTab');
+}

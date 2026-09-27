@@ -2,7 +2,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useSWRConfig } from 'swr';
 import { clearAuthTokens } from '../../api/auth';
 import { clearActiveSessionId } from '../../api/sessions';
-import { prefetchSessionTab } from '../../routes/prefetch';
+import { prefetchCardTab, prefetchSessionTab } from '../../routes/prefetch';
 import styles from './AccountPage.module.css';
 
 function AccountPage() {
@@ -40,6 +40,17 @@ function AccountPage() {
                         onMouseEnter={prefetchSessionTab}
                     >
                         SESSION
+                    </NavLink>
+
+                    <NavLink
+                        to="cards"
+                        className={({ isActive }) =>
+                            isActive ? styles.active : styles.link
+                        }
+                        onFocus={prefetchCardTab}
+                        onMouseEnter={prefetchCardTab}
+                    >
+                        CARDS
                     </NavLink>
 
                     <button type="button" className={styles.link} onClick={handleLogout}>
