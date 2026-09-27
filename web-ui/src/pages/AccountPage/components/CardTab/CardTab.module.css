@@ -107,8 +107,13 @@
   font-size: 1.25rem;
 }
 
+.estimation:not(:disabled) {
+  color: var(--text-color);
+  background: var(--button-color);
+}
+
 .estimation:not(:disabled):hover {
-  color: var(--text-accent);
+  color: var(--text-contrast);
 }
 
 .estimation:disabled,
@@ -136,41 +141,4 @@
 
 .button:disabled {
   cursor: default;
-}
-
-.button::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-
-  background: var(--text-contrast);
-
-  mask: url(./media/rings.svg) no-repeat center;
-  -webkit-mask: url(./media/rings.svg) no-repeat center;
-  opacity: 0.5;
-
-  transform: scale(0);
-  transition: var(--transition-base);
-}
-
-.button:not(:disabled):hover::before {
-  transform: scale(0.9);
-}
-
-.button:active::before {
-  animation: pulse var(--transition-base);
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(0.9);
-  }
-
-  50% {
-    transform: scale(0.95);
-  }
-
-  100% {
-    transform: scale(0.9);
-  }
 }

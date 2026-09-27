@@ -1,4 +1,4 @@
-export const ESTIMATIONS = ['MOMENTAL', 'DIFFICULT', 'EASY', 'REPEAT'];
+export const ESTIMATIONS = ['MOMENTAL', 'EASY', 'DIFFICULT', 'REPEAT'];
 
 export function cardsKey(sessionId, visitId) {
   return ['session-cards', sessionId, visitId];
