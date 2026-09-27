@@ -73,7 +73,7 @@ services:
       - libretranslate_models:/home/libretranslate/.local
     environment:
       - LT_LOAD_ONLY=en,ru
-      - LT_UPDATE_MODELS=ture
+      - LT_UPDATE_MODELS=false
 
 volumes:
   pgdata:
