@@ -4,7 +4,7 @@
 
 ## Назначение
 
-`web-ui` — браузерный клиент VSRT-LANG. Пользователь входит в систему, смотрит список сессий и наполняет активную сессию словами.
+`web-ui` — браузерный клиент VSRT-LANG. Пользователь входит в систему, смотрит список сессий, наполняет активную сессию словами и повторяет её карточки.
 
 Приложение:
 
@@ -26,9 +26,9 @@
 - `router.jsx` — `createBrowserRouter`:
   - `/` — страница входа; при наличии access-токена редирект на `/account`;
   - `/forgot-password`, `/reset-password` — без `GuestOnly` и без `RequireAuth`; открываются и с токеном, и без;
-  - `/account` — требуется токен; вкладки `profile` и `session`;
+  - `/account` — требуется токен; вкладки `profile`, `session` и `cards`;
   - страницы грузятся через `React.lazy` / `Suspense`.
-- `routes/prefetch.js` — `prefetchAccount`, `prefetchSessionTab`: предварительная загрузка чанков кабинета.
+- `routes/prefetch.js` — `prefetchAccount`, `prefetchSessionTab`, `prefetchCardTab`: предварительная загрузка чанков кабинета.
 
 ## Слои страницы
 
@@ -131,7 +131,7 @@
 
 Содержит:
 
-- `AccountPage.jsx` — меню PROFILE / SESSION / LOGOUT, `Outlet` для вкладок; logout чистит токены, активную сессию и кэш SWR.
+- `AccountPage.jsx` — меню PROFILE / SESSION / CARDS / LOGOUT, `Outlet` для вкладок; logout чистит токены, активную сессию и кэш SWR.
 
 ### `src/pages/AccountPage/components/ProfileTab`
 
@@ -211,6 +211,38 @@
 
 - `useSessionTab.js` — SWR по `sessionRecordsKey(activeSessionId)`; синхронизация поля ввода с выбранным словом; `WRITE` вызывает API и обновляет список. `delete` убирает активное слово, очищает форму и сбрасывает выбор.
 
+### `src/pages/AccountPage/components/CardTab`
+
+Реализует: повторение готовых карточек активной сессии по SM-2. Маршрут `/account/cards`.
+
+Содержит:
+
+- `CardTab.jsx` — лицо: phrase / base form / synonyms столбцом и contexts справа; тыл: переводы фразы и контекстов, виден после `open`; меню: статистика `Remaining` / `Passed`, оценки `momental` / `difficult` / `easy` / `repeat`, кнопка `open` / `next`. Без активной сессии, при загрузке, ошибке и пустой очереди вместо лица — статус.
+
+#### `CardTab/api`
+
+Реализует: HTTP карточек активной сессии.
+
+Содержит:
+
+- `cardTabApi.js` — `GET /sessions/{id}/cards` без `limit`; `POST /sessions/{id}/cards` (`phrase`, `estimation`). Сессию не создаёт.
+
+#### `CardTab/model`
+
+Реализует: очередь захода и представление карточки.
+
+Содержит:
+
+- `cardTabModel.js` — `ESTIMATIONS`, `cardsKey`, `mapCard`, `createRun`, `revealCard`, `estimateCard`, `advanceRun` (пропуск и `REPEAT` — в конец очереди, прочие оценки — удаление и «пройдено» +1), `buildCardView` (пустое — `—`, контексты по строке).
+
+#### `CardTab/hooks`
+
+Реализует: загрузку очереди, оценки и переходы.
+
+Содержит:
+
+- `useCardTab.js` — SWR с ключом на заход (`visitId`), перезапросы выключены: фокус окна не сбрасывает очередь, новый заход грузит свежую. Очередь и счётчики на клиенте за заход. Одна оценка на показ, только после `open`; ошибка POST заменяет подпись главной кнопки до следующей оценки или `next`.
+
 ### `src/shared/ui`
 
 Реализует: переиспользуемые элементы без знания страниц и API.
@@ -237,8 +269,9 @@
         → ProfileTab → useProfileCard → saveAvatar.js → POST /users/avatar
         → ProfileTab → useProfileCard → saveProfile.js → POST /users/me
         → SessionTab → useSessionTab → sessionTabApi → /sessions/{id}/records
+        → CardTab → useCardTab → cardTabApi → /sessions/{id}/cards
 ```
 
 В compose браузер не открывает порт manager; nginx web-ui проксирует `/login`, `/register`, `/sessions`, `/users` и POST `/forgot-password` с POST `/reset-password` на `manager:8080`. GET `/forgot-password` и GET `/reset-password` остаются страницами SPA.
 
-Активная сессия: `ProfileTab` пишет id в `localStorage`. `SessionTab` читает его; если id нет, `getOrCreateSessionId` создаёт сессию на backend.
+Активная сессия: `ProfileTab` пишет id в `localStorage`. `SessionTab` читает его; если id нет, `getOrCreateSessionId` создаёт сессию на backend. `CardTab` тоже читает id; без id показывает статус и запросов не шлёт.
