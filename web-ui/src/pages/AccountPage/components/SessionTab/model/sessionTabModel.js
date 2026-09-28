@@ -89,6 +89,6 @@ export function buildWordDetails(entry) {
     synonyms: entry.synonyms.join('\t,\t') || '—',
     antonyms: entry.antonyms.join('\t,\t') || '—',
     meaning: entry.meaning || 'No meaning provided yet.',
-    contexts: entry.contexts.join('\t||\t') || '—',
+    contexts: entry.contexts.join('\n') || '—',
   };
 }
