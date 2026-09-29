@@ -25,6 +25,7 @@ function useSessionTab() {
     mutate,
   } = useSWR(sessionRecordsKey(sessionId), async () => {
     const records = await loadSavedWords();
+    console.log(records)
     return records.map((record, index) => mapRecordToWord(record, index));
   });
   const [form, setForm] = useState(createInitialForm);

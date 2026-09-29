@@ -61,7 +61,7 @@ function SessionTab() {
                         <>
                             <p className={styles.value}>{details.translation}</p>
                             <p className={styles.value}>{details.synonyms}</p>
-                            <p className={styles.value}>{details.antonyms}</p>
+                            <p className={styles.value}>{details.baseForm}</p>
                         </>
                     ) : (
                         <p className={styles.value}>Select or type a word to see details.</p>

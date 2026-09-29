@@ -9,6 +9,7 @@ export function mapRecordToWord(record, index = 0) {
   const translations = record?.translations || record?.Translations || [];
   const synonyms = record?.synonyms || record?.Synonyms || [];
   const antonyms = record?.antonyms || record?.Antonyms || [];
+  const meaning = record?.meaning;
   const baseForm = record?.baseForm || record?.BaseForm || record?.base_form || phrase;
   const contexts = record?.contexts || record?.Contexts || [];
   const rawCount = record?.count ?? record?.Count;
@@ -20,7 +21,8 @@ export function mapRecordToWord(record, index = 0) {
     translation: translations,
     synonyms,
     antonyms,
-    meaning: baseForm || 'No meaning provided yet.',
+    meaning: meaning,
+    baseForm: baseForm,
     contexts: contexts.map((item) => item?.phrase || item?.Phrase || item?.translation || item?.Translation || ''),
     count: Number.isFinite(count) ? count : 0,
   };
@@ -88,7 +90,8 @@ export function buildWordDetails(entry) {
     translation: translation || '—',
     synonyms: entry.synonyms.join('\t,\t') || '—',
     antonyms: entry.antonyms.join('\t,\t') || '—',
-    meaning: entry.meaning || 'No meaning provided yet.',
+    meaning: entry.meaning || '—',
+    baseForm: entry.baseForm || '—',
     contexts: entry.contexts.join('\n') || '—',
   };
 }
