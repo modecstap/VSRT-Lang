@@ -1,10 +1,11 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "VSRT-Lang",
+  "name": "VSRT-Lang",
+  "description": "Spaced-repetition language learning. Build study sessions of words; translations, meanings, synonyms, antonyms and usage contexts are filled in automatically.",
   "icons": [
     {
       "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
+      "sizes": "192x192",
       "type": "image/x-icon"
     },
     {
@@ -20,6 +21,6 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#181818",
+  "background_color": "#f5eddc"
 }
