@@ -2,8 +2,10 @@ import Button from '../../../../shared/ui/Button/Button';
 import useCardTab from './hooks/useCardTab';
 import { ESTIMATIONS } from './model/cardTabModel';
 import styles from './CardTab.module.css';
+import { useDocumentTitle } from '../../../../shared/hooks/useDocumentTitle';
 
 function CardTab() {
+    useDocumentTitle('Cards');
     const {
         canEstimate,
         card,

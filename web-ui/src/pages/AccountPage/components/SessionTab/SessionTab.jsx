@@ -2,8 +2,10 @@ import Button from '../../../../shared/ui/Button/Button';
 import Input from '../../../../shared/ui/Input/Input';
 import useSessionTab from './hooks/useSessionTab';
 import styles from './SessionTab.module.css';
+import { useDocumentTitle } from '../../../../shared/hooks/useDocumentTitle';
 
 function SessionTab() {
+    useDocumentTitle('Session');
     const {
         deleteError,
         details,

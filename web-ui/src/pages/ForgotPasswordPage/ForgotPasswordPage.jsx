@@ -4,8 +4,10 @@ import Input from '../../shared/ui/Input/Input';
 import pageStyles from '../LoginPage/LoginPage.module.css';
 import formStyles from '../LoginPage/components/LoginForm/LoginForm.module.css';
 import { useForgotPasswordForm } from './hooks/useForgotPasswordForm';
+import { useDocumentTitle } from '../../shared/hooks/useDocumentTitle';
 
 function ForgotPasswordPage() {
+  useDocumentTitle('Forgot password');
   const { form, phase, buttonLabel, handleChange, handleSubmit } = useForgotPasswordForm();
 
   return (

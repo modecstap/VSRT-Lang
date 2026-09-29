@@ -27,7 +27,8 @@
   - `/` — страница входа; при наличии access-токена редирект на `/account`;
   - `/forgot-password`, `/reset-password` — без `GuestOnly` и без `RequireAuth`; открываются и с токеном, и без;
   - `/account` — требуется токен; вкладки `profile`, `session` и `cards`;
-  - страницы грузятся через `React.lazy` / `Suspense`.
+  - страницы грузятся через `React.lazy` / `Suspense`;
+  - каждый экран ставит заголовок вкладки `VSRT-Lang — <Page>` через `useDocumentTitle`; до запуска JS виден статический `<title>VSRT-Lang</title>` из `public/index.html`. Соответствие: `/` → `Login` / `Register` (по активной форме), `/forgot-password` → `Forgot password`, `/reset-password` → `Reset password`, `/account/profile` → `Profile`, `/account/session` → `Session`, `/account/cards` → `Cards`.
 - `routes/prefetch.js` — `prefetchAccount`, `prefetchSessionTab`, `prefetchCardTab`: предварительная загрузка чанков кабинета.
 
 ## Слои страницы
@@ -251,6 +252,14 @@
 
 - `Button/Button.jsx` — кнопка, вариант `primary` по умолчанию.
 - `Input/Input.jsx` — поле или textarea (`multiline`).
+
+### `src/shared/hooks`
+
+Реализует: общие хуки без знания страниц и API.
+
+Содержит:
+
+- `useDocumentTitle.js` — `useEffect` пишет `document.title` = `VSRT-Lang — <page>`, без cleanup.
 
 ## Связи
 

@@ -4,8 +4,10 @@ import Input from '../../shared/ui/Input/Input';
 import pageStyles from '../LoginPage/LoginPage.module.css';
 import formStyles from '../LoginPage/components/LoginForm/LoginForm.module.css';
 import { useResetPasswordForm } from './hooks/useResetPasswordForm';
+import { useDocumentTitle } from '../../shared/hooks/useDocumentTitle';
 
 function ResetPasswordPage() {
+  useDocumentTitle('Reset password');
   const { form, phase, buttonLabel, handleChange, handleSubmit } = useResetPasswordForm();
 
   return (

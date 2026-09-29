@@ -3,8 +3,10 @@ import useProfileCard from './hooks/useProfileCard';
 import styles from "./ProfileTab.module.css";
 import ProfileUserCard from './components/ProfileUserCard';
 import SessionList from './components/SessionList';
+import { useDocumentTitle } from '../../../../shared/hooks/useDocumentTitle';
 
 function ProfileTab() {
+    useDocumentTitle('Profile');
     const {
         uploading,
         uploadError,
