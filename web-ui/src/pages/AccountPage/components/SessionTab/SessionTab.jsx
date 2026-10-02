@@ -82,7 +82,6 @@ function SessionTab() {
                         className={styles.input}
                         id="context"
                         name="context"
-                        label="Context"
                         placeholder="Type a context"
                         value={form.context}
                         onChange={handleContextChange}
@@ -95,7 +94,6 @@ function SessionTab() {
                         className={styles.input}
                         id="word"
                         name="word"
-                        label="Word"
                         placeholder="Type a word"
                         value={form.word}
                         onChange={handleWordChange}

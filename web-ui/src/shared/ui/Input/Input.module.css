@@ -6,7 +6,7 @@
 .label {
   font-size: 0.94rem;
   font-weight: 600;
-  color: var(--text-color);
+  color: var(--text-contrast);
   text-transform: uppercase;
 }
 
@@ -17,7 +17,7 @@
   border: 0;
   font-size: 1rem;
   color: var(--text-contrast);
-  background: var(--text-color);
+  background: var(--bg-contrast);
 }
 
 .textarea {
